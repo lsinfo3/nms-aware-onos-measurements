@@ -1,0 +1,13 @@
+#!/bin/bash
+
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'rm /home/ubuntu/clientList.txt; /home/ubuntu/python/tests/02_lowBandwidthSsh/simpleNms.py -i 5; exec bash'\""
+sleep 4
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/tests/02_lowBandwidthSsh/testOverSsh.py -d 10 -c 8 -b 200 -n iperf1 -r /home/ubuntu/iperfResult1.txt'\""
+sleep 4
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/tests/02_lowBandwidthSsh/testOverSsh.py -d 10 -c 4 -b 400 -n iperf2 -r /home/ubuntu/iperfResult2.txt'\""
+sleep 4
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/rightVm/; vagrant up; sleep 3; vagrant ssh -c 'sudo /home/ubuntu/mininetTopo/rightTopo.py; exec bash'; exec bash\""
+#sleep 6
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/firstOnosVm; vagrant up; sleep 3; vagrant ssh -c 'source /home/ubuntu/onos/tools/dev/bash_profile; onos-karaf; exec bash'; exec bash\""
+#sleep 8
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/secondOnosVm; vagrant up; sleep 3; vagrant ssh -c 'source /home/ubuntu/onos/tools/dev/bash_profile; onos-karaf; exec bash'; exec bash\""
