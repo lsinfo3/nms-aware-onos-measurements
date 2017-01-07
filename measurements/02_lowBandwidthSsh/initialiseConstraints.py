@@ -95,26 +95,26 @@ def addConstraint(appId, intentKey, newConstraint):
   put(INTENTURL, json.dumps(intentDict))
 
 
-def initaliseConstraints():
+def initialiseConstraints(iperfResultPath, clientCount):
   
   # get all installed intents in json
   response = get(INTENTURL)
   
   # get iperf connections: mapping id to source transport protocol port
-  clientPortMap = clientsOfIperf(RESULTPATH, CLIENTCOUNT)
-  info("+++ Client Port Map:\n")
-  print(str(clientPortMap) + "\n")
+  clientPortMap = clientsOfIperf(iperfResultPath, clientCount)
+  # info("+++ Client Port Map:\n")
+  # print(str(clientPortMap) + "\n")
   
   # gather the intent keys of the iperf clients
   iperfIntentKeyMap = findIperfIntents(response.json(), clientPortMap)
   
-  info("+++ iperf intents updated:\n")
+  # info("+++ iperf intents updated:\n")
   # add desired constraint to the intents
   for intentKey, appId in iperfIntentKeyMap.items():
-    addConstraint(appId, intentKey, json.loads(LATCONST))
-    print(str(intentKey))
+    addConstraint(appId, intentKey, json.loads(ADVCONST))
+    # print(str(intentKey))
 
 
 if __name__ == '__main__':
   setLogLevel( 'info' )
-  initaliseConstraints()
+  initialiseConstraints(iperfResultPath=RESULTPATH, clientCount=CLIENTCOUNT)

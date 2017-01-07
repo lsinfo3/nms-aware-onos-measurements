@@ -4,7 +4,7 @@ from mininet.log import setLogLevel, info
 from pexpect import pxssh
 import threading, subprocess
 import os.path, json, sys, getopt
-
+import initialiseConstraints
 
 CLIENTLISTPATH='/home/ubuntu/clientList.txt'
 hostname1 = '100.0.1.101'
@@ -189,10 +189,14 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     
     # read iperf output and append it to the client list
     clientPortMap = getIperfClients(resultIperf=resultIperf,
-      clientCount=clientCount, bandwidth=bandwidth)
+      clientCount=clientCount, bandwidth=bandwidth+'000')
     
     addClientsToList(clientListPath=CLIENTLISTPATH, clientPortMap=clientPortMap,
         instanceName=iperfName)
+    
+    info("+++ Adding constraints to intents\n")
+    # add constraints to intents
+    initialiseConstraints.initialiseConstraints(resultIperf, clientCount)
     
     # wait until iperf client has finished measurement
     info("+++ Waiting for iperf client to finish\n")
