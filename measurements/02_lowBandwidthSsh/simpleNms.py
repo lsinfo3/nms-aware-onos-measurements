@@ -69,18 +69,46 @@ def getFlows(deviceId, flowUrl):
 
 
 # count the bandwidth of the active connections for each switch
-def countConnections(activeConnections, controllerConnections):
+def countConnections(activeConnections, controllerConnections, annotationType, switchCapacityPath):
   
   switchCount = {}
-  # count for every device
-  for deviceId in controllerConnections:
-    switchCount[deviceId] = 0
-    # go through every active connection
-    for activeConnection in activeConnections:
-      # check if the connection is on current device
-      connection = {'src': int(activeConnection['src']), 'dst': int(activeConnection['dst'])}
-      if connection in controllerConnections[deviceId]:
-        switchCount[deviceId] += int(activeConnection['bandwidth'])
+  
+  # check if a file with default values exists
+  if os.path.isfile(switchCapacityPath):
+    # load the default values of the switches
+    f = open(switchCapacityPath, 'r')
+    switchCapacityJson = json.load(f)
+    f.close()
+    
+    # count for every device
+    for deviceId in controllerConnections:
+      
+      # define the start value
+      switchCount[deviceId] = switchCapacityJson[deviceId][annotationType]
+      info("setting default switch count for switch {} to {}.\n".format(deviceId, switchCapacityJson[deviceId][annotationType]))
+      
+      # go through every active connection
+      for activeConnection in activeConnections:
+        
+        # check if the connection is on current device
+        connection = {'src': int(activeConnection['src']), 'dst': int(activeConnection['dst'])}
+        # info("Is {} in {}?\n".format(connection, controllerConnections[deviceId]))
+        
+        if connection in controllerConnections[deviceId]:
+          info("It is. Removing {} from {}.\n".format(activeConnection[annotationType], switchCount[deviceId]))
+          switchCount[deviceId] -= int(activeConnection[annotationType])
+    
+  else:
+    # count for every device
+    for deviceId in controllerConnections:
+      # start value
+      switchCount[deviceId] = 0
+      # go through every active connection
+      for activeConnection in activeConnections:
+        # check if the connection is on current device
+        connection = {'src': int(activeConnection['src']), 'dst': int(activeConnection['dst'])}
+        if connection in controllerConnections[deviceId]:
+          switchCount[deviceId] += int(activeConnection[annotationType])
   
   return switchCount
 
@@ -88,6 +116,7 @@ def countConnections(activeConnections, controllerConnections):
 # update link annotations of controller
 def updateLinkAnnotations(linkUrl, switchCount, annotationType):
   
+  # TODO: use 'onos/v1/links' instead!
   # get the links from the controller
   linksJson = get(linkUrl).json()
   
@@ -100,37 +129,59 @@ def updateLinkAnnotations(linkUrl, switchCount, annotationType):
       if switchId in linkId:
         # get the link config
         linkConfig = linksJson[linkId]
-        info("+++ link {} is connected to switch {}\n".format(linkId, switchId))
+        # info("+++ link {} is connected to switch {}\n".format(linkId, switchId))
         # only update if the config has changed
         if linkConfig['basic'][annotationType] != switchCount[switchId]:
-          info("+++ config has changed\n")
+          # info("+++ config has changed\n")
           # update the bandwidth
           linkConfig['basic'][annotationType] = switchCount[switchId]
           # save new config
           newLinks[linkId] = linkConfig
         else:
-          info("+++ config has NOT changed\n")
+          # info("+++ config has NOT changed\n")
+          pass
   
   # update the links on the controller
   post(linkUrl, json.dumps(newLinks))
 
 
 # set the default value for the link annotation
-def resetLinkAnnotations(linkUrl, defaultValue, annotationType):
+def resetLinkAnnotations(linkUrl, annotationType, switchCapacityPath):
   
   # get the links from the controller
   linksJson = get(linkUrl).json()
   
   newLinks = {}
-  # go through every link
-  for linkId in linksJson:
-    # get the link config
-    linkConfig = linksJson[linkId]
-    if linkConfig['basic'][annotationType] != defaultValue:
-      # update the bandwidth
-      linkConfig['basic'][annotationType] = defaultValue
-      # save new config
-      newLinks[linkId] = linkConfig
+  
+  # check if a file with default values exists
+  if os.path.isfile(switchCapacityPath):
+    # load the default values of the switches
+    f = open(switchCapacityPath, 'r')
+    switchCapacityJson = json.load(f)
+    f.close()
+    
+    # go through every link
+    for linkId in linksJson:
+      # get the link config
+      linkConfig = linksJson[linkId]
+      for deviceId in switchCapacityJson:
+        if deviceId in linkId:
+          defaultValue = switchCapacityJson[deviceId][annotationType]
+          if linkConfig['basic'][annotationType] != defaultValue:
+            # update the bandwidth
+            linkConfig['basic'][annotationType] = defaultValue
+            # save new config
+            newLinks[linkId] = linkConfig
+  else:
+    # go through every link
+    for linkId in linksJson:
+      # get the link config
+      linkConfig = linksJson[linkId]
+      if linkConfig['basic'][annotationType] != 0:
+        # update the bandwidth
+        linkConfig['basic'][annotationType] = 0
+        # save new config
+        newLinks[linkId] = linkConfig
   
   # update the links on the controller
   post(linkUrl, json.dumps(newLinks))
@@ -155,9 +206,11 @@ def manage(interval):
         controllerConnections[deviceId] = getFlows(deviceId, FLOWURL)
     
       # count the bandwidth of the active connections for each switch
-      switchCount = countConnections(activeConnections, controllerConnections)
+      switchCount = countConnections(activeConnections, controllerConnections,
+          annotationType='bandwidth',
+          switchCapacityPath='/home/ubuntu/python/measurements/02_lowBandwidthSsh/switchCapacity.txt')
     
-      print 'SwitchCount:'
+      info("SwitchCount:\n")
       printDict(switchCount)
       
       # update the annotations of the controller
@@ -166,7 +219,8 @@ def manage(interval):
     # no connections -> set link annotation to default value
     else:
       info("No connections. Set link annotation to default value.\n")
-      resetLinkAnnotations(linkUrl=LINKURL, defaultValue=0, annotationType='bandwidth')
+      resetLinkAnnotations(linkUrl=LINKURL, annotationType='bandwidth',
+          switchCapacityPath='/home/ubuntu/python/measurements/02_lowBandwidthSsh/switchCapacity.txt')
     
     endTime = time.time()
     
