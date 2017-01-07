@@ -58,6 +58,15 @@ def connectToRootNS( network, switch, ip, routes ):
     root.setIP( ip, intf=intf )
     # Start network that now includes link to root namespace
     network.start()
+    
+    # wait until network propagated its values
+    info("*** wait until network values are propagated.\n")
+    try:
+        time.sleep(10)
+    except KeyboardInterrupt:
+      print('\n\nKeyboard exception received. Exiting.')
+      exit()
+    
     # Add routes from root ns to hosts
     for route in routes:
         root.cmd( 'route add -net ' + route + ' dev ' + str( intf ) )
