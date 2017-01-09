@@ -80,6 +80,8 @@ def countConnections(activeConnections, controllerConnections, annotationType, s
     switchCapacityJson = json.load(f)
     f.close()
     
+    # TODO: check if annotation type is set!
+    
     # count for every device
     for deviceId in controllerConnections:
       
@@ -95,7 +97,7 @@ def countConnections(activeConnections, controllerConnections, annotationType, s
         # info("Is {} in {}?\n".format(connection, controllerConnections[deviceId]))
         
         if connection in controllerConnections[deviceId]:
-          info("It is. Removing {} from {}.\n".format(activeConnection[annotationType], switchCount[deviceId]))
+          # info("It is. Removing {} from {}.\n".format(activeConnection[annotationType], switchCount[deviceId]))
           switchCount[deviceId] -= int(activeConnection[annotationType])
     
   else:
@@ -159,6 +161,8 @@ def resetLinkAnnotations(linkUrl, annotationType, switchCapacityPath):
     f = open(switchCapacityPath, 'r')
     switchCapacityJson = json.load(f)
     f.close()
+    
+    # TODO: check if annotation type is set!
     
     # go through every link
     for linkId in linksJson:
