@@ -170,7 +170,7 @@ def startIperfClient(threadName, duration='10', clientCount='1', interval='2',
 # connect to both hosts and run iperf server and client on them
 # write the active connections to a file for network management
 def performanceTest(duration, clientCount, resultIperf, bandwidth,
-    iperfName, serverPort='5001'):
+    iperfName, serverPort='5001', addConstraints=False):
   
   try:
     
@@ -203,9 +203,10 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     addClientsToList(clientListPath=CLIENTLISTPATH, clientPortMap=clientPortMap,
         instanceName=iperfName)
     
-    info("+++ Adding constraints to intents\n")
-    # add constraints to intents
-    initialiseConstraints.initialiseConstraints(resultIperf, clientCount)
+    if addConstraints:
+      info("+++ Adding constraints to intents\n")
+      # add constraints to intents
+      initialiseConstraints.initialiseConstraints(resultIperf, clientCount)
     
     # wait until iperf client has finished measurement
     info("+++ Waiting for iperf client to finish\n")
@@ -232,7 +233,8 @@ if __name__ == '__main__':
   setLogLevel( 'info' )
   
   cmd='Usage:\n{} [-d <duration>] [-c <clientCount>] [-b <iperfBandwidthInKb>] \
-	[-p <iperfServerPort>] [-n <iperfInstanceName>] [-r <iperfResultPath>]'.format(sys.argv[0])
+	[-p <iperfServerPort>] [-n <iperfInstanceName>] [-r <iperfResultPath>] \
+  [-a]'.format(sys.argv[0])
   argv = sys.argv[1:]
   
   # check mandatory arguments
@@ -245,19 +247,21 @@ if __name__ == '__main__':
   # parsing commandline arguments
   ### TODO: Missing arguments: clientListPath, host1, host2?
   try:
-    opts, args = getopt.getopt(argv,"d:c:r:b:n:p:",
+    opts, args = getopt.getopt(argv,"d:c:r:b:n:p:a",
 		["duration=", "clientCount=", "resultIperf=", "bandwidth=", 
-    "iperfName=", "serverPort="])
+    "iperfName=", "serverPort=", "addConstraints"])
   except getopt.GetoptError:
     print cmd
     sys.exit(2)
   
-  durationArg = ''
-  clientCountArg = ''
-  resultIperfArg = ''
-  bandwidthArg = ''
-  iperfNameArg = ''
-  serverPortArg = ''
+  # setting default values
+  durationArg = '10'
+  clientCountArg = '1'
+  resultIperfArg = '/home/ubuntu/iperfResult.txt'
+  bandwidthArg = '200'
+  iperfNameArg = 'iperfInstance'
+  serverPortArg = '5001'
+  addConstraintsArg = False
 
   # set command line arguments
   for opt, arg in opts:
@@ -276,23 +280,12 @@ if __name__ == '__main__':
       iperfNameArg = arg
     elif opt in ("-p", "--serverPort"):
       serverPortArg = arg
-  
-  # setting default values if no other was defined
-  if durationArg=='':
-    durationArg='10'
-  if clientCountArg=='':
-    clientCountArg='1'
-  if resultIperfArg=='':
-    resultIperfArg='/home/ubuntu/iperfResult.txt'
-  if bandwidthArg=='':
-    bandwidthArg='200'
-  if iperfNameArg=='':
-    bandwidthArg='iperfInstance'
-  if serverPortArg=='':
-    serverPortArg='5001'
+    elif opt in ("-a", "--addConstraints"):
+      addConstraintsArg = True
 
   performanceTest(duration=durationArg, clientCount=clientCountArg,
       resultIperf=resultIperfArg, bandwidth=bandwidthArg,
-      iperfName=iperfNameArg, serverPort=serverPortArg)
+      iperfName=iperfNameArg, serverPort=serverPortArg,
+      addConstraints=addConstraintsArg)
 
 

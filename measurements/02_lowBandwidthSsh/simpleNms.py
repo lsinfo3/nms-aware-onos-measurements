@@ -87,7 +87,7 @@ def countConnections(activeConnections, controllerConnections, annotationType, s
       
       # define the start value
       switchCount[deviceId] = switchCapacityJson[deviceId][annotationType]
-      info("setting default switch count for switch {} to {}.\n".format(deviceId, switchCapacityJson[deviceId][annotationType]))
+      # info("setting default switch count for switch {} to {}.\n".format(deviceId, switchCapacityJson[deviceId][annotationType]))
       
       # go through every active connection
       for activeConnection in activeConnections:
