@@ -3,8 +3,8 @@
 from mininet.log import setLogLevel, info
 from pexpect import pxssh
 import threading, subprocess
-import os.path, json, sys, getopt
-import initialiseConstraints
+import os.path, json, sys, getopt, time
+
 
 CLIENTLISTPATH='/home/ubuntu/clientList.txt'
 hostname1 = '100.0.1.101'
@@ -116,7 +116,7 @@ def removeClientsFromList(clientListPath, instanceName):
 class myThread (threading.Thread):
   
   def __init__(self, threadID, name, duration, clientCount, resultIperf,
-		bandwidth):
+		bandwidth, serverPort):
     threading.Thread.__init__(self)
     self.threadID = threadID
     self.name = name
@@ -124,19 +124,20 @@ class myThread (threading.Thread):
     self.clientCount = clientCount
     self.resultIperf = resultIperf
     self.bandwidth = bandwidth
+    self.serverPort = serverPort
   
   def run(self):
     info("+++ Starting thread " + self.name + "\n")
     # run iperf ssh command here
     startIperfClient(threadName=self.name, duration=self.duration, 
         clientCount=self.clientCount, resultIperf=self.resultIperf,
-        bandwidth=self.bandwidth)
+        bandwidth=self.bandwidth, serverPort=self.serverPort)
     info("+++ Exiting thread " + self.name + "\n")
 
 
 # start an iperf client on host via ssh
 def startIperfClient(threadName, duration='10', clientCount='1', interval='2', 
-      resultIperf='$HOME/iperfResult.txt', bandwidth='200'):
+      resultIperf='$HOME/iperfResult.txt', bandwidth='200', serverPort='5001'):
   
   try:
     # log in to host1 via ssh
@@ -144,14 +145,20 @@ def startIperfClient(threadName, duration='10', clientCount='1', interval='2',
     h1.login(hostname1, username, password)
     
     # starting iperf client bandwidth measurement
-    info('+++ Start iperf client\n')
+    info('+++ Start iperf client:\nRuntime: {}\nServerPort: {}\n'.format(duration, serverPort))
     
     h1.sendline('iperf -c '+hostname2+' -u -b '+bandwidth+'k -P '
-		+clientCount+' -t '+duration+' -i '+interval+' | tee ' 
-		+resultIperf)
+		+clientCount+' -t '+duration+' -i '+interval+' -p '+serverPort
+    +' | tee '+resultIperf + ' &')
     h1.prompt()
     
-    info('+++ End iperf client\n')
+    try:
+        time.sleep(int(duration)+5)
+    except KeyboardInterrupt:
+      print('\n\nKeyboard exception received. Exiting.')
+      exit()
+    
+    info('+++ iperf client ended\n')
     
     h1.logout()
     
@@ -163,7 +170,7 @@ def startIperfClient(threadName, duration='10', clientCount='1', interval='2',
 # connect to both hosts and run iperf server and client on them
 # write the active connections to a file for network management
 def performanceTest(duration, clientCount, resultIperf, bandwidth,
-    iperfName):
+    iperfName, serverPort='5001'):
   
   try:
     
@@ -173,8 +180,10 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
 
     # start iperf server on host 2
     info("+++ Start iperf server\n")
-    h2.sendline('iperf -s -u -D')
+    h2.sendline('iperf -s -u -D -p '+serverPort)
     h2.prompt()
+    
+    h2.logout()
     
     # remove old iperf result files
     if os.path.isfile(resultIperf):
@@ -183,20 +192,16 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     
     # create iperf client measurement thread
     thread = myThread(1, "IperfClientMeasurementThread-1", duration,
-		clientCount, resultIperf, bandwidth)
+		clientCount, resultIperf, bandwidth, serverPort)
     # start thread
     thread.start()
     
     # read iperf output and append it to the client list
     clientPortMap = getIperfClients(resultIperf=resultIperf,
-      clientCount=clientCount, bandwidth=bandwidth+'000')
+      clientCount=clientCount, bandwidth=bandwidth)
     
     addClientsToList(clientListPath=CLIENTLISTPATH, clientPortMap=clientPortMap,
         instanceName=iperfName)
-    
-    info("+++ Adding constraints to intents\n")
-    # add constraints to intents
-    initialiseConstraints.initialiseConstraints(resultIperf, clientCount)
     
     # wait until iperf client has finished measurement
     info("+++ Waiting for iperf client to finish\n")
@@ -207,11 +212,12 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     removeClientsFromList(clientListPath=CLIENTLISTPATH, instanceName=iperfName)
     
     # kill the iperf server on host 2
-    info('+++ kill iperf server\n')
-    h2.sendline('sudo killall iperf')
-    h2.prompt()
+    # TODO: WARNING do not kill the iperf server! other clients lose connection!
+    # info('+++ kill iperf server\n')
+    # h2.sendline('sudo killall iperf')
+    # h2.prompt()
     
-    h2.logout()
+    # h2.logout()
 
   except pxssh.ExceptionPxssh, e:
     print "pxssh failed on login."
@@ -222,7 +228,7 @@ if __name__ == '__main__':
   setLogLevel( 'info' )
   
   cmd='Usage:\n{} [-d <duration>] [-c <clientCount>] [-b <iperfBandwidthInKb>] \
-	[-n <iperfInstanceName>] [-r <iperfResultPath>]'.format(sys.argv[0])
+	[-p <iperfServerPort>] [-n <iperfInstanceName>] [-r <iperfResultPath>]'.format(sys.argv[0])
   argv = sys.argv[1:]
   
   # check mandatory arguments
@@ -235,8 +241,9 @@ if __name__ == '__main__':
   # parsing commandline arguments
   ### TODO: Missing arguments: clientListPath, host1, host2?
   try:
-    opts, args = getopt.getopt(argv,"d:c:r:b:n:",
-		["duration=", "clientCount=", "resultIperf=", "bandwidth=", "iperfName="])
+    opts, args = getopt.getopt(argv,"d:c:r:b:n:p:",
+		["duration=", "clientCount=", "resultIperf=", "bandwidth=", 
+    "iperfName=", "serverPort="])
   except getopt.GetoptError:
     print cmd
     sys.exit(2)
@@ -246,6 +253,7 @@ if __name__ == '__main__':
   resultIperfArg = ''
   bandwidthArg = ''
   iperfNameArg = ''
+  serverPortArg = ''
 
   # set command line arguments
   for opt, arg in opts:
@@ -262,6 +270,8 @@ if __name__ == '__main__':
       bandwidthArg = arg
     elif opt in ("-n", "--iperfName"):
       iperfNameArg = arg
+    elif opt in ("-p", "--serverPort"):
+      serverPortArg = arg
   
   # setting default values if no other was defined
   if durationArg=='':
@@ -274,9 +284,11 @@ if __name__ == '__main__':
     bandwidthArg='200'
   if iperfNameArg=='':
     bandwidthArg='iperfInstance'
+  if serverPortArg=='':
+    serverPortArg='5001'
 
   performanceTest(duration=durationArg, clientCount=clientCountArg,
       resultIperf=resultIperfArg, bandwidth=bandwidthArg,
-      iperfName=iperfNameArg)
+      iperfName=iperfNameArg, serverPort=serverPortArg)
 
 
