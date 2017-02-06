@@ -1,2 +1,8 @@
 # ignore compiled python files
 *.pyc
+
+*.pdf
+*.png
+*.csv
+.Rhistory
+.idea/
