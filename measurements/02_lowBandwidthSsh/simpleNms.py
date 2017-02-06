@@ -97,7 +97,7 @@ def countConnections(activeConnections, controllerConnections, annotationType, s
         # info("Is {} in {}?\n".format(connection, controllerConnections[deviceId]))
         
         if connection in controllerConnections[deviceId]:
-          # info("It is. Removing {} from {}.\n".format(activeConnection[annotationType], switchCount[deviceId]))
+          #info("It is. Removing {} from {}.\n".format(activeConnection[annotationType], switchCount[deviceId]))
           switchCount[deviceId] -= int(activeConnection[annotationType])
     
   else:
@@ -201,6 +201,9 @@ def manage(interval):
     info("Updating config at {}.\n".format(int(startTime)))
     # get the active connections
     activeConnections = readConnectionInformation('/home/ubuntu/clientList.txt')
+    
+    #info("Active Connections:\n")
+    #printDict(activeConnections)
     
     # only update if there are active connections
     if activeConnections:

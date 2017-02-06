@@ -38,7 +38,7 @@ def waitForClientInformation(resultIperf, clientCount):
 
 # add the active clients in the resultIperf file to the clientListPath
 # file in JSON format
-def getIperfClients(resultIperf, clientCount, bandwidth):
+def getIperfClients(resultIperf, clientCount, bandwidth, serverPort):
   
   # wait until iperf created the client information in result file
   waitForClientInformation(resultIperf, clientCount)
@@ -58,7 +58,7 @@ def getIperfClients(resultIperf, clientCount, bandwidth):
     num = num[:-1]
     # source port Number of client
     port = words[5]
-    clientPortMap[num] = {"src": port, "dst": "5001", "bandwidth": bandwidth}
+    clientPortMap[num] = {"src": port, "dst": serverPort, "bandwidth": bandwidth}
 
   f.close()
   return clientPortMap
@@ -198,7 +198,8 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     
     # read iperf output and append it to the client list
     clientPortMap = getIperfClients(resultIperf=resultIperf,
-      clientCount=clientCount, bandwidth=bandwidth+'000')
+      clientCount=clientCount, bandwidth=bandwidth+'000',
+      serverPort=serverPort)
     
     addClientsToList(clientListPath=CLIENTLISTPATH, clientPortMap=clientPortMap,
         instanceName=iperfName)
