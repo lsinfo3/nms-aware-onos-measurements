@@ -12,7 +12,8 @@ args <- commandArgs(trailingOnly = TRUE)
 # default values
 # resolution of the time axis
 resolution <- 1
-fileName <- "nms_s2eth2.csv"
+fileName <- "nms_s2-eth2.csv"
+outFilePath <- "./out.png"
 
 if(length(args) >= 1){
 	resolution <- as.numeric(args[1])
@@ -21,7 +22,20 @@ if(length(args) >= 2){
   print(as.character(args[2]))
   fileName <- as.character(args[2])
 }
+if(length(args) >= 3){
+  outFilePath <- as.character(args[3])
+}
 rm(args)
+
+
+# column names
+TIME = "frame.time_relative"
+IPSRC = "ip.src"
+IPDST = "ip.dst"
+PROTO = "ip.proto"
+SRCPORT = "udp.srcport"
+DSTPORT = "udp.dstport"
+LENGTH = "frame.len"
 
 
 # function calculation the bandwidth of traffic data
@@ -31,7 +45,7 @@ getBandwidth <- function(time, traffic, resolution, base=1) {
 
 	for(value in 2:length(time)) {
 	  # length in Bit
-	  bandwidth[value] <- sum(traffic[traffic$Time > (time[value-1]) & traffic$Time <= time[value], "Length"]*8)/resolution
+	  bandwidth[value] <- sum(traffic[traffic[[TIME]] > (time[value-1]) & traffic[[TIME]] <= time[value], LENGTH]*8)/resolution
 	}
 
 	return(bandwidth/base)
@@ -41,16 +55,16 @@ getBandwidth <- function(time, traffic, resolution, base=1) {
 # get all captured traffic
 capture <- read.csv(fileName, header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
 # only the traffic from iperf host one to two
-iperfTraffic <- subset(capture, Source=="100.0.1.101" & Destination=="100.0.1.201")
+iperfTraffic <- capture[ capture[[IPSRC]] == "100.0.1.101" & capture[[IPDST]] == "100.0.1.201", ]
 
 # get all src/dst port pairs
 portList <- list()
 i <- 1
 # vector of unique destination ports
-uniqueDst <- unique(iperfTraffic[, "DstPort"])
+uniqueDst <- unique(iperfTraffic[, DSTPORT])
 for(dst in uniqueDst){
 	# vector of unique source ports to specific destination port
-	uniqueSrc <- unique(subset(iperfTraffic, DstPort==dst)[, "SrcPort"])
+	uniqueSrc <- unique(iperfTraffic[ iperfTraffic[[DSTPORT]] == dst, SRCPORT])
 	# add src/dst port pair to list
 	for(src in uniqueSrc){
 		portList[[i]] <- list("src"=src, "dst"=dst)
@@ -59,16 +73,16 @@ for(dst in uniqueDst){
 }
 
 # latest complete second in packet capture
-timeMax=floor(max(capture[,2]))
+timeMax=floor(max(capture[,TIME]))
 # time values to check
 time <- seq(0, timeMax, by=resolution)
 
 # calculate the bandwidths
-bandwidthData <- data.frame("time"=time, "allPorts"=getBandwidth(time, iperfTraffic, resolution, 1024))
+bandwidthData <- data.frame("time"=time, "bandwidthAll"=getBandwidth(time, iperfTraffic, resolution, 1024))
 # calculate bandwidth of each src/dst port pair
 i <- 1
 for(portPair in portList){
-	traffic <- subset(iperfTraffic, SrcPort==portPair[[1]] & DstPort==portPair[[2]])
+	traffic <- iperfTraffic[ iperfTraffic[[SRCPORT]]==portPair[[1]] & iperfTraffic[[DSTPORT]]==portPair[[2]], ]
 	# add results to data frame as new column
 	name = paste(portPair[[1]], ", ", portPair[[2]], sep="")
 	bandwidthData[[name]] <- getBandwidth(time, traffic, resolution, 1024)
@@ -91,9 +105,8 @@ a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, colour=tpPorts)) +
 # print(a)
 
 # save cdf_plot as pdf
-name <- "Bandwidth.png"
 width <- 5.9; height <- 3.5
 #width <- 2.9; height <- 2.0
 #plot <- plot + theme(plot.margin = grid::unit(c(0,0,0,0), "mm"))
-ggsave(name, plot = a, width = width, height = height)
+ggsave(outFilePath, plot = a, width = width, height = height)
 
