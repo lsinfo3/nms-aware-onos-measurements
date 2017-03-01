@@ -2,9 +2,11 @@
 
 from mininet.log import setLogLevel, info
 from pexpect import pxssh
+import getIperfClients
 import threading, subprocess
 import os.path, json, sys, getopt, time
 import initialiseConstraints
+
 
 CLIENTLISTPATH='/home/ubuntu/clientList.txt'
 hostname1 = '100.0.1.101'
@@ -13,56 +15,6 @@ username = 'ubuntu'
 password = '4fa3fe78fc88f8b5c19e50c0'
 
 
-# return the line count of a file
-def file_len(fname):
-    p = subprocess.Popen(['wc', '-l', fname], stdout=subprocess.PIPE, 
-                                              stderr=subprocess.PIPE)
-    result, err = p.communicate()
-    if p.returncode != 0:
-        raise IOError(err)
-    return int(result.strip().split()[0])
-
-
-# wait until iperf created the file containing the client information
-def waitForClientInformation(resultIperf, clientCount):
-  # wait until file contains client information
-  lines = 0
-  while lines < (5 + int(clientCount)):
-    
-    if os.path.isfile(resultIperf): 
-      try:
-        lines = file_len(resultIperf)
-      except IOError, e:
-        print 'IOError:\n{}Trying again.'.format(e)
-
-
-# add the active clients in the resultIperf file to the clientListPath
-# file in JSON format
-def getIperfClients(resultIperf, clientCount, bandwidth, serverPort):
-  
-  # wait until iperf created the client information in result file
-  waitForClientInformation(resultIperf, clientCount)
-  
-  f = open(resultIperf, 'r')
-  
-  # skip first 5 lines
-  for i in range(5):
-    f.readline()
-
-  clientPortMap = {}
-  # read number of clientCount lines
-  for line in range(int(clientCount)):
-    words = f.readline().split()
-    # client Number
-    num = words[1]
-    num = num[:-1]
-    # source port Number of client
-    port = words[5]
-    clientPortMap[num] = {"src": port, "dst": serverPort, "bandwidth": bandwidth}
-
-  f.close()
-  return clientPortMap
-  
 def addClientsToList(clientListPath, clientPortMap, instanceName):
   
   # write client information to file
@@ -197,7 +149,7 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     thread.start()
     
     # read iperf output and append it to the client list
-    clientPortMap = getIperfClients(resultIperf=resultIperf,
+    clientPortMap = getIperfClients.getIperfClients(resultIperf=resultIperf,
       clientCount=clientCount, bandwidth=bandwidth+'000',
       serverPort=serverPort)
     
@@ -207,7 +159,7 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     if addConstraints:
       info("+++ Adding constraints to intents\n")
       # add constraints to intents
-      initialiseConstraints.initialiseConstraints(resultIperf, clientCount)
+      initialiseConstraints.initialiseConstraints(clientPortMap=clientPortMap)
     
     # wait until iperf client has finished measurement
     info("+++ Waiting for iperf client to finish\n")
