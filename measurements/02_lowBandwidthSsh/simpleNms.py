@@ -111,12 +111,17 @@ def countConnections(activeConnections, controllerConnections, annotationType, s
         connection = {'src': int(activeConnection['src']), 'dst': int(activeConnection['dst'])}
         if connection in controllerConnections[deviceId]:
           switchCount[deviceId] += int(activeConnection[annotationType])
+
+  # do not allow negative values
+  for deviceId in switchCount:
+    if switchCount[deviceId] < 0:
+      switchCount[deviceId] = 0
   
   return switchCount
 
 
 # update link annotations of controller
-def updateLinkAnnotations(linkUrl, switchCount, annotationType):
+def updateLinkAnnotations(linkUrl, switchCount, annotationType, alwaysUpdate=False):
   
   # TODO: use 'onos/v1/links' instead!
   # get the links from the controller
@@ -133,7 +138,7 @@ def updateLinkAnnotations(linkUrl, switchCount, annotationType):
         linkConfig = linksJson[linkId]
         # info("+++ link {} is connected to switch {}\n".format(linkId, switchId))
         # only update if the config has changed
-        if linkConfig['basic'][annotationType] != switchCount[switchId]:
+        if (linkConfig['basic'][annotationType] != switchCount[switchId]) | alwaysUpdate:
           # info("+++ config has changed\n")
           # update the bandwidth
           linkConfig['basic'][annotationType] = switchCount[switchId]
@@ -221,7 +226,7 @@ def manage(interval):
       printDict(switchCount)
       
       # update the annotations of the controller
-      updateLinkAnnotations(LINKURL, switchCount, annotationType='bandwidth')
+      updateLinkAnnotations(LINKURL, switchCount, annotationType='bandwidth', alwaysUpdate=True)
       
     # no connections -> set link annotation to default value
     else:
