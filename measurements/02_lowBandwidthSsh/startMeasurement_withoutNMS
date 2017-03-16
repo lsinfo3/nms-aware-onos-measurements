@@ -50,3 +50,29 @@ sleep 10
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 'sudo killall iperf'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
 # kill tcpdump in vagrant vm
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
+
+
+# mv capture files to new folder
+leftVmFolder="$HOME/Masterthesis/vm/leftVm"
+folderName="$leftVmFolder/captures/no_nms_$(date +%F_%H-%M-%S)"
+mkdir $folderName
+mv $leftVmFolder/captures/*.cap $folderName
+
+# generate folder and compute graphs for each cap file
+for f in $folderName/*.cap
+do
+	# echo "File: $f"
+	fileBaseName=$(basename "$f")
+	# echo "FileBaseName: $fileBaseName"
+	fileName="${fileBaseName%.*}"
+	# echo "FileName: $fileName"
+	fileFolderName="$folderName/$fileName"
+	
+	mkdir $fileFolderName
+	mv $f $fileFolderName
+	
+	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" -o "$fileFolderName/${fileName}-combined.png" -i "$fileFolderName/$fileBaseName"
+	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_manyPlot/bandwidth_allClients_manyPlot.r" -o "$fileFolderName/${fileName}_separate.png" -i "$fileFolderName/$fileBaseName"
+done
+
+unset leftVmFolder folderName fileBaseName fileName fileFolderName
