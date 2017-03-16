@@ -81,34 +81,41 @@ def addConstraint(appId, intentKey, newConstraint):
   put(INTENTURL, json.dumps(intentDict))
 
 
+def getIntentKeys(clientPortMap):
+  
+  # get all installed intents in ONOS as json
+  response = get(INTENTURL)
+  # print("All Intents:" + str(response.json()) + "\n")
+
+  # gather the intent keys of the iperf clients
+  return findIperfIntents(response.json(), clientPortMap)
+  # print("Iperf Intent Key Map" + str(iperfIntentKeyMap) + "\n")
+
+
 def initialiseConstraints(clientPortMap):
   
   # info("+++ Client Port Map:\n")
   # print(str(clientPortMap) + "\n")
   
   # map of the corresponding iperf intents of onos
-  iperfIntentKeyMap = {}
-  # run loop until all intents are provisioned
+  iperfIntentKeyMap = getIntentKeys(clientPortMap)
+  # run loop until all intents are provisioned in onos
   while len(iperfIntentKeyMap) < len(clientPortMap):
-    
-    # get all installed intents in ONOS as json
-    response = get(INTENTURL)
-    # print("All Intents:" + str(response.json()) + "\n")
-    
-    # gather the intent keys of the iperf clients
-    iperfIntentKeyMap = findIperfIntents(response.json(), clientPortMap)
-    # print("Iperf Intent Key Map" + str(iperfIntentKeyMap) + "\n")
+    info("+++ Missing iperf intents in ONOS, trying again.\n" + 
+        "\tOnly found: " + str(iperfIntentKeyMap.keys()) + "\n")
+    iperfIntentKeyMap = getIntentKeys(clientPortMap)
     try:
         time.sleep(1)
     except KeyboardInterrupt:
       print('\n\nKeyboard exception received. Exiting.')
       exit()
+
+  # update constraint to add
+  advConstraint = json.loads(ADVCONST)
+  advConstraint["threshold"] = clientPortMap.values()[1]['bandwidth']
   
   # info("+++ iperf intents updated:\n")
   # add desired constraint to the intents
-  bandwidth=clientPortMap.values()[1]['bandwidth']
-  advConstraint = json.loads(ADVCONST)
-  advConstraint["threshold"] = bandwidth
   for intentKey, appId in iperfIntentKeyMap.items():
     # info("Intent: " + str(intentKey) + ", Constraint: " + str(advConstraint) + "\n")
     addConstraint(appId, intentKey, advConstraint)
