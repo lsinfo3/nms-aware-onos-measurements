@@ -18,8 +18,8 @@ computeBandwidth <- function(csvFileName, bandwidthTimeResolution) {
   
   # get all captured traffic
   capture <- read.csv(csvFileName, header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
-  # use only the traffic from iperf host one to two
-  iperfTraffic <- capture[ capture[[IPSRC]] == "100.0.1.101" & capture[[IPDST]] == "100.0.1.201", ]
+  # use only udp traffic from iperf host one to two
+  iperfTraffic <- capture[ capture[[PROTO]] == "17" & capture[[IPSRC]] == "100.0.1.101" & capture[[IPDST]] == "100.0.1.201", ]
   
   # get all src/dst port pairs
   portList <- getUniquePorts(iperfTraffic, DSTPORT, SRCPORT)

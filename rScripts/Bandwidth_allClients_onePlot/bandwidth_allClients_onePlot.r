@@ -16,7 +16,7 @@ args <- commandArgs(trailingOnly = TRUE)
 # default values
 # resolution of the time axis
 resolution <- 1
-fileName <- "nms_s2-eth2.csv"
+fileName <- "standard_s2-eth2.csv"
 outFilePath <- "./out.png"
 
 if(length(args) >= 1){
@@ -48,7 +48,7 @@ a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, colour=tpPorts)) +
   scale_color_manual(values=lineColor, name = "TP-Ports (src, dst)") +
   xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
   ggtitle(basename(outFilePath))
-# print(a)
+#print(a)
 
 # save cdf_plot as pdf
 #width <- 5.9; height <- 3.5

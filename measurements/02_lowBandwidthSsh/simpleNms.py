@@ -137,12 +137,12 @@ def updateLinkAnnotations(linkUrl, switchCount, annotationType, alwaysUpdate=Fal
         # get the link config
         linkConfig = linksJson[linkId]
         # info("+++ link {} is connected to switch {}\n".format(linkId, switchId))
-        # only update if the config has changed
+        # only update if the config has changed or alwaysUpdate flag ist true
         if (linkConfig['basic'][annotationType] != switchCount[switchId]) | alwaysUpdate:
           # info("+++ config has changed\n")
           # update the bandwidth
           linkConfig['basic'][annotationType] = switchCount[switchId]
-          # save new config
+          # store new  link config
           newLinks[linkId] = linkConfig
         else:
           # info("+++ config has NOT changed\n")
@@ -239,7 +239,7 @@ def manage(interval):
     timeDiff = endTime - startTime
     info("Updated config. Took {} seconds.\n\n".format(timeDiff))
     if timeDiff > interval:
-      info("Warning: Updated process takes longer than the repetition interval")
+      info("Warning: Update process takes longer than the repetition interval")
     else:
       try:
         time.sleep(interval - timeDiff)

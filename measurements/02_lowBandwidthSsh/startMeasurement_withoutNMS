@@ -23,7 +23,7 @@ while getopts "d:h" opt; do
   esac
 done
 
-NAME="rand"
+NAME="standard"
 # monitor traffic with tcpdump to file
 # output of switch 2 (first data stream)
 # gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s2-eth1 -Z ubuntu -w "$NAME"_s2-eth1.cap'\""
@@ -38,23 +38,23 @@ gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'c
 
 sleep 5
 # start iperf bandwidth test
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt'\""
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 200 -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt'\""
 sleep 40
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5002 -n iperf2 -r /home/ubuntu/iperfResult2.txt'\""
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 200 -p 5002 -n iperf2 -r /home/ubuntu/iperfResult2.txt'\""
 sleep 40
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5003 -n iperf3 -r /home/ubuntu/iperfResult3.txt'\""
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 200 -p 5003 -n iperf3 -r /home/ubuntu/iperfResult3.txt'\""
 
 sleep $DURATION
 sleep 10
 # kill iperf server on mininet vm in vagrant vm
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 'sudo killall iperf'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 'sudo killall iperf3'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
 # kill tcpdump in vagrant vm
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
 
 
 # mv capture files to new folder
 leftVmFolder="$HOME/Masterthesis/vm/leftVm"
-folderName="$leftVmFolder/captures/no_nms_$(date +%F_%H-%M-%S)"
+folderName="$leftVmFolder/captures/${NAME}_$(date +%F_%H-%M-%S)"
 mkdir $folderName
 mv $leftVmFolder/captures/*.cap $folderName
 

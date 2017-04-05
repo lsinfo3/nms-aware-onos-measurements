@@ -5,9 +5,9 @@ Read iperf output and return iperf clients in a map with additional
 information
 """
 
-import subprocess
-import os.path
+import os.path, subprocess, time
 
+SKIPLINES=1
 
 # return the line count of a file
 def file_len(fname):
@@ -23,13 +23,23 @@ def file_len(fname):
 def waitForClientInformation(resultIperf, clientCount):
   # wait until file contains client information
   lines = 0
-  while lines < (5 + int(clientCount)):
-    
-    if os.path.isfile(resultIperf): 
-      try:
-        lines = file_len(resultIperf)
-      except IOError, e:
-        print 'IOError:\n{}Trying again.'.format(e)
+  try:
+    while lines < (SKIPLINES + int(clientCount)):
+      if os.path.isfile(resultIperf): 
+        try:
+          lines = file_len(resultIperf)
+        except IOError, e:
+          print 'IOError:\n{}Trying again.'.format(e)
+        if lines < (SKIPLINES + int(clientCount)):
+          time.sleep(1)
+      else:
+        print 'No iPerf result file {} found!'.format(resultIperf)
+        time.sleep(1)
+  except KeyboardInterrupt:
+    print('\n\nKeyboard exception received. Exiting.')
+    exit()
+  
+  print('iPerf result contains client information')
 
 
 # add the active clients in the resultIperf file to the clientListPath
@@ -42,7 +52,7 @@ def getIperfClients(resultIperf, clientCount, bandwidth, serverPort):
   f = open(resultIperf, 'r')
   
   # skip first 5 lines
-  for i in range(5):
+  for i in range(SKIPLINES):
     f.readline()
 
   clientPortMap = {}

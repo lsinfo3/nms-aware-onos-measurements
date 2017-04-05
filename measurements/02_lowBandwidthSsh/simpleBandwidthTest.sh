@@ -24,11 +24,12 @@ while getopts "d:h" opt; do
 done
 
 # start network management system
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10; exec bash'\""
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10; exec bash'\""
 
-sleep 5
+#sleep 5
 # start iperf bandwidth test
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 400 -p 5001 -n iperf1 -a -r /home/ubuntu/iperfResult1.txt'\""
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 400 -p 5001 -n iperf1 -a -r /home/ubuntu/iperfResult1.txt; exec bash'\""
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 400 -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt; exec bash'\""
 
 killIperf()
 {
