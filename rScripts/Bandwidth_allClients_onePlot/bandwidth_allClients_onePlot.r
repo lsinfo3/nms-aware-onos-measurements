@@ -16,7 +16,7 @@ args <- commandArgs(trailingOnly = TRUE)
 # default values
 # resolution of the time axis
 resolution <- 1
-fileName <- "standard_s2-eth2.csv"
+fileName <- "temp.csv"
 outFilePath <- "./out.png"
 
 if(length(args) >= 1){
@@ -34,20 +34,20 @@ rm(args)
 
 # compute the bandwidth data
 bandwidthData <- computeBandwidth(fileName, resolution)
-
+bandwidthData <- bandwidthData[,c("time","bandwidthAll")]
 # melt the results together
-bandwidthData <- melt(bandwidthData, id="time", variable.name="tpPorts", value.name = "bandwidth")
+#bandwidthData2 <- melt(bandwidthData, id="time", variable.name="tpPorts", value.name = "bandwidth")
 
-lineColor <- c("black", colorRampPalette(c("blue", "red"))(length(unique(bandwidthData[, "tpPorts"]))))
+#lineColor <- c("black", colorRampPalette(c("blue", "red"))(length(unique(bandwidthData[, "tpPorts"]))))
 
 # print the whole thing
-a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, colour=tpPorts)) +
+a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll)) +
   geom_line(size=0.2) +
 # scale_color_gradient(low="coral", high="steelblue", name = "TP-Ports (src, dst)") +
 # scale_color_brewer(palette="Dark2") +
-  scale_color_manual(values=lineColor, name = "TP-Ports (src, dst)") +
-  xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
-  ggtitle(basename(outFilePath))
+# scale_color_manual(values=lineColor, name = "TP-Ports (src, dst)") +
+  xlab("Time (s)") + ylab("Bandwidth (kBit/s)")
+# ggtitle(basename(outFilePath))
 #print(a)
 
 # save cdf_plot as pdf

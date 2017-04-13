@@ -43,17 +43,23 @@ bandwidthData <- melt(bandwidthData, id="time", variable.name="tpPorts", value.n
 
 # add factor for variable order
 bandwidthData$tpPorts <- factor(bandwidthData$tpPorts, levels=sort(levels(bandwidthData$tpPorts)))
+bandwidthData[["src"]] <- strsplit(as.character(bandwidthData[["tpPorts"]]), ", ")
+bandwidthData[["src"]] <- sapply(bandwidthData[["src"]], function (x) x[2])
+bandwidthData[["dst"]] <- strsplit(as.character(bandwidthData[["tpPorts"]]), ", ")
+bandwidthData[["dst"]] <- sapply(bandwidthData[["dst"]], function (x) x[1])
 
 lineColor <- colorRampPalette(c("blue", "red"))(length(unique(bandwidthData[, "tpPorts"])))
+fillColor <- colorRampPalette(c("lightblue4", "lightcoral"))(length(unique(bandwidthData[, "tpPorts"])))
 
 # print the whole thing
-a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, colour=tpPorts, facets=tpPorts)) +
-  geom_line() +
-  facet_grid(tpPorts ~ .) +
+a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=tpPorts, fill=tpPorts, facets=tpPorts)) +
+  geom_area() +
+  facet_wrap(~ tpPorts, ncol=3) +
 #  scale_color_discrete(name = "TP-Ports (src, dst)") +
   scale_color_manual(values=lineColor, name = "TP-Ports (src, dst)") +
-  xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
-  ggtitle(basename(outFilePath))
+  scale_fill_manual(values=fillColor, name="TP-Ports (src, dst)") +
+  xlab("Time (s)") + ylab("Bandwidth (kBit/s)")
+#  ggtitle(basename(outFilePath))
 
 # save plot as png
 #width <- 5.9; height <- 3.5
