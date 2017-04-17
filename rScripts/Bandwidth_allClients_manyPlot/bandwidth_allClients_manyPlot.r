@@ -17,7 +17,7 @@ args <- commandArgs(trailingOnly = TRUE)
 # resolution of the time axis
 resolution <- 1
 fileName <- "./temp.csv"
-outFilePath <- "./out.png"
+outFilePath <- "./out"
 
 if(length(args) >= 1){
   resolution <- as.numeric(args[1])
@@ -43,6 +43,8 @@ bandwidthData <- melt(bandwidthData, id="time", variable.name="tpPorts", value.n
 
 # add factor for variable order
 bandwidthData$tpPorts <- factor(bandwidthData$tpPorts, levels=sort(levels(bandwidthData$tpPorts)))
+
+# get extra source and destination port columns
 bandwidthData[["src"]] <- strsplit(as.character(bandwidthData[["tpPorts"]]), ", ")
 bandwidthData[["src"]] <- sapply(bandwidthData[["src"]], function (x) x[2])
 bandwidthData[["dst"]] <- strsplit(as.character(bandwidthData[["tpPorts"]]), ", ")
@@ -51,18 +53,29 @@ bandwidthData[["dst"]] <- sapply(bandwidthData[["dst"]], function (x) x[1])
 lineColor <- colorRampPalette(c("blue", "red"))(length(unique(bandwidthData[, "tpPorts"])))
 fillColor <- colorRampPalette(c("lightblue4", "lightcoral"))(length(unique(bandwidthData[, "tpPorts"])))
 
-# print the whole thing
-a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=tpPorts, fill=tpPorts, facets=tpPorts)) +
-  geom_area() +
-  facet_wrap(~ tpPorts, ncol=3) +
-#  scale_color_discrete(name = "TP-Ports (src, dst)") +
-  scale_color_manual(values=lineColor, name = "TP-Ports (src, dst)") +
-  scale_fill_manual(values=fillColor, name="TP-Ports (src, dst)") +
-  xlab("Time (s)") + ylab("Bandwidth (kBit/s)")
-#  ggtitle(basename(outFilePath))
-
-# save plot as png
-#width <- 5.9; height <- 3.5
-width <- 14; height <- 10
-#width <- 2.9; height <- 2.0
-ggsave(outFilePath, plot = a, width = width, height = height)
+for(destinationPort in unique(bandwidthData[, "dst"])) {
+  
+  # print the whole thing
+  figure <- ggplot(data=bandwidthData[bandwidthData$dst==destinationPort,],
+                   aes(x=time, y=bandwidth, color=tpPorts, fill=tpPorts)) +
+    geom_area(size=0.3) +
+    facet_grid(dst + src ~ ., labeller=labeller(src = function(x) {paste("src=", x, sep="")}, dst = function(x) {paste("dst=", x, sep="")})) +
+  #  scale_color_discrete(name = "TP-Ports (src, dst)") +
+    scale_color_manual(values=lineColor, name = "TP-Ports (src, dst)") +
+  #  scale_color_gradient(low="blue", high="red") +
+    scale_fill_manual(values=fillColor, name="TP-Ports (src, dst)") +
+    xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
+    theme(legend.position = "none")
+  #  ggtitle(basename(outFilePath))
+  
+  # save plot as png
+  #width <- 7.9; height <- 3.5
+  #width <- 2.9; height <- 2.0
+  width <- 5.9; height <- 2.0 * length(unique(bandwidthData[bandwidthData[["dst"]]==destinationPort, "src"]))
+  ggsave(paste(outFilePath, as.character(destinationPort), ".png", sep=""), plot = figure, width = width, height = height)
+  
+  # update color values to use for next figure
+  srcNum <- length(unique(bandwidthData[bandwidthData[["dst"]]==destinationPort, "src"]))
+  lineColor <- tail(lineColor, -srcNum)
+  fillColor <- tail(fillColor, -srcNum)
+}
