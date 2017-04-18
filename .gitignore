@@ -4,5 +4,7 @@
 *.pdf
 *.png
 *.csv
+*.cap
+./rScripts/test_files/
 .Rhistory
 .idea/
