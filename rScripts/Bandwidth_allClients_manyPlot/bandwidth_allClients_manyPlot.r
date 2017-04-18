@@ -53,7 +53,7 @@ bandwidthData2 <- melt(bandwidthData2, id="time", variable.name="tpPorts", value
 bandwidthData1$tpPorts <- factor(bandwidthData1$tpPorts, levels=sort(levels(bandwidthData1$tpPorts)))
 bandwidthData2$tpPorts <- factor(bandwidthData2$tpPorts, levels=sort(levels(bandwidthData2$tpPorts)))
 
-# get extra source and destination port columns
+# extract source and destination port as columns
 bandwidthData1[["src"]] <- strsplit(as.character(bandwidthData1[["tpPorts"]]), ", ")
 bandwidthData1[["src"]] <- sapply(bandwidthData1[["src"]], function (x) x[2])
 bandwidthData1[["dst"]] <- strsplit(as.character(bandwidthData1[["tpPorts"]]), ", ")
@@ -72,7 +72,7 @@ bandwidthData <- rbind(bandwidthData1, bandwidthData2)
 timeMin <- min(bandwidthData[["time"]])
 bandwidthData[["time"]] <- sapply(bandwidthData[["time"]], function (x) {x-timeMin})
 
-# unify source port
+# simplify source port number
 sourcePorts <- unique(bandwidthData[, "src"])
 i=1
 for(src in sourcePorts) {
@@ -89,28 +89,16 @@ for(destinationPort in unique(bandwidthData[, "dst"])) {
   figure <- ggplot(data=bandwidthData[bandwidthData$dst==destinationPort,],
                    aes(x=time, y=bandwidth, color=Switch, linetype=Switch)) +
     geom_line() +
-  #  facet_grid(dst + src ~ ., labeller=labeller(src = function(x) {paste("src:", x, sep="")}, dst = function(x) {paste("dst:", x, sep="")})) +
     facet_grid(src ~ ., labeller=labeller(src = function(x) {paste("src:", x, sep="")})) +
-  #  scale_color_discrete(name = "TP-Ports (src, dst)") +
-  #  scale_color_manual(values=lineColor, name = "TP-Ports (src, dst)") +
-  #  scale_color_gradient(low="blue", high="red") +
-  #  scale_fill_manual(values=fillColor, name="TP-Ports (src, dst)") +
     scale_color_manual(values=c("blue", "red")) +
     scale_linetype_manual(values=c("solid","42")) +
     scale_y_continuous(breaks=c(0,100,200)) +
     xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
     theme_bw() +
-    theme(legend.position = "bottom" , text = element_text(family="Helvetica", size=12))
-  #  ggtitle(basename(outFilePath))
+    theme(legend.position = "bottom" , text = element_text(size=12))
   
   # save plot as png
-  #width <- 7.9; height <- 3.5
-  #width <- 2.9; height <- 2.0
   width <- 7.4; height <- 1.0 + 1.8 * length(unique(bandwidthData[bandwidthData[["dst"]]==destinationPort, "src"]))
   ggsave(paste(outFilePath, as.character(destinationPort), ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
   
-  # update color values to use for next figure
-  #srcNum <- length(unique(bandwidthData[bandwidthData[["dst"]]==destinationPort, "src"]))
-  #lineColor <- tail(lineColor, -srcNum)
-  #fillColor <- tail(fillColor, -srcNum)
 }
