@@ -40,8 +40,9 @@ if [ -z "$capFilePath" ]
   else
     # convert cap to csv file
     tshark -T fields -n -r $capFilePath -E separator=, -E header=y \
-	  -E quote=d -e frame.time_relative -e ip.src -e ip.dst -e ip.proto \
-	  -e udp.srcport -e udp.dstport -e frame.len > ./temp.csv
+	  -E quote=d -e frame.time_relative -e frame.time_epoch -e ip.src \
+	  -e ip.dst -e ip.proto -e udp.srcport -e udp.dstport \
+	  -e frame.len > ./temp.csv
 
     # create graph from csv file
     $rFilePath 1 ./temp.csv $outFilePath
