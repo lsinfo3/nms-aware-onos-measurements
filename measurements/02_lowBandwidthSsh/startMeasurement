@@ -60,10 +60,10 @@ gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/
 
 sleep $DURATION
 sleep 10
-# kill iperf server on mininet vm in vagrant vm
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 'sudo killall iperf3'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
 # kill tcpdump in vagrant vm
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
+# kill iperf server on mininet vm in vagrant vm
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 'sudo killall iperf3'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
 # kill nms?
 
 # copy iperf output to measurement folder
