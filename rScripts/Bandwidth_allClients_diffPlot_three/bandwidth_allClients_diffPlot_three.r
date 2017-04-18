@@ -71,15 +71,20 @@ bandwidthData <- rbind(bandwidthData1, bandwidthData2)
 # set measurement start time to zero
 timeMin <- min(bandwidthData[["time"]])
 bandwidthData[["time"]] <- sapply(bandwidthData[["time"]], function (x) {x-timeMin})
+rm(timeMin)
 
 # simplify source port number
-sourcePorts <- unique(bandwidthData[, "src"])
-i=1
-for(src in sourcePorts) {
-  bandwidthData[bandwidthData[["src"]]==src, "src"] <- sapply(bandwidthData[bandwidthData[["src"]]==src, "src"], function (x) {as.character(i)})
-  i <- i+1
+i <- 1
+destinationPorts <- unique(bandwidthData[, "dst"])
+for(dst in sort(as.integer(destinationPorts))) {
+  sourcePorts <- unique(bandwidthData[bandwidthData[["dst"]]==dst, "src"])
+  for(src in sourcePorts) {
+    bandwidthData[bandwidthData[["dst"]]==dst & bandwidthData[["src"]]==src, "src"] <- sapply(bandwidthData[bandwidthData[["dst"]]==dst & bandwidthData[["src"]]==src, "src"], function (x) {as.character(i)})
+    i <- i+1
+  }
 }
-rm(i)
+rm(i, src, dst, destinationPorts, sourcePorts)
+
 # define factor order
 bandwidthData$src <- factor(bandwidthData$src, levels=sort(as.integer(unique(bandwidthData$src))))
 
@@ -102,3 +107,4 @@ for(destinationPort in unique(bandwidthData[, "dst"])) {
   ggsave(paste(outFilePath, as.character(destinationPort), ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
   
 }
+rm(destinationPort)
