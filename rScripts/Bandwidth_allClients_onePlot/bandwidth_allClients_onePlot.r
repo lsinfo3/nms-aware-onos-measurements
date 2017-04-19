@@ -20,14 +20,11 @@ fileName <- "temp.csv"
 outFilePath <- "./out.pdf"
 
 if(length(args) >= 1){
-	resolution <- as.numeric(args[1])
+  print(as.character(args[1]))
+  fileName <- as.character(args[1])
 }
 if(length(args) >= 2){
-  print(as.character(args[2]))
-  fileName <- as.character(args[2])
-}
-if(length(args) >= 3){
-  outFilePath <- as.character(args[3])
+  outFilePath <- as.character(args[2])
 }
 rm(args)
 
@@ -42,7 +39,7 @@ bandwidthData[["time"]] <- sapply(bandwidthData[["time"]], function (x) {x-timeM
 
 # print the whole thing
 a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll)) +
-  geom_line() +
+  geom_line(color="blue") +
   xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
   theme_bw() +
   theme(text = element_text(size=12))

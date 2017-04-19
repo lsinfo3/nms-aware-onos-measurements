@@ -3,14 +3,19 @@
 # default values
 outFilePath="./out.png"
 rFilePath="./bandwidth_allClients_onePlot.r"
-capFilePath=""
+capFilePath1=""
+capFilePath2=""
 
 while getopts "hi:o:r:" opt; do
   case $opt in
-    i)
-      echo "Input cap filepath: $OPTARG" >&2
-      capFilePath=$OPTARG
+    a)
+      echo "Input cap filepath one: $OPTARG" >&2
+      capFilePath1=$OPTARG
       ;;
+    b)
+      echo "Input cap filepath two: $OPTARG" >&2
+      capFilePath2=$OPTARG
+      ;;  
     o)
       echo "Output png filepath: $OPTARG" >&2
       outFilePath=$OPTARG
@@ -20,7 +25,7 @@ while getopts "hi:o:r:" opt; do
       rFilePath=$OPTARG
       ;;
     h)
-      echo -e "Usage:\ncreatePlot.sh [-r R_SCRIPT_FILE] [-o OUTPUT_FILE] -i CAPTURE_FILE"
+      echo -e "Usage:\ncreatePlot.sh -a CAPTURE_FILE1 [-b CAPTURE_FILE2] -r R_SCRIPT_FILE [-o OUTPUT_FILE]"
       exit 1
       ;;
     \?)
@@ -34,19 +39,37 @@ while getopts "hi:o:r:" opt; do
   esac
 done
 
-if [ -z "$capFilePath" ]
+if [ -z "$capFilePath1" ] || [ -z "$rFilePath"]
   then
-    echo "No cap file defined! Exiting." >&2
+    echo "No cap file or r script file path defined! Exiting." >&2
+    exit 1
   else
-    # convert cap to csv file
-    tshark -T fields -n -r $capFilePath -E separator=, -E header=y \
+    # convert first cap to csv file
+    tshark -T fields -n -r $capFilePath1 -E separator=, -E header=y \
 	  -E quote=d -e frame.time_relative -e frame.time_epoch -e ip.src \
 	  -e ip.dst -e ip.proto -e udp.srcport -e udp.dstport \
-	  -e frame.len > ./temp.csv
+	  -e frame.len > ./temp1.csv
 
-    # create graph from csv file
-    $rFilePath 1 ./temp.csv $outFilePath
+    if [ -z "$capFilePath2"]
+	  then
+	    # if no further cap file is defined execute script
+        # create graph from csv file
+        $rFilePath ./temp1.csv $outFilePath
 
-    # remove csv file
-    rm ./temp.csv
+      else
+        # convert second cap to csv file
+        tshark -T fields -n -r $capFilePath2 -E separator=, -E header=y \
+	      -E quote=d -e frame.time_relative -e frame.time_epoch -e ip.src \
+	      -e ip.dst -e ip.proto -e udp.srcport -e udp.dstport \
+	      -e frame.len > ./temp2.csv
+	    
+	    $rFilePath ./temp1.csv ./temp2.csv $outFilePath
+	    
+	    # remove csv file2
+        rm ./temp2.csv
+    fi
+    
+    # remove csv file1
+    rm ./temp1.csv
+
 fi
