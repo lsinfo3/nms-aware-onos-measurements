@@ -92,8 +92,9 @@ do
 	mkdir $fileFolderName
 	mv $f $fileFolderName
 	
-	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" -o "$fileFolderName/${fileName}-combined.png" -i "$fileFolderName/$fileBaseName"
-	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_manyPlot/bandwidth_allClients_manyPlot.r" -o "$fileFolderName/${fileName}_separate.png" -i "$fileFolderName/$fileBaseName"
+	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" -o "$fileFolderName/${fileName}-combined" -i "$fileFolderName/$fileBaseName"
+	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" -o "$fileFolderName/${fileName}_separate_one" -i "$fileFolderName/$fileBaseName"
+	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" -o "$fileFolderName/${fileName}_separate_three" -i "$fileFolderName/$fileBaseName"
 done
 
 # move iperf result to the new folder

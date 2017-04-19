@@ -17,7 +17,7 @@ args <- commandArgs(trailingOnly = TRUE)
 # resolution of the time axis
 resolution <- 1
 fileName <- "temp.csv"
-outFilePath <- "./out.pdf"
+outFilePath <- "./out"
 
 if(length(args) >= 1){
   outFilePath <- as.character(args[1])
@@ -38,7 +38,7 @@ timeMin <- min(bandwidthData[["time"]])
 bandwidthData[["time"]] <- sapply(bandwidthData[["time"]], function (x) {x-timeMin})
 
 # print the whole thing
-a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll)) +
+figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll)) +
   geom_line(color="blue") +
   xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
   theme_bw() +
@@ -46,4 +46,4 @@ a <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll)) +
 
 # save cdf_plot as pdf
 width <- 15.0; height <- 7.0
-ggsave(outFilePath, plot = a, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
