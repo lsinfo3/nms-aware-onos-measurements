@@ -20,11 +20,11 @@ fileName <- "temp.csv"
 outFilePath <- "./out.pdf"
 
 if(length(args) >= 1){
-  print(as.character(args[1]))
-  fileName <- as.character(args[1])
+  outFilePath <- as.character(args[1])
 }
 if(length(args) >= 2){
-  outFilePath <- as.character(args[2])
+  print(as.character(args[2]))
+  fileName <- as.character(args[2])
 }
 rm(args)
 

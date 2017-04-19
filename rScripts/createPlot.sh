@@ -54,7 +54,7 @@ if [ -z "$capFilePath1" ] || [ -z "$rFilePath"]
 	  then
 	    # if no further cap file is defined execute script
         # create graph from csv file
-        $rFilePath ./temp1.csv $outFilePath
+        $rFilePath $outFilePath ./temp1.csv
 
       else
         # convert second cap to csv file
@@ -63,7 +63,7 @@ if [ -z "$capFilePath1" ] || [ -z "$rFilePath"]
 	      -e ip.dst -e ip.proto -e udp.srcport -e udp.dstport \
 	      -e frame.len > ./temp2.csv
 	    
-	    $rFilePath ./temp1.csv ./temp2.csv $outFilePath
+	    $rFilePath $outFilePath ./temp1.csv ./temp2.csv
 	    
 	    # remove csv file2
         rm ./temp2.csv
