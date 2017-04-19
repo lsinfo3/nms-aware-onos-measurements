@@ -38,7 +38,6 @@ rm(args)
 if(fileName2=="./s4.csv") {
   bandwidthData <- mergeBandwidth(c(fileName1), resolution)
 } else {
-  print("Two file names!")
   bandwidthData <- mergeBandwidth(c(fileName1, fileName2), resolution)
 }
 

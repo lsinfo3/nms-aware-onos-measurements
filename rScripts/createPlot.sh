@@ -6,7 +6,7 @@ rFilePath="./bandwidth_allClients_onePlot.r"
 capFilePath1=""
 capFilePath2=""
 
-while getopts "hi:o:r:" opt; do
+while getopts "ha:b:o:r:" opt; do
   case $opt in
     a)
       echo "Input cap filepath one: $OPTARG" >&2
@@ -39,7 +39,7 @@ while getopts "hi:o:r:" opt; do
   esac
 done
 
-if [ -z "$capFilePath1" ] || [ -z "$rFilePath"]
+if [ -z "$capFilePath1" ] || [ -z "$rFilePath" ]
   then
     echo "No cap file or r script file path defined! Exiting." >&2
     exit 1
@@ -50,7 +50,7 @@ if [ -z "$capFilePath1" ] || [ -z "$rFilePath"]
 	  -e ip.dst -e ip.proto -e udp.srcport -e udp.dstport \
 	  -e frame.len > ./temp1.csv
 
-    if [ -z "$capFilePath2"]
+    if [ -z "$capFilePath2" ]
 	  then
 	    # if no further cap file is defined execute script
         # create graph from csv file

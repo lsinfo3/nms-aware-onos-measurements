@@ -38,7 +38,6 @@ rm(args)
 if(fileName2=="./s4.csv") {
   bandwidthData <- mergeBandwidth(c(fileName1), resolution)
 } else {
-  print("Two file names!")
   bandwidthData <- mergeBandwidth(c(fileName1, fileName2), resolution)
 }
 
@@ -48,8 +47,8 @@ if("Switch" %in% colnames(bandwidthData)) {
   figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=Switch, linetype=Switch)) +
     geom_line() +
     facet_grid(dst + src ~ ., labeller=labeller(src = function(x) {paste("s:", x, sep="")}, dst = function(x) {paste("d:", x, sep="")})) +
-    scale_color_manual(aes(color=Switch), values=c("blue", "red")) +
-    scale_linetype_manual(aes(linetype=Switch), values=c("solid","42")) +
+    scale_color_manual(values=c("blue", "red")) +
+    scale_linetype_manual(values=c("solid","42")) +
     scale_y_continuous(breaks=c(0,100,200)) +
     xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
     theme_bw() +
