@@ -44,7 +44,9 @@ computeBandwidth <- function(csvFileName, bandwidthTimeResolution) {
     bandwidthData[[name]] <- getBandwidth(time, traffic, bandwidthTimeResolution, 1024, EPOCH, LENGTH)
     i <- i+1
   }
-  rm(traffic)
+  if(exists("traffic")) {
+    rm(traffic)
+  }
   rm(i)
   
   return(bandwidthData)

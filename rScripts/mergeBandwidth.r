@@ -13,8 +13,15 @@ mergeBandwidth <- function(fileNames, resolution) {
     # melt the results together
     bandwidthData1 <- melt(bandwidthData1, id="time", variable.name="tpPorts", value.name = "bandwidth")
     
+    # check if tport column is available
+    if(!("tpPorts" %in% colnames(bandwidthData1))) {
+       next
+    }
+    
     # add factor for variable order
-    bandwidthData1$tpPorts <- factor(bandwidthData1$tpPorts, levels=sort(levels(bandwidthData1$tpPorts)))
+    if(!is.null(levels(bandwidthData1$tpPorts))){
+      bandwidthData1$tpPorts <- factor(bandwidthData1$tpPorts, levels=sort(levels(bandwidthData1$tpPorts)))
+    }
     
     # extract source and destination port as columns
     bandwidthData1[["src"]] <- strsplit(as.character(bandwidthData1[["tpPorts"]]), ", ")
@@ -24,6 +31,10 @@ mergeBandwidth <- function(fileNames, resolution) {
     
     # append item to list
     bandwidthList[[length(bandwidthList)+1]] <- bandwidthData1
+  }
+  
+  if(length(bandwidthList)==0){
+    stop("No tp ports to measure.")
   }
   
   # combine both frames
@@ -58,5 +69,4 @@ mergeBandwidth <- function(fileNames, resolution) {
   bandwidthData$src <- factor(bandwidthData$src, levels=sort(as.integer(unique(bandwidthData$src))))
   
   return(bandwidthData)
-  
 }

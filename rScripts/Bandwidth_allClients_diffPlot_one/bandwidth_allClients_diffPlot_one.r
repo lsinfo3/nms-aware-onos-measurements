@@ -25,11 +25,11 @@ if(length(args) >= 1){
   outFilePath <- as.character(args[1])
 }
 if(length(args) >= 2){
-  print(as.character(args[2]))
+  #print(as.character(args[2]))
   fileName1 <- as.character(args[2])
 }
 if(length(args) >= 3){
-  print(as.character(args[3]))
+  #print(as.character(args[3]))
   fileName2 <- as.character(args[3])
 }
 rm(args)
