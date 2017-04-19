@@ -80,24 +80,57 @@ mkdir $folderName
 mv $leftVmFolder/captures/*.cap $folderName
 
 # generate folder and compute graphs for each cap file
-for f in $folderName/*.cap
-do
+for f in $folderName/*.cap; do
+	
 	# echo "File: $f"
-	fileBaseName=$(basename "$f")
+	fileBaseName=$(basename "$f") # example: ./out.pdf -> out.pdf
 	# echo "FileBaseName: $fileBaseName"
-	fileName="${fileBaseName%.*}"
+	fileName="${fileBaseName%.*}" # example: out.pdf -> out
 	# echo "FileName: $fileName"
 	fileFolderName="$folderName/$fileName"
 	
+	# create combined plots
+	for file2 in $folderName/*.cap; do
+		if ( [[ $f == *'s1-eth3'* ]] && [[ $file2 == *'s3-eth3'* ]] ) || ( [[ $f == *'s2-eth2'* ]] && [[ $file2 == *'s4-eth1'* ]] ); then
+		
+			# get file name
+			fileName2=$(basename "$file2")
+			fileName2="${fileName2%.*}"
+		
+			# run R scripts
+			$leftVmFolder/python/rScripts/createPlot.sh \
+				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
+				-a "$f" \
+				-b "$file2" \
+				-o "$folderName/${fileName}_${fileName2}_separate_one"
+			$leftVmFolder/python/rScripts/createPlot.sh \
+				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
+				-a "$f" \
+				-b "$file2" \
+				-o "$folderName/${fileName}_${fileName2}_separate_three"
+		fi
+	done
+	
+	# move files to own folder
 	mkdir $fileFolderName
 	mv $f $fileFolderName
 	
-	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" -o "$fileFolderName/${fileName}-combined" -i "$fileFolderName/$fileBaseName"
-	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" -o "$fileFolderName/${fileName}_separate_one" -i "$fileFolderName/$fileBaseName"
-	$leftVmFolder/python/rScripts/createPlot.sh -r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" -o "$fileFolderName/${fileName}_separate_three" -i "$fileFolderName/$fileBaseName"
+	# run R scripts
+	$leftVmFolder/python/rScripts/createPlot.sh \
+		-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
+		-a "$fileFolderName/$fileBaseName" \
+		-o "$fileFolderName/${fileName}-combined"
+	$leftVmFolder/python/rScripts/createPlot.sh \
+		-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
+		-a "$fileFolderName/$fileBaseName" \
+		-o "$fileFolderName/${fileName}_separate_one"
+	$leftVmFolder/python/rScripts/createPlot.sh \
+		-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
+		-a "$fileFolderName/$fileBaseName" \
+		-o "$fileFolderName/${fileName}_separate_three" 
 done
 
 # move iperf result to the new folder
 mv $leftVmFolder/captures/*.txt $folderName
 
-unset leftVmFolder folderName fileBaseName fileName fileFolderName
+unset leftVmFolder folderName fileBaseName fileName fileName2 fileFolderName
