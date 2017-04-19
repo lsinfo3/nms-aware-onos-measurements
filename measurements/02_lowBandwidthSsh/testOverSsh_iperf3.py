@@ -102,7 +102,8 @@ def startIperfClient(threadName, duration='10', clientCount='1', interval='2',
     h1.sendline('stdbuf -i0 -o0 -e0 iperf3 -c '+hostname2+' -u -b '+bandwidth+'k -P '
 		+clientCount+' -t '+duration+' -i '+interval+' -p '+serverPort
     +' -l 1470 | tee '+resultIperf)
-    # match the next shell prompt
+    # wait until finished and match the next shell prompt
+    time.sleep(float(duration))
     h1.prompt()
     
     info('+++ iperf client ended\n')
