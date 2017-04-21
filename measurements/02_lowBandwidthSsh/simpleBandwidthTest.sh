@@ -29,14 +29,14 @@ done
 #sleep 5
 # start iperf bandwidth test
 #gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 400 -p 5001 -n iperf1 -a -r /home/ubuntu/iperfResult1.txt; exec bash'\""
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 400 -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt; exec bash'\""
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 400 -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt; exec bash'\""
 
 killIperf()
 {
 	# kill iperf client on mininet client h1x1 in vagrant vm
-	gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.101 'sudo killall iperf'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
+	gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.101 'sudo killall iperf3'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
 	# kill iperf server on mininet client h2x1 in vagrant vm
-	gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 'sudo killall iperf'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
+	gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 'sudo killall iperf3'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
 	exit 1
 }
 trap killIperf SIGINT

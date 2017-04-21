@@ -54,24 +54,24 @@ sleep 5
 
 if [ "$TYPE" == "NMS" ]; then
   # start iperf bandwidth test
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 200 -p 5001 -n iperf1 -a -r /home/ubuntu/iperfResult1.txt'\""
+  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5001 -n iperf1 -a -r /home/ubuntu/iperfResult1.txt'\""
   sleep 40
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 200 -p 5002 -n iperf2 -a -r /home/ubuntu/iperfResult2.txt'\""
+  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5002 -n iperf2 -a -r /home/ubuntu/iperfResult2.txt'\""
   sleep 40
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 200 -p 5003 -n iperf3 -a -r /home/ubuntu/iperfResult3.txt'\""
+  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5003 -n iperf3 -a -r /home/ubuntu/iperfResult3.txt'\""
 else
   # start iperf bandwidth test
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 200 -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt'\""
+  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt'\""
   sleep 40
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 200 -p 5002 -n iperf2 -r /home/ubuntu/iperfResult2.txt'\""
+  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5002 -n iperf2 -r /home/ubuntu/iperfResult2.txt'\""
   sleep 40
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh_iperf3.py -d $DURATION -c 4 -b 200 -p 5003 -n iperf3 -r /home/ubuntu/iperfResult3.txt'\""
+  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5003 -n iperf3 -r /home/ubuntu/iperfResult3.txt'\""
 fi
 
 sleep $DURATION
 sleep 10
 # kill iperf server on mininet vm in vagrant vm
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 'sudo killall iperf3'; expect \"password:\"; sleep 1; send \"4fa3fe78fc88f8b5c19e50c0\"'\""
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall iperf3'\""
 # kill tcpdump in vagrant vm
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
 # kill nms?

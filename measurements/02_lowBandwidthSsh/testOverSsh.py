@@ -99,21 +99,23 @@ def startIperfClient(threadName, duration='10', clientCount='1', interval='2',
     # starting iperf client bandwidth measurement
     info('+++ Start iperf client:\nRuntime: {}\nServerPort: {}\n'.format(duration, serverPort))
     
-    h1.sendline('iperf -c '+hostname2+' -u -b '+bandwidth+'k -P '
+    h1.sendline('stdbuf -i0 -o0 -e0 iperf3 -c '+hostname2+' -u -b '+bandwidth+'k -P '
 		+clientCount+' -t '+duration+' -i '+interval+' -p '+serverPort
-    +' | tee '+resultIperf)
-    # match the next shell prompt
+    +' -l 1470 | tee '+resultIperf)
+    # wait until finished and match the next shell prompt
+    time.sleep(float(duration))
     h1.prompt()
     
     info('+++ iperf client ended\n')
+    time.sleep(5)
     h1.logout()
     
   except pxssh.ExceptionPxssh, e:
     print "pxssh failed on login."
     print str(e)
   except KeyboardInterrupt:
-    print('\n\nKeyboard exception received. Exiting.')
-    exit()
+      print('\n\nKeyboard exception received. Exiting.')
+      exit()
 
 
 # connect to both hosts and run iperf server and client on them
@@ -129,7 +131,7 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
 
     # start iperf server on host 2
     info("+++ Start iperf server\n")
-    h2.sendline('iperf -s -u -D -p '+serverPort)
+    h2.sendline('iperf3 -s -D -p '+serverPort)
     h2.prompt()
     
     h2.logout()
@@ -145,11 +147,13 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     # start thread
     thread.start()
     
+    info("+++ Get iPerf clients from output\n")
     # read iperf output and append it to the client list
     clientPortMap = getIperfClients.getIperfClients(resultIperf=resultIperf,
       clientCount=clientCount, bandwidth=bandwidth+'000',
       serverPort=serverPort)
     
+    info("+++ Adding clients to list\n")
     addClientsToList(clientListPath=CLIENTLISTPATH, clientPortMap=clientPortMap,
         instanceName=iperfName)
     
