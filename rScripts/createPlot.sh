@@ -17,7 +17,7 @@ while getopts "ha:b:o:r:" opt; do
       capFilePath2=$OPTARG
       ;;  
     o)
-      echo "Output png filepath: $OPTARG" >&2
+      echo "Output filepath: $OPTARG" >&2
       outFilePath=$OPTARG
       ;;
     r)
