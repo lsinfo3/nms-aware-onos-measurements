@@ -98,6 +98,9 @@ for f in $folderName/*.cap; do
 	fileName="${fileBaseName%.*}" # example: out.pdf -> out
 	# echo "FileName: $fileName"
 	fileFolderName="$folderName/$fileName"
+	# get the legend name
+	legendNamePos=`expr index "$fileName" "_"`
+	legendName=${fileName:$legendNamePos:2}
 	
 	# create combined plots
 	for file2 in $folderName/*.cap; do
@@ -106,24 +109,27 @@ for f in $folderName/*.cap; do
 			# get file name
 			fileName2=$(basename "$file2")
 			fileName2="${fileName2%.*}"
+			# get the legend name
+			legendNamePos=`expr index "$fileName2" "_"`
+			legendName2=${fileName2:$legendNamePos:2}
 		
 			# run R scripts - diff plot one
 			$leftVmFolder/python/rScripts/createPlot.sh \
 				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
-				-a "$f" \
-				-b "$file2" \
+				-i "$f $file2" \
+				-n "$legendName $legendName2" \
 				-o "$folderName/${fileName}_${fileName2}_separate_one"
 			# run R script - diff plot three
 			$leftVmFolder/python/rScripts/createPlot.sh \
 				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
-				-a "$f" \
-				-b "$file2" \
+				-i "$f $file2" \
+				-n "$legendName $legendName2" \
 				-o "$folderName/${fileName}_${fileName2}_separate_three"
 			# run R scripts - one plot
 			$leftVmFolder/python/rScripts/createPlot.sh \
 				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
-				-a "$f" \
-				-b "$file2" \
+				-i "$f $file2" \
+				-n "$legendName $legendName2" \
 				-o "$folderName/${fileName}_${fileName2}_combined"
 		fi
 	done
@@ -135,15 +141,18 @@ for f in $folderName/*.cap; do
 	# run R scripts
 	$leftVmFolder/python/rScripts/createPlot.sh \
 		-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
-		-a "$fileFolderName/$fileBaseName" \
+		-i "$fileFolderName/$fileBaseName" \
+		-n "$legendName" \
 		-o "$fileFolderName/${fileName}-combined"
 	$leftVmFolder/python/rScripts/createPlot.sh \
 		-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
-		-a "$fileFolderName/$fileBaseName" \
+		-i "$fileFolderName/$fileBaseName" \
+		-n "$legendName" \
 		-o "$fileFolderName/${fileName}_separate_one"
 	$leftVmFolder/python/rScripts/createPlot.sh \
 		-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
-		-a "$fileFolderName/$fileBaseName" \
+		-i "$fileFolderName/$fileBaseName" \
+		-n "$legendName" \
 		-o "$fileFolderName/${fileName}_separate_three" 
 done
 
