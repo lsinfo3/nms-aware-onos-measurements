@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-mergeBandwidth <- function(fileNames, resolution) {
+mergeBandwidth <- function(fileNames, legendNames, resolution) {
   
   bandwidthList <- list()
   for(fileName in fileNames) {
@@ -37,15 +37,14 @@ mergeBandwidth <- function(fileNames, resolution) {
     stop("No tp ports to measure.")
   }
   
-  # combine both frames
-  if(length(bandwidthList)==1) {
-    bandwidthData <- bandwidthList[[1]]
-  } else if (length(bandwidthList)==2){
-    bandwidthList[[1]][["Switch"]] <- "s2"
-    bandwidthList[[2]][["Switch"]] <- "s4"
-    bandwidthData <- rbind(bandwidthList[[1]], bandwidthList[[2]])
-  } else {
-    return(data.frame())
+  # combine all frames from list
+  for(i in 1:length(bandwidthList)) {
+    bandwidthList[[i]][["Switch"]] <- legendNames[i]
+    if(exists("bandwidthData")) {
+      bandwidthData <- rbind(bandwidthData, bandwidthList[[i]])
+    } else {
+      bandwidthData <- bandwidthList[[i]]
+    }
   }
   
   # set measurement start time to zero

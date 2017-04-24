@@ -17,52 +17,46 @@ args <- commandArgs(trailingOnly = TRUE)
 # default values
 # resolution of the time axis
 resolution <- 1
-fileName1 <- "./s2.csv"
-fileName2 <- "./s4.csv"
+csvFiles <- ""
+legendNames <- ""
 outFilePath <- "./out_diff"
 
 if(length(args) >= 1){
   outFilePath <- as.character(args[1])
 }
 if(length(args) >= 2){
-  #print(as.character(args[2]))
-  fileName1 <- as.character(args[2])
+  csvFiles <- strsplit(as.character(args[2]), " ")[[1]]
+  #print(csvFiles)
 }
 if(length(args) >= 3){
-  #print(as.character(args[3]))
-  fileName2 <- as.character(args[3])
+  legendNames <- strsplit(as.character(args[3]), " ")[[1]]
+  #print(legendNames)
 }
 rm(args)
 
-# check if second string is set
-if(fileName2=="./s4.csv") {
-  bandwidthData <- mergeBandwidth(c(fileName1), resolution)
-} else {
-  bandwidthData <- mergeBandwidth(c(fileName1, fileName2), resolution)
+#csvFiles <- c("s2.csv", "s4.csv")
+#legendNames <- c("s2", "s4")
+
+# calculate bandwidth data
+bandwidthData <- mergeBandwidth(csvFiles, legendNames, resolution)
+
+
+# plot the bandwidth
+figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=Switch, linetype=Switch)) +
+  geom_line() +
+  facet_grid(dst + src ~ ., labeller=labeller(src = function(x) {paste("s:", x, sep="")}, dst = function(x) {paste("d:", x, sep="")})) +
+  scale_color_manual(values=c("blue", "red")) +
+  scale_linetype_manual(values=c("solid","42")) +
+  scale_y_continuous(breaks=c(0,100,200)) +
+  xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
+  theme_bw() +
+  theme(legend.position = "bottom" , text = element_text(size=12))
+
+# remove legend if only one line is plotted
+if(length(unique(bandwidthData[["Switch"]])) == 1) {
+  figure <- figure + theme(legend.position = "none")
 }
 
-
-# check if the data frame contains the bandwidth of only one switch
-if("Switch" %in% colnames(bandwidthData)) {
-  figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=Switch, linetype=Switch)) +
-    geom_line() +
-    facet_grid(dst + src ~ ., labeller=labeller(src = function(x) {paste("s:", x, sep="")}, dst = function(x) {paste("d:", x, sep="")})) +
-    scale_color_manual(values=c("blue", "red")) +
-    scale_linetype_manual(values=c("solid","42")) +
-    scale_y_continuous(breaks=c(0,100,200)) +
-    xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
-    theme_bw() +
-    theme(legend.position = "bottom" , text = element_text(size=12))
-} else {
-  figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth)) +
-    geom_line(color="blue") +
-    facet_grid(dst + src ~ ., labeller=labeller(src = function(x) {paste("s:", x, sep="")}, dst = function(x) {paste("d:", x, sep="")})) +
-    scale_y_continuous(breaks=c(0,100,200)) +
-    xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
-    theme_bw() +
-    theme(legend.position = "bottom" , text = element_text(size=12))
-}
-
-# save plot as png
+# save plot as pdf
 width <- 15.0; height <- 20.0
 ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")

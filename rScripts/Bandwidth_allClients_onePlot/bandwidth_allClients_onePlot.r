@@ -16,38 +16,37 @@ args <- commandArgs(trailingOnly = TRUE)
 # default values
 # resolution of the time axis
 resolution <- 1
-switchName1 <- "s1"
-switchName2 <- "s3"
-fileName1 <- "s2.csv"
-fileName2 <- "s4.csv"
+csvFiles <- ""
+legendNames <- ""
 outFilePath <- "./out"
 
 if(length(args) >= 1){
   outFilePath <- as.character(args[1])
 }
 if(length(args) >= 2){
-  #print(as.character(args[2]))
-  fileName1 <- as.character(args[2])
+  csvFiles <- strsplit(as.character(args[2]), " ")[[1]]
+  #print(csvFiles)
 }
 if(length(args) >= 3){
-  #print(as.character(args[3]))
-  fileName2 <- as.character(args[3])
+  legendNames <- strsplit(as.character(args[3]), " ")[[1]]
+  #print(legendNames)
 }
+#csvFiles <- c("s2.csv", "s4.csv")
+#legendNames <- c("s2", "s4")
 rm(args)
 
-
-# compute the bandwidth data
-bandwidthData <- computeBandwidth(fileName1, resolution)
-bandwidthData <- bandwidthData[,c("time","bandwidthAll")]
-bandwidthData[["Switch"]] <- switchName1
-
-# if second file is given, compute bandwidth for it
-if(fileName2 != "s4.csv") {
-  bandwidthDataTemp <- computeBandwidth(fileName2, resolution)
-  bandwidthDataTemp <- bandwidthDataTemp[, c("time", "bandwidthAll")]
-  bandwidthDataTemp[["Switch"]] <- switchName2
-  # join both data frames vertically
-  bandwidthData <- rbind(bandwidthData, bandwidthDataTemp)
+for(i in 1:length(csvFiles)) {
+  # compute the bandwidth data
+  bandwidthDataTemp <- computeBandwidth(csvFiles[i], resolution)
+  bandwidthDataTemp <- bandwidthDataTemp[,c("time","bandwidthAll")]
+  bandwidthDataTemp[["Switch"]] <- legendNames[i]
+  
+  if(exists("bandwidthData")) {
+    # join both data frames vertically
+    bandwidthData <- rbind(bandwidthData, bandwidthDataTemp)
+  } else {
+    bandwidthData <- bandwidthDataTemp
+  }
   rm(bandwidthDataTemp)
 }
 
