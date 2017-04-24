@@ -107,17 +107,24 @@ for f in $folderName/*.cap; do
 			fileName2=$(basename "$file2")
 			fileName2="${fileName2%.*}"
 		
-			# run R scripts
+			# run R scripts - diff plot one
 			$leftVmFolder/python/rScripts/createPlot.sh \
 				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
 				-a "$f" \
 				-b "$file2" \
 				-o "$folderName/${fileName}_${fileName2}_separate_one"
+			# run R script - diff plot three
 			$leftVmFolder/python/rScripts/createPlot.sh \
 				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
 				-a "$f" \
 				-b "$file2" \
 				-o "$folderName/${fileName}_${fileName2}_separate_three"
+			# run R scripts - one plot
+			$leftVmFolder/python/rScripts/createPlot.sh \
+				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
+				-a "$f" \
+				-b "$file2" \
+				-o "$folderName/${fileName}_${fileName2}_combined"
 		fi
 	done
 	
