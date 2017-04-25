@@ -57,7 +57,8 @@ bandwidthData[["time"]] <- sapply(bandwidthData[["time"]], function (x) {x-timeM
 # print the whole thing
 figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll, color=Switch)) +
   geom_line() +
-  scale_color_manual(values=c("blue", "red")) +
+  scale_color_manual(values=c("blue", "#E69F00", "red", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+) +
   xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
   theme_bw() +
   theme(text = element_text(size=12))

@@ -9,31 +9,31 @@ legendNames=""
 while getopts "hi:o:r:n:" opt; do
   case $opt in
     i)
-      echo "Input cap filepaths: $OPTARG" >&2
+      printf "Input cap filepaths:\n$OPTARG\n" >&2
       capFiles=$OPTARG
       ;;
     n)
-      echo "Legend names: $OPTARG" >&2
+      printf "Legend names:\n$OPTARG\n" >&2
       legendNames=$OPTARG
       ;;
     o)
-      echo "Output filepath: $OPTARG" >&2
+      printf "Output filepath:\n$OPTARG\n" >&2
       outFilePath=$OPTARG
       ;;
     r)
-      echo "R filepath to create graph: $OPTARG" >&2
+      printf "R filepath to create graph:\n$OPTARG\n" >&2
       rFilePath=$OPTARG
       ;;
     h)
-      echo -e "Usage:\ncreatePlot.sh -i \"CAPTURE_FILE1 [CAPTURE_FILE2 ...]\" -n \"LEGEND_NAME1 [LEGEND_NAME2 ...]\" -r R_SCRIPT_FILE [-o OUTPUT_FILE]"
+      printf "Usage:\ncreatePlot.sh -i \"CAPTURE_FILE1 [CAPTURE_FILE2 ...]\" -n \"LEGEND_NAME1 [LEGEND_NAME2 ...]\" -r R_SCRIPT_FILE [-o OUTPUT_FILE]\n"
       exit 1
       ;;
     \?)
-      echo "Invalid option: -$OPTARG" >&2
+      printf "Invalid option: -$OPTARG\n" >&2
       exit 1
       ;;
     :)
-      echo "Option -$OPTARG requires an argument." >&2
+      printf "Option -$OPTARG requires an argument.\n" >&2
       exit 1
       ;;
   esac
@@ -41,7 +41,7 @@ done
 
 if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
   then
-    echo "No cap file or r script file path defined! Exiting." >&2
+    printf "No cap file or r script file path defined!\nExiting.\n" >&2
     exit 1
   else
     
@@ -62,7 +62,8 @@ if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
 	    -e frame.len > ./${fileName}.csv
 	  
 	  # save output in string
-	  if [ -z $csvFiles ]; then
+	  if [ -z "$csvFiles" ]
+	  then
 	    csvFiles="./${fileName}.csv"
 	  else
 	    csvFiles="$csvFiles ./${fileName}.csv"
