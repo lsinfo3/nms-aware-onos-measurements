@@ -2,8 +2,9 @@
 
 DURATION="120"
 TYPE="ORG"
+USEUDP=false
 
-while getopts "t:d:h" opt; do
+while getopts "t:d:hu" opt; do
   case $opt in
 	t)
 	  TYPE=$OPTARG
@@ -19,8 +20,12 @@ while getopts "t:d:h" opt; do
       echo "Measurement duration: $OPTARG seconds" >&2
       DURATION=$OPTARG
       ;;
+    u)
+      echo "Use UDP rather than TCP." >&2
+      USEUDP=true
+      ;;
     h)
-      echo -e "Usage:\nstartMeasurement_withNMS.sh [-d DURATION] -t {ORG|MOD|NMS}"
+      echo -e "Usage:\nstartMeasurement_withNMS.sh [-d DURATION] [-u] -t {ORG|MOD|NMS}"
       exit 1
       ;;
     \?)
@@ -52,21 +57,22 @@ fi
 
 sleep 5
 
-if [ "$TYPE" == "NMS" ]; then
-  # start iperf bandwidth test
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5001 -n iperf1 -a -r /home/ubuntu/iperfResult1.txt'\""
-  sleep 40
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5002 -n iperf2 -a -r /home/ubuntu/iperfResult2.txt'\""
-  sleep 40
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5003 -n iperf3 -a -r /home/ubuntu/iperfResult3.txt'\""
-else
-  # start iperf bandwidth test
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt'\""
-  sleep 40
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5002 -n iperf2 -r /home/ubuntu/iperfResult2.txt'\""
-  sleep 40
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200 -p 5003 -n iperf3 -r /home/ubuntu/iperfResult3.txt'\""
+# start iperf bandwidth test
+iperfCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200"
+if [ "$USEUDP" == true ]; then
+  # use UDP rather than TCP
+  iperfCommand="$iperfCommand -u"
 fi
+if [ "$TYPE" == "NMS" ]; then
+  # add constraints if NMS is used
+  iperfCommand="$iperfCommand -a"
+fi
+gnome-terminal -e "$iperfCommand -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt'\""
+sleep 40
+gnome-terminal -e "$iperfCommand -p 5002 -n iperf2 -r /home/ubuntu/iperfResult2.txt'\""
+sleep 40
+gnome-terminal -e "$iperfCommand -p 5003 -n iperf3 -r /home/ubuntu/iperfResult3.txt'\""
+unset iperfCommand
 
 sleep $DURATION
 sleep 10
@@ -80,6 +86,8 @@ gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 's
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/; cp ./iperfResult1.txt ./captures/iperfResult1.txt'\""
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/; cp ./iperfResult2.txt ./captures/iperfResult2.txt'\""
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/; cp ./iperfResult3.txt ./captures/iperfResult3.txt'\""
+
+
 
 ### create results
 leftVmFolder="$HOME/Masterthesis/vm/leftVm"
@@ -101,6 +109,13 @@ for f in $folderName/*.cap; do
 	# get the legend name
 	legendNamePos=`expr index "$fileName" "_"`
 	legendName=${fileName:$legendNamePos:2}
+  
+  # create plot command
+	rCommand="$leftVmFolder/python/rScripts/createPlot.sh"
+	if [ "$USEUDP" == true ]; then
+		# use UDP rather than TCP
+		rCommand="$rCommand -u"
+  fi
 	
 	# create combined plots
 	for file2 in $folderName/*.cap; do
@@ -112,48 +127,79 @@ for f in $folderName/*.cap; do
 			# get the legend name
 			legendNamePos=`expr index "$fileName2" "_"`
 			legendName2=${fileName2:$legendNamePos:2}
-		
-			# run R scripts - diff plot one
-			$leftVmFolder/python/rScripts/createPlot.sh \
-				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
-				-i "$f $file2" \
-				-n "$legendName $legendName2" \
-				-o "$folderName/${fileName}_${fileName2}_separate_one"
+
+			rCommandTwoFiles="$rCommand -i \"$f $file2\""
+			rCommandTwoFiles="$rCommandTwoFiles -n \"$legendName $legendName2\""
+			
+			# run R script - diff plot one
+			rCommandEval="$rCommandTwoFiles -r $leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r"
+			rCommandEval="$rCommandEval -o $folderName/${fileName}_${fileName2}_separate_one"
+			eval $rCommandEval
 			# run R script - diff plot three
-			$leftVmFolder/python/rScripts/createPlot.sh \
-				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
-				-i "$f $file2" \
-				-n "$legendName $legendName2" \
-				-o "$folderName/${fileName}_${fileName2}_separate_three"
+			rCommandEval="$rCommandTwoFiles -r $leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r"
+			rCommandEval="$rCommandEval -o $folderName/${fileName}_${fileName2}_separate_three"
+			eval $rCommandEval
 			# run R scripts - one plot
-			$leftVmFolder/python/rScripts/createPlot.sh \
-				-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
-				-i "$f $file2" \
-				-n "$legendName $legendName2" \
-				-o "$folderName/${fileName}_${fileName2}_combined"
+			rCommandEval="$rCommandTwoFiles -r $leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r"
+			rCommandEval="$rCommandEval -o $folderName/${fileName}_${fileName2}_combined"
+			eval $rCommandEval
+      unset rCommandTwoFiles rCommandEval
+
+			## run R script - diff plot one
+			#$leftVmFolder/python/rScripts/createPlot.sh \
+			#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
+			#	-i "$f $file2" \
+			#	-n "$legendName $legendName2" \
+			#	-o "$folderName/${fileName}_${fileName2}_separate_one"
+			## run R script - diff plot three
+			#$leftVmFolder/python/rScripts/createPlot.sh \
+			#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
+			#	-i "$f $file2" \
+			#	-n "$legendName $legendName2" \
+			#	-o "$folderName/${fileName}_${fileName2}_separate_three"
+			## run R scripts - one plot
+			#$leftVmFolder/python/rScripts/createPlot.sh \
+			#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
+			#	-i "$f $file2" \
+			#	-n "$legendName $legendName2" \
+			#	-o "$folderName/${fileName}_${fileName2}_combined"
 		fi
 	done
 	
 	# move files to own folder
 	mkdir $fileFolderName
 	mv $f $fileFolderName
+  
+  rCommand="$rCommand -i \"$fileFolderName/$fileBaseName\""
+  rCommand="$rCommand -n \"$legendName\""
 	
 	# run R scripts
-	$leftVmFolder/python/rScripts/createPlot.sh \
-		-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
-		-i "$fileFolderName/$fileBaseName" \
-		-n "$legendName" \
-		-o "$fileFolderName/${fileName}-combined"
-	$leftVmFolder/python/rScripts/createPlot.sh \
-		-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
-		-i "$fileFolderName/$fileBaseName" \
-		-n "$legendName" \
-		-o "$fileFolderName/${fileName}_separate_one"
-	$leftVmFolder/python/rScripts/createPlot.sh \
-		-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
-		-i "$fileFolderName/$fileBaseName" \
-		-n "$legendName" \
-		-o "$fileFolderName/${fileName}_separate_three" 
+  rCommandEval="$rCommand -r $leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r"
+  rCommandEval="$rCommandEval -o $fileFolderName/${fileName}-combined"
+  eval $rCommandEval
+  rCommandEval="$rCommand -r $leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r"
+  rCommandEval="$rCommandEval -o $fileFolderName/${fileName}_separate_one"
+  eval $rCommandEval
+  rCommandEval="$rCommand -r $leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r"
+  rCommandEval="$rCommandEval -o $fileFolderName/${fileName}_separate_three"
+  eval $rCommandEval
+  unset rCommand rCommandEval
+  
+	#$leftVmFolder/python/rScripts/createPlot.sh \
+	#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
+	#	-i "$fileFolderName/$fileBaseName" \
+	#	-n "$legendName" \
+	#	-o "$fileFolderName/${fileName}-combined"
+	#$leftVmFolder/python/rScripts/createPlot.sh \
+	#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
+	#	-i "$fileFolderName/$fileBaseName" \
+	#	-n "$legendName" \
+	#	-o "$fileFolderName/${fileName}_separate_one"
+	#$leftVmFolder/python/rScripts/createPlot.sh \
+	#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
+	#	-i "$fileFolderName/$fileBaseName" \
+	#	-n "$legendName" \
+	#	-o "$fileFolderName/${fileName}_separate_three" 
 done
 
 # move iperf result to the new folder

@@ -2,25 +2,30 @@
 
 
 
-computeBandwidth <- function(csvFileName, bandwidthTimeResolution) {
+computeBandwidth <- function(csvFileName, bandwidthTimeResolution, protocol) {
   
   source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getBandwidth.r")
   source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getUniquePorts.r")
   
   # column names
-  TIME = "frame.time_relative"
-  EPOCH = "frame.time_epoch"
-  IPSRC = "ip.src"
-  IPDST = "ip.dst"
-  PROTO = "ip.proto"
-  SRCPORT = "udp.srcport"
-  DSTPORT = "udp.dstport"
-  LENGTH = "frame.len"
+  TIME <- "frame.time_relative"
+  EPOCH <- "frame.time_epoch"
+  IPSRC <- "ip.src"
+  IPDST <- "ip.dst"
+  PROTO <- "ip.proto"
+  if(protocol=="6") {
+    SRCPORT <- "tcp.srcport"
+    DSTPORT <- "tcp.dstport"
+  } else if(protocol=="17") {
+    SRCPORT <- "udp.srcport"
+    DSTPORT <- "udp.dstport"
+  }
+  LENGTH <- "frame.len"
   
   # get all captured traffic
   capture <- read.csv(csvFileName, header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
   # use only udp traffic from iperf host one to two
-  iperfTraffic <- capture[ capture[[PROTO]] == "17" & capture[[IPSRC]] == "100.0.1.101" & capture[[IPDST]] == "100.0.1.201", ]
+  iperfTraffic <- capture[ capture[[PROTO]] == protocol & capture[[IPSRC]] == "100.0.1.101" & capture[[IPDST]] == "100.0.1.201", ]
   
   # get all src/dst port pairs
   portList <- getUniquePorts(iperfTraffic, DSTPORT, SRCPORT)

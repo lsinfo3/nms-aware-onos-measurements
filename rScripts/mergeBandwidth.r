@@ -1,11 +1,11 @@
 #!/usr/bin/env Rscript
 
-mergeBandwidth <- function(fileNames, legendNames, resolution) {
+mergeBandwidth <- function(fileNames, legendNames, resolution, protocol) {
   
   bandwidthList <- list()
   for(fileName in fileNames) {
     # compute the bandwidth data
-    bandwidthData1 <- computeBandwidth(fileName, resolution)
+    bandwidthData1 <- computeBandwidth(fileName, resolution, protocol)
     
     # remove "bandwidthAll" column
     bandwidthData1[["bandwidthAll"]] <- NULL

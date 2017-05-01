@@ -19,25 +19,30 @@ resolution <- 1
 csvFiles <- ""
 legendNames <- ""
 outFilePath <- "./out"
+protocol <- "17"
 
 if(length(args) >= 1){
-  outFilePath <- as.character(args[1])
+  protocol <- as.character(args[1])
 }
 if(length(args) >= 2){
-  csvFiles <- strsplit(as.character(args[2]), " ")[[1]]
-  #print(csvFiles)
+  outFilePath <- as.character(args[2])
 }
 if(length(args) >= 3){
-  legendNames <- strsplit(as.character(args[3]), " ")[[1]]
+  csvFiles <- strsplit(as.character(args[3]), " ")[[1]]
+  #print(csvFiles)
+}
+if(length(args) >= 4){
+  legendNames <- strsplit(as.character(args[4]), " ")[[1]]
   #print(legendNames)
 }
+rm(args)
+
 #csvFiles <- c("s2.csv", "s4.csv")
 #legendNames <- c("s2", "s4")
-rm(args)
 
 for(i in 1:length(csvFiles)) {
   # compute the bandwidth data
-  bandwidthDataTemp <- computeBandwidth(csvFiles[i], resolution)
+  bandwidthDataTemp <- computeBandwidth(csvFiles[i], resolution, protocol)
   bandwidthDataTemp <- bandwidthDataTemp[,c("time","bandwidthAll")]
   bandwidthDataTemp[["Switch"]] <- legendNames[i]
   
@@ -59,7 +64,7 @@ figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll, color=Switch)) 
   geom_line() +
   scale_color_manual(values=c("blue", "#E69F00", "red", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 ) +
-  xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
+  xlab("Time [s]") + ylab("Bandwidth [kbit/s]") +
   theme_bw() +
   theme(text = element_text(size=12))
 

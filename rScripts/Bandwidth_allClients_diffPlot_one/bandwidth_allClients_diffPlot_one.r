@@ -20,16 +20,20 @@ resolution <- 1
 csvFiles <- ""
 legendNames <- ""
 outFilePath <- "./out_diff"
+protocol <- "17"
 
 if(length(args) >= 1){
-  outFilePath <- as.character(args[1])
+  protocol <- as.character(args[1])
 }
 if(length(args) >= 2){
-  csvFiles <- strsplit(as.character(args[2]), " ")[[1]]
-  #print(csvFiles)
+  outFilePath <- as.character(args[2])
 }
 if(length(args) >= 3){
-  legendNames <- strsplit(as.character(args[3]), " ")[[1]]
+  csvFiles <- strsplit(as.character(args[3]), " ")[[1]]
+  #print(csvFiles)
+}
+if(length(args) >= 4){
+  legendNames <- strsplit(as.character(args[4]), " ")[[1]]
   #print(legendNames)
 }
 rm(args)
@@ -38,7 +42,7 @@ rm(args)
 #legendNames <- c("s2", "s4")
 
 # calculate bandwidth data
-bandwidthData <- mergeBandwidth(csvFiles, legendNames, resolution)
+bandwidthData <- mergeBandwidth(csvFiles, legendNames, resolution, protocol)
 
 
 # plot the bandwidth
@@ -48,7 +52,7 @@ figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=Switch, line
   scale_color_manual(values=c("blue", "red")) +
   scale_linetype_manual(values=c("solid","42")) +
   scale_y_continuous(breaks=c(0,100,200)) +
-  xlab("Time (s)") + ylab("Bandwidth (kBit/s)") +
+  xlab("Time [s]") + ylab("Bandwidth [kbit/s]") +
   theme_bw() +
   theme(legend.position = "bottom" , text = element_text(size=12))
 
