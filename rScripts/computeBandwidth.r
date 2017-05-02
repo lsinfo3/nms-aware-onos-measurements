@@ -39,6 +39,7 @@ computeBandwidth <- function(csvFileName, bandwidthTimeResolution, protocol) {
   
   # calculate the bandwidth
   # bandwidth of all connections
+  print("Bandwidth all")
   bandwidthData <- data.frame("time"=time, "bandwidthAll"=getBandwidth(time, iperfTraffic, bandwidthTimeResolution, 1024, EPOCH, LENGTH))
   # calculate bandwidth for each port pair
   i <- 1
@@ -46,6 +47,7 @@ computeBandwidth <- function(csvFileName, bandwidthTimeResolution, protocol) {
     traffic <- iperfTraffic[ iperfTraffic[[SRCPORT]]==portPair[[1]] & iperfTraffic[[DSTPORT]]==portPair[[2]], ]
     # add results to data frame as new column
     name = paste(portPair[[2]], ", ", portPair[[1]], sep="")
+    print(name)
     bandwidthData[[name]] <- getBandwidth(time, traffic, bandwidthTimeResolution, 1024, EPOCH, LENGTH)
     i <- i+1
   }

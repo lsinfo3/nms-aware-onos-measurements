@@ -30,7 +30,7 @@ while getopts "hi:o:r:n:u" opt; do
       useUdp=true
       ;;
     h)
-      printf "Usage:\ncreatePlot.sh -i \"CAPTURE_FILE1 [CAPTURE_FILE2 ...]\" -n \"LEGEND_NAME1 [LEGEND_NAME2 ...]\" -r R_SCRIPT_FILE [-o OUTPUT_FILE]\n"
+      printf "Usage:\ncreatePlot.sh -i \"CAPTURE_FILE1 [CAPTURE_FILE2 ...]\" -n \"LEGEND_NAME1 [LEGEND_NAME2 ...]\" -r R_SCRIPT_FILE [-u] [-o OUTPUT_FILE]\n"
       exit 1
       ;;
     \?)
