@@ -25,7 +25,7 @@ while getopts "t:d:hu" opt; do
       USEUDP=true
       ;;
     h)
-      echo -e "Usage:\nstartMeasurement_withNMS.sh [-d DURATION] [-u] -t {ORG|MOD|NMS}"
+      echo -e "Usage:\nstartMeasurement.sh [-d DURATION] [-u] -t {ORG|MOD|NMS}"
       exit 1
       ;;
     \?)
@@ -145,24 +145,6 @@ for f in $folderName/*.cap; do
 			eval $rCommandEval
       unset rCommandTwoFiles rCommandEval
 
-			## run R script - diff plot one
-			#$leftVmFolder/python/rScripts/createPlot.sh \
-			#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
-			#	-i "$f $file2" \
-			#	-n "$legendName $legendName2" \
-			#	-o "$folderName/${fileName}_${fileName2}_separate_one"
-			## run R script - diff plot three
-			#$leftVmFolder/python/rScripts/createPlot.sh \
-			#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
-			#	-i "$f $file2" \
-			#	-n "$legendName $legendName2" \
-			#	-o "$folderName/${fileName}_${fileName2}_separate_three"
-			## run R scripts - one plot
-			#$leftVmFolder/python/rScripts/createPlot.sh \
-			#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
-			#	-i "$f $file2" \
-			#	-n "$legendName $legendName2" \
-			#	-o "$folderName/${fileName}_${fileName2}_combined"
 		fi
 	done
 	
@@ -185,21 +167,6 @@ for f in $folderName/*.cap; do
   eval $rCommandEval
   unset rCommand rCommandEval
   
-	#$leftVmFolder/python/rScripts/createPlot.sh \
-	#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_onePlot/bandwidth_allClients_onePlot.r" \
-	#	-i "$fileFolderName/$fileBaseName" \
-	#	-n "$legendName" \
-	#	-o "$fileFolderName/${fileName}-combined"
-	#$leftVmFolder/python/rScripts/createPlot.sh \
-	#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_one/bandwidth_allClients_diffPlot_one.r" \
-	#	-i "$fileFolderName/$fileBaseName" \
-	#	-n "$legendName" \
-	#	-o "$fileFolderName/${fileName}_separate_one"
-	#$leftVmFolder/python/rScripts/createPlot.sh \
-	#	-r "$leftVmFolder/python/rScripts/Bandwidth_allClients_diffPlot_three/bandwidth_allClients_diffPlot_three.r" \
-	#	-i "$fileFolderName/$fileBaseName" \
-	#	-n "$legendName" \
-	#	-o "$fileFolderName/${fileName}_separate_three" 
 done
 
 # move iperf result to the new folder

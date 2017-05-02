@@ -12,7 +12,7 @@ getBandwidth <- function(time, traffic, resolution, base=1, timeHeaderName, leng
     bandwidth[value] <- bandwidthValue
     totalTraffic <- totalTraffic + bandwidthValue
   }
-  print(paste("Total traffic: ", as.character(totalTraffic), "bit", sep=""))
+  print(paste("Total traffic: ", as.character(totalTraffic), " bit", sep=""))
   
   return(bandwidth/base)
 }

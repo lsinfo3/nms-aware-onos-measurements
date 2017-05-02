@@ -16,8 +16,9 @@ DEVICEID2 = 'of:0000000000000002'
 DEVICEID4 = 'of:0000000000000004'
 FLOWURL = 'http://192.168.33.20:8181/onos/v1/flows/'
 LINKURL = 'http://192.168.33.20:8181/onos/v1/network/configuration/links'
-SRCPORT = 'UDP_SRC'
-DSTPORT = 'UDP_DST'
+PROTOSRC = 'TCP_SRC'
+PROTODST = 'TCP_DST'
+CRITERIA = 'tcpPort'
 
 
 # open file and read the connection information in json format
@@ -54,12 +55,12 @@ def getFlows(deviceId, flowUrl):
     # save the udp's connection src and dst port
     connection = {}
     for criteria in selector['criteria']:
-      if criteria['type'] == SRCPORT:
-        connection['src'] = criteria['udpPort']
-        # print SRCPORT + ': {}'.format(criteria['udpPort'])
-      if criteria['type'] == DSTPORT:
-        connection['dst'] = criteria['udpPort']
-        # print DSTPORT + ': {}'.format(criteria['udpPort'])
+      if criteria['type'] == PROTOSRC:
+        connection['src'] = criteria[CRITERIA]
+        # print PROTOSRC + ': {}'.format(criteria[CRITERIA])
+      if criteria['type'] == PROTODST:
+        connection['dst'] = criteria[CRITERIA]
+        # print PROTODST + ': {}'.format(criteria[CRITERIA])
     
     # if the connection dict has two elements
     if len(connection.keys()) == 2:
@@ -94,7 +95,7 @@ def countConnections(activeConnections, controllerConnections, annotationType, s
         
         # check if the connection is on current device
         connection = {'src': int(activeConnection['src']), 'dst': int(activeConnection['dst'])}
-        # info("Is {} in {}?\n".format(connection, controllerConnections[deviceId]))
+        #info("Is {} in {}?\n".format(connection, controllerConnections[deviceId]))
         
         if connection in controllerConnections[deviceId]:
           #info("It is. Removing {} from {}.\n".format(activeConnection[annotationType], switchCount[deviceId]))
@@ -216,6 +217,9 @@ def manage(interval):
       controllerConnections = {}
       for deviceId in [DEVICEID2, DEVICEID4]:
         controllerConnections[deviceId] = getFlows(deviceId, FLOWURL)
+      
+      #info("Controller connections:\n")
+      #printDict(controllerConnections)
     
       # count the bandwidth of the active connections for each switch
       switchCount = countConnections(activeConnections, controllerConnections,
@@ -251,17 +255,18 @@ def manage(interval):
 if __name__ == '__main__':
   setLogLevel( 'info' )
   
-  cmd='Usage:\n{} [-i <interval>]'.format(sys.argv[0])
+  cmd='Usage:\n{} [-u] [-i <interval>]'.format(sys.argv[0])
   argv = sys.argv[1:]
   
   # parsing commandline arguments
   try:
-    opts, args = getopt.getopt(argv,"i:",["interval="])
+    opts, args = getopt.getopt(argv,"ui:",["udp", "interval="])
   except getopt.GetoptError:
     print cmd
     sys.exit(2)
     
-  intervalArg = ''
+  intervalArg = '30'
+  useUdp=False
   
   # set command line arguments
   for opt, arg in opts:
@@ -270,9 +275,10 @@ if __name__ == '__main__':
       sys.exit()
     elif opt in ("-i", "--interval"):
       intervalArg = arg
-  
-  # setting default values if no other was defined
-  if intervalArg=='':
-    intervalArg='30'
+    elif opt in ("-u", "--udp"):
+      useUdp = True
+      PROTOSRC = 'UDP_SRC'
+      PROTODST = 'UDP_DST'
+      CRITERIA = 'udpPort'
   
   manage(int(intervalArg))
