@@ -60,15 +60,17 @@ if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
       fileBaseName=$(basename "$capFile")
       fileName="${fileBaseName%.*}"
       
-      # convert cap to csv file
-      tsharkCmd="tshark -T fields -n -r $capFile -E separator=,"
-      tsharkCmd="$tsharkCmd -E header=y -E quote=d"
-      tsharkCmd="$tsharkCmd -e frame.time_relative -e frame.time_epoch"
-      tsharkCmd="$tsharkCmd -e ip.src -e ip.dst -e ip.proto"
-      tsharkCmd="$tsharkCmd -e udp.srcport -e udp.dstport"
-      tsharkCmd="$tsharkCmd -e tcp.srcport -e tcp.dstport"
-      tsharkCmd="$tsharkCmd -e frame.len > ./${fileName}.csv"
-      eval $tsharkCmd
+      if [ ! -f ./${fileName}.csv ]; then
+        # convert cap to csv file
+        tsharkCmd="tshark -T fields -n -r $capFile -E separator=,"
+        tsharkCmd="$tsharkCmd -E header=y -E quote=d"
+        tsharkCmd="$tsharkCmd -e frame.time_relative -e frame.time_epoch"
+        tsharkCmd="$tsharkCmd -e ip.src -e ip.dst -e ip.proto"
+        tsharkCmd="$tsharkCmd -e udp.srcport -e udp.dstport"
+        tsharkCmd="$tsharkCmd -e tcp.srcport -e tcp.dstport"
+        tsharkCmd="$tsharkCmd -e frame.len > ./${fileName}.csv"
+        eval $tsharkCmd
+      fi
 	  
 	  # save output in string
 	  if [ -z "$csvFiles" ]
@@ -88,10 +90,10 @@ if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
     fi
     
     # remove csv files
-    for capFile in $capFilesList; do
-      fileBaseName=$(basename "$capFile")
-      fileName="${fileBaseName%.*}"
-      rm ./${fileName}.csv
-    done
+    #for capFile in $capFilesList; do
+    #  fileBaseName=$(basename "$capFile")
+    #  fileName="${fileBaseName%.*}"
+    #  rm ./${fileName}.csv
+    #done
     
 fi
