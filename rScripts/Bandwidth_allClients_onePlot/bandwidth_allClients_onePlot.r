@@ -37,8 +37,8 @@ if(length(args) >= 4){
 }
 rm(args)
 
-#csvFiles <- c("s2.csv", "s4.csv")
-#legendNames <- c("s2", "s4")
+csvFiles <- c("s1.csv", "s3.csv")
+legendNames <- c("s1", "s3")
 
 for(i in 1:length(csvFiles)) {
   # compute the bandwidth data
@@ -58,6 +58,10 @@ for(i in 1:length(csvFiles)) {
 # reset measurement start time to zero
 timeMin <- min(bandwidthData[["time"]])
 bandwidthData[["time"]] <- sapply(bandwidthData[["time"]], function (x) {x-timeMin})
+
+source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getThroughput.r")
+throughPutData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
+throughPut <- getThroughput(throughPutData, 2000, "s1", "s3")
 
 # print the whole thing
 figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll, color=Switch)) +
