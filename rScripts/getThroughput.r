@@ -8,25 +8,16 @@
 # outName: header name of the outgoing bandwidth column for the traffic dataframe
 
 getThroughput <- function(traffic, trafficLimit, inName, outName) {
-  # bandwidth vector for results
-  throughput <- vector(mode="numeric", length=length(traffic[,"time"]))
   
-  for(time in traffic[, "time"]) {
-    inTraffic <- traffic[traffic[["time"]] == time, inName]
-    if(is.na(inTraffic)) {
-      inTraffic <- 0
-    }
-    outTraffic <- traffic[traffic[["time"]] == time, outName]
-    if(is.na(outTraffic)) {
-      outTraffic <- 0
-    }
-    if(inTraffic == 0) {
-      throughput[time] <- 1
-    } else {
-      throughputValue <- min( (outTraffic / min(inTraffic, trafficLimit)), 1)
-      throughput[time] <- throughputValue
-    }
-  }
+  # remove zeros at the beginning and end
+  traffic <- traffic[min( which( traffic[, inName] != 0)) : max( which( traffic[, inName] != 0)), ]
+  # restrict in going traffic to bandwidth limit
+  traffic[traffic[[inName]] > trafficLimit, inName] <- trafficLimit
+  
+  # get quotient
+  throughput <- traffic[[outName]]/traffic[[inName]]
+  # filter out values higher than 1
+  throughput[throughput > 1.0] <- 1
   
   return(throughput)
 }
