@@ -63,14 +63,14 @@ bandwidthData[["time"]] <- sapply(bandwidthData[["time"]], function (x) {x-timeM
 rm(timeMin)
 
 # calculate the percentage of the throughput
-source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getThroughput.r")
+source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getThroughput.r")
 throughputData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
 throughput <- getThroughput(throughputData[, c("s1", "s3")], 2000, "s1", "s3")
 rm(throughputData, getThroughput)
 print(paste("Mean of throughput: ", mean(throughput), sep=""))
 
 # calculate the fairness
-source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getLinkFairness.r")
+source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getLinkFairness.r")
 linkFairnessData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
 linkFairness <- getLinkFairness(linkFairnessData[, c("s2", "s4")])
 rm(linkFairnessData, getLinkFairness)
@@ -103,14 +103,14 @@ source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/mergeBandwidth.r")
 bandwidthData <- mergeBandwidth(csvFiles[c(2,4)], legendNames[c(2,4)], resolution, protocol)
 
 # calculate the flow fairness
-source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getFlowFairness.r")
+source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getFlowFairness.r")
 flowFairnessData <- dcast(bandwidthData, time ~ src, value.var="bandwidth", fun.aggregate=sum)
 flowFairness <- getFlowFairness(flowFairnessData[, 2:ncol(flowFairnessData)], rep(200, 12))
 rm(flowFairnessData, getFlowFairness)
 print(paste("Mean of flow fairness: ", mean(flowFairness), sep=""))
 
 # calculate the flow reallocation
-source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getReallocation.r")
+source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getReallocation.r")
 reallocations <- getReallocation(bandwidthData[, c("time", "bandwidth", "src", "Switch")])
 rm(getReallocation)
 print(paste("Flow reallocations: ", sum(reallocations), sep=""))
