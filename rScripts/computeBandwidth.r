@@ -27,28 +27,27 @@ computeBandwidth <- function(csvFileName, bandwidthTimeResolution, protocol) {
   # use only udp traffic from iperf host one to two
   iperfTraffic <- capture[ capture[[PROTO]] == protocol & capture[[IPSRC]] == "100.0.1.101" & capture[[IPDST]] == "100.0.1.201", ]
   
-  # get all src/dst port pairs
-  portList <- getUniquePorts(iperfTraffic, DSTPORT, SRCPORT)
-  
-  # latest complete second in capture file
-  timeMax=floor(max(capture[,EPOCH]))
+  # first and latest complete second in capture file
   timeMin=ceiling(min(capture[,EPOCH]))
+  timeMax=floor(max(capture[,EPOCH]))
   # time values to compute bandwidth for
-  time <- seq(timeMin, timeMax, by=bandwidthTimeResolution)
-  rm(capture)
+  time <- unique(floor(capture[, EPOCH]))
+  rm(capture, timeMin, timeMax)
   
   # calculate the bandwidth
   # bandwidth of all connections
-  print("Bandwidth all")
-  bandwidthData <- data.frame("time"=time, "bandwidthAll"=getBandwidth(time, iperfTraffic, bandwidthTimeResolution, 1024, EPOCH, LENGTH))
+  bandwidthData <- data.frame("time"=time, "bandwidthAll"=getBandwidth(time, iperfTraffic[, c(EPOCH, LENGTH)], 1024))
+  
+  # get all src/dst port pairs
+  portList <- getUniquePorts(iperfTraffic, DSTPORT, SRCPORT)
   # calculate bandwidth for each port pair
   i <- 1
   for(portPair in portList){
     traffic <- iperfTraffic[ iperfTraffic[[SRCPORT]]==portPair[[1]] & iperfTraffic[[DSTPORT]]==portPair[[2]], ]
     # add results to data frame as new column
     name = paste(portPair[[2]], ", ", portPair[[1]], sep="")
-    print(name)
-    bandwidthData[[name]] <- getBandwidth(time, traffic, bandwidthTimeResolution, 1024, EPOCH, LENGTH)
+    #print(name)
+    bandwidthData[[name]] <- getBandwidth(time, traffic[, c(EPOCH, LENGTH)], 1024)
     i <- i+1
   }
   if(exists("traffic")) {
