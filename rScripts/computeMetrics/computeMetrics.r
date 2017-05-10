@@ -109,6 +109,13 @@ flowFairness <- getFlowFairness(flowFairnessData[, 2:ncol(flowFairnessData)], re
 rm(flowFairnessData, getFlowFairness)
 print(paste("Mean of flow fairness: ", mean(flowFairness), sep=""))
 
+# calculate the flow reallocation
+source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getReallocation.r")
+reallocations <- getReallocation(bandwidthData[, c("time", "bandwidth", "src", "Switch")])
+rm(getReallocation)
+print(paste("Flow reallocations: ", sum(reallocations), sep=""))
+
+
 # plot the bandwidth
 figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=Switch, linetype=Switch)) +
   geom_line() +
