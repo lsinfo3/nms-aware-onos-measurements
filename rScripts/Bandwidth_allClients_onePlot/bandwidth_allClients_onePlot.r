@@ -37,8 +37,8 @@ if(length(args) >= 4){
 }
 rm(args)
 
-csvFiles <- c("s1.csv", "s3.csv")
-legendNames <- c("s1", "s3")
+#csvFiles <- c("s1.csv", "s3.csv")
+#legendNames <- c("s1", "s3")
 
 for(i in 1:length(csvFiles)) {
   # compute the bandwidth data
@@ -59,9 +59,17 @@ for(i in 1:length(csvFiles)) {
 timeMin <- min(bandwidthData[["time"]])
 bandwidthData[["time"]] <- sapply(bandwidthData[["time"]], function (x) {x-timeMin})
 
-source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getThroughput.r")
-throughPutData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
-throughPut <- getThroughput(throughPutData, 2000, "s1", "s3")
+# calculate the percentage of the throughput
+#source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getThroughput.r")
+#throughputData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
+#throughput <- getThroughput(throughputData[, 2:ncol(throughputData)], 2000, "s1", "s3")
+#print(paste("Mean of throughput: ", mean(throughput), sep=""))
+
+# calculate the fairness
+#source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getLinkFairness.r")
+#fairnessData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
+#fairness <- getLinkFairness(fairnessData[, 2:ncol(fairnessData)])
+#print(paste("Mean of fairness: ", mean(fairness), sep=""))
 
 # print the whole thing
 figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll, color=Switch)) +

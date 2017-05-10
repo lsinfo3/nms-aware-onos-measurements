@@ -97,3 +97,5 @@ if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
     #done
     
 fi
+
+# tshark -T fields -n -r s1.cap -E separator=, -E header=y -E quote=d -e frame.time_relative -e frame.time_epoch -e ip.src -e ip.dst -e ip.proto -e udp.srcport -e udp.dstport -e tcp.srcport -e tcp.dstport -e frame.len > s1.csv

@@ -2,7 +2,7 @@
 
 # function calculation the throughput based on the ingoing or max bandwidth
 #
-# traffic: dataframe holding timestamp and ingoing and outgoing bandwidth in kbit
+# traffic: dataframe holding in- and outgoing bandwidth in kbit
 # trafficLimit: defining the bandwidth limit for the network in kbit
 # inName: header name of the ingoing bandwidth column for the traffic dataframe
 # outName: header name of the outgoing bandwidth column for the traffic dataframe

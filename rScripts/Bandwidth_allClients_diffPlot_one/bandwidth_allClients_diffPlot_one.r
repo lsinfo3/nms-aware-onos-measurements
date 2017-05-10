@@ -44,6 +44,11 @@ rm(args)
 # calculate bandwidth data
 bandwidthData <- mergeBandwidth(csvFiles, legendNames, resolution, protocol)
 
+# calculate the flow fairness
+#source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getFlowFairness.r")
+#fairnessData <- dcast(bandwidthData, time ~ src, value.var="bandwidth", fun.aggregate=sum)
+#flowFairness <- getFlowFairness(fairnessData[, 2:ncol(fairnessData)], rep(200, 12))
+#print(paste("Mean of fairness: ", mean(flowFairness), sep=""))
 
 # plot the bandwidth
 figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=Switch, linetype=Switch)) +
