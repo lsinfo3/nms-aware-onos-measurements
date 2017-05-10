@@ -90,11 +90,11 @@ if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
     fi
     
     # remove csv files
-    #for capFile in $capFilesList; do
-    #  fileBaseName=$(basename "$capFile")
-    #  fileName="${fileBaseName%.*}"
-    #  rm ./${fileName}.csv
-    #done
+    for capFile in $capFilesList; do
+      fileBaseName=$(basename "$capFile")
+      fileName="${fileBaseName%.*}"
+      rm ./${fileName}.csv
+    done
     
 fi
 
