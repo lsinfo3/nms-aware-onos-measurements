@@ -37,8 +37,8 @@ if(length(args) >= 4){
 }
 rm(args)
 
-#csvFiles <- c("s1.csv", "s3.csv")
-#legendNames <- c("s1", "s3")
+#csvFiles <- c("s1.csv", "s2.csv", "s3.csv", "s4.csv")
+#legendNames <- c("s1", "s2", "s3", "s4")
 
 for(i in 1:length(csvFiles)) {
   # compute the bandwidth data

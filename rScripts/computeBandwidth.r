@@ -4,9 +4,6 @@
 
 computeBandwidth <- function(csvFileName, bandwidthTimeResolution, protocol) {
   
-  source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getBandwidth.r")
-  source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getUniquePorts.r")
-  
   # column names
   TIME <- "frame.time_relative"
   EPOCH <- "frame.time_epoch"
@@ -35,11 +32,14 @@ computeBandwidth <- function(csvFileName, bandwidthTimeResolution, protocol) {
   rm(capture, timeMin, timeMax)
   
   # calculate the bandwidth
+  source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getBandwidth.r")
   # bandwidth of all connections
   bandwidthData <- data.frame("time"=time, "bandwidthAll"=getBandwidth(time, iperfTraffic[, c(EPOCH, LENGTH)], 1024))
   
   # get all src/dst port pairs
+  source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getUniquePorts.r")
   portList <- getUniquePorts(iperfTraffic, DSTPORT, SRCPORT)
+  
   # calculate bandwidth for each port pair
   i <- 1
   for(portPair in portList){

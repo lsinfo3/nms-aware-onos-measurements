@@ -14,5 +14,5 @@ getLinkFairness <- function(traffic) {
   # calculate fairness
   fairness <- apply(traffic, 1, jain)
   # return only non NAN values
-  return(fairness[!is.nan(fairness)])
+  return(fairness[!is.na(fairness)])
 }
