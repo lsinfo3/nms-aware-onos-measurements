@@ -198,9 +198,10 @@ def resetLinkAnnotations(linkUrl, annotationType, switchCapacityPath):
 
 
 # manage network
-def manage(interval):
+def manage(interval, runtime):
   
-  # cycle through the update process
+  # cycle through the update process until runtime is over
+  startRuntime = time.time()
   while 1:
     
     startTime = time.time()
@@ -250,22 +251,29 @@ def manage(interval):
       except KeyboardInterrupt:
         print('\n\nKeyboard exception received. Exiting.')
         exit()
+    
+    # check if runtime is over
+    if runtime != 0:
+      if (time.time() - startRuntime) > runtime:
+        print("\n\nRuntime of {}s is over".format(runtime))
+        exit()
 
 
 if __name__ == '__main__':
   setLogLevel( 'info' )
   
-  cmd='Usage:\n{} [-u] [-i <interval>]'.format(sys.argv[0])
+  cmd='Usage:\n{} [-u] [-i <interval>] [-r <runtime> s]'.format(sys.argv[0])
   argv = sys.argv[1:]
   
   # parsing commandline arguments
   try:
-    opts, args = getopt.getopt(argv,"ui:",["udp", "interval="])
+    opts, args = getopt.getopt(argv,"ui:r:",["udp", "interval=", "runtime="])
   except getopt.GetoptError:
     print cmd
     sys.exit(2)
     
   intervalArg = '30'
+  runtimeArg= '0'
   useUdp=False
   
   # set command line arguments
@@ -275,10 +283,12 @@ if __name__ == '__main__':
       sys.exit()
     elif opt in ("-i", "--interval"):
       intervalArg = arg
+    elif opt in ("-r", "--runtime"):
+      runtimeArg = arg
     elif opt in ("-u", "--udp"):
       useUdp = True
       PROTOSRC = 'UDP_SRC'
       PROTODST = 'UDP_DST'
       CRITERIA = 'udpPort'
   
-  manage(int(intervalArg))
+  manage(interval=int(intervalArg), runtime=int(runtimeArg))

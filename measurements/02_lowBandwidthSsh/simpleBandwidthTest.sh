@@ -51,7 +51,7 @@ done
 
 if [ "$TYPE" == "NMS" ]; then
   # start network management system
-  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10"
+  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $(($DURATION + 100))"
   if [ "$USEUDP" == true ]; then
 	nmsCommand="$nmsCommand -u"
   fi

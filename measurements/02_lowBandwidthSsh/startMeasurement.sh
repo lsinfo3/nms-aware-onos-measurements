@@ -49,10 +49,13 @@ gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'c
 # output of switch 1 (both data streams before limitation)
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s1-eth3 -Z ubuntu -w "$TYPE"_s1-eth3.cap'\""
 
-if [ "$TYPE" == "NMS" ]
-  then
-    # start network management system
-    gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10; exec bash'\""
+if [ "$TYPE" == "NMS" ]; then
+  # start network management system
+  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $(($DURATION + 100))"
+  if [ "$USEUDP" == true ]; then
+	nmsCommand="$nmsCommand -u"
+  fi
+  gnome-terminal -e "$nmsCommand; exec bash'\""
 fi
 
 sleep 5
