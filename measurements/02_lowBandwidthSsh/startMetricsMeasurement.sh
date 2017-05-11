@@ -63,10 +63,13 @@ gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'c
 # output of switch 1 (both data streams before limitation)
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s1-eth3 -Z ubuntu -w "$TYPE"_s1-eth3.cap'\""
 
-if [ "$TYPE" == "NMS" ]
-  then
-    # start network management system
-    gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10'\""
+if [ "$TYPE" == "NMS" ]; then
+  # start network management system
+  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $(($DURATION + 20))"
+  if [ "$USEUDP" == true ]; then
+	nmsCommand="$nmsCommand -u"
+  fi
+  gnome-terminal -e "$nmsCommand'\""
 fi
 
 sleep 5
@@ -81,8 +84,10 @@ if [ "$TYPE" == "NMS" ]; then
   # add constraints if NMS is used
   iperfCommand="$iperfCommand -a"
 fi
-gnome-terminal -e "$iperfCommand -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt'\""
-unset iperfCommand
+iperfResultName="iperfResult1.txt"
+# execute command and move iperf result to captures folder at the end
+gnome-terminal -e "$iperfCommand -p 5001 -n iperf1 -r /home/ubuntu/${iperfResultName}; cp /home/ubuntu/${iperfResultName} ./captures/${iperfResultName}'\""
+unset iperfCommand iperfResultName
 
 sleep $DURATION
 sleep 10
@@ -90,11 +95,6 @@ sleep 10
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall iperf3'\""
 # kill tcpdump in vagrant vm
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
-# kill nms
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall python'\""
-
-# copy iperf output to measurement folder
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/; cp ./iperfResult1.txt ./captures/iperfResult1.txt'\""
 
 
 
@@ -123,16 +123,16 @@ for f in $folderName/*.cap; do
   # concatenate capture file and legend names
   if [ -z "$capFiles" ]
     then
-	  capFiles="${capFiles} $f"
+	  capFiles="$f"
 	else
-	  csvFiles="$f"
+	  capFiles="${capFiles} $f"
   fi
   
   if [ -z "$legendNames" ]
     then
-	  legendNames="${legendNames} $legendName"
-	else
 	  legendNames="$legendName"
+	else
+	  legendNames="${legendNames} $legendName"
   fi
 
 done
@@ -143,8 +143,8 @@ if [ "$USEUDP" == true ]; then
   # use UDP rather than TCP
   rCommand="$rCommand -u"
 fi
-rCommand="$rCommand -i \"$capFiles\""
-rCommand="$rCommand -n \"$legendNames\""
+rCommand="$rCommand -i \"${capFiles}\""
+rCommand="$rCommand -n \"${legendNames}\""
 rCommand="$rCommand -r $leftVmFolder/python/rScripts/computeMetrics/computeMetrics.r"
 rCommand="$rCommand -o $folderName/${fileName}-metrics"
 
@@ -155,5 +155,7 @@ unset rCommand
 mv $leftVmFolder/captures/*.txt $folderName
 
 unset leftVmFolder folderName fileBaseName fileName fileName2 fileFolderName
+
+sleep 10
 
 done
