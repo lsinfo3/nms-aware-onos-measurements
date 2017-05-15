@@ -255,7 +255,9 @@ def manage(interval, runtime):
     # check if runtime is over
     if runtime != 0:
       if (time.time() - startRuntime) > runtime:
-        print("\n\nRuntime of {}s is over".format(runtime))
+        info("\n\nRuntime of {}s is over.\nSetting link annotations to default value.\n".format(runtime))
+        resetLinkAnnotations(linkUrl=LINKURL, annotationType='bandwidth',
+            switchCapacityPath='/home/ubuntu/python/measurements/02_lowBandwidthSsh/switchCapacity.txt')
         exit()
 
 
