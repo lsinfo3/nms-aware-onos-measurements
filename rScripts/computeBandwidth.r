@@ -13,15 +13,17 @@ computeBandwidth <- function(csvFileName, bandwidthTimeResolution, protocol) {
   if(protocol=="6") {
     SRCPORT <- "tcp.srcport"
     DSTPORT <- "tcp.dstport"
+    #LENGTH <- "tcp.len"
   } else if(protocol=="17") {
     SRCPORT <- "udp.srcport"
     DSTPORT <- "udp.dstport"
+    #LENGTH <- "udp.length"
   }
   LENGTH <- "frame.len"
   
   # get all captured traffic
   capture <- read.csv(csvFileName, header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
-  # use only udp traffic from iperf host one to two
+  # use only traffic from iperf host one to two
   iperfTraffic <- capture[ capture[[PROTO]] == protocol & capture[[IPSRC]] == "100.0.1.101" & capture[[IPDST]] == "100.0.1.201", ]
   
   # first and latest complete second in capture file
@@ -34,6 +36,7 @@ computeBandwidth <- function(csvFileName, bandwidthTimeResolution, protocol) {
   # calculate the bandwidth
   source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/getBandwidth.r")
   # bandwidth of all connections
+  #print("BandwidthAll")
   bandwidthData <- data.frame("time"=time, "bandwidthAll"=getBandwidth(time, iperfTraffic[, c(EPOCH, LENGTH)], 1024))
   
   # get all src/dst port pairs

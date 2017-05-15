@@ -68,7 +68,8 @@ if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
         tsharkCmd="$tsharkCmd -e ip.src -e ip.dst -e ip.proto"
         tsharkCmd="$tsharkCmd -e udp.srcport -e udp.dstport"
         tsharkCmd="$tsharkCmd -e tcp.srcport -e tcp.dstport"
-        tsharkCmd="$tsharkCmd -e frame.len > ./${fileName}.csv"
+        tsharkCmd="$tsharkCmd -e frame.len -e tcp.len -e udp.length"
+        tsharkCmd="$tsharkCmd > ./${fileName}.csv"
         eval $tsharkCmd
       fi
 	  
@@ -98,4 +99,4 @@ if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
     
 fi
 
-# tshark -T fields -n -r s1.cap -E separator=, -E header=y -E quote=d -e frame.time_relative -e frame.time_epoch -e ip.src -e ip.dst -e ip.proto -e udp.srcport -e udp.dstport -e tcp.srcport -e tcp.dstport -e frame.len > s1.csv
+# tshark -T fields -n -r s1.cap -E separator=, -E header=y -E quote=d -e frame.time_relative -e frame.time_epoch -e ip.src -e ip.dst -e ip.proto -e udp.srcport -e udp.dstport -e tcp.srcport -e tcp.dstport -e frame.len -e tcp.len -e udp.length > s1.csv

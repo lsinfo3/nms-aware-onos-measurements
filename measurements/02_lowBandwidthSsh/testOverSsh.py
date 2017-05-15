@@ -106,6 +106,9 @@ def startIperfClient(threadName, duration='10', clientCount='1',
     cmd += ' -c ' + hostname2
     if(useUdp):
       cmd += ' -u'
+    else:
+      #cmd += ' -O 60'
+      cmd += ' -C cubic'
     cmd += ' -b ' + bandwidth + 'k'
     cmd += ' -P ' + clientCount
     cmd += ' -t ' + duration
