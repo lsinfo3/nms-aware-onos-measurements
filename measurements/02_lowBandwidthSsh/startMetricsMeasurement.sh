@@ -162,10 +162,16 @@ rCommand="$rCommand -o $resultFolder/metrics"
 eval $rCommand
 unset rCommand
 
-# move iperf result to the new folder
-mv $leftVmFolder/captures/*.txt $resultFolder
+# move iperf result and graphs to extra folder with timestamp
+dataFolder="${resultFolder}/$(date +%F_%H-%M-%S)"
+mkdir $dataFolder
+mv $leftVmFolder/captures/*.txt $dataFolder
+mv ${resultFolder}/*.pdf $dataFolder
 
-unset fileBaseName fileName fileName2 fileFolderName
+# remove capture files
+rm $resultFolder/*.cap
+
+unset fileBaseName fileName fileName2 fileFolderName dataFolder
 
 sleep 10
 
