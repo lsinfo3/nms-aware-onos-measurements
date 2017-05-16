@@ -36,6 +36,9 @@ if(length(args) >= 4){
 }
 rm(args)
 
+resultHeader <- c("time", "throughput", "linkFairness", "flowFairness", "reallocations")
+result <- c(strftime(Sys.time(), "%Y-%m-%d_%H-%M-%S"))
+
 #csvFiles <- c("s1.csv", "s2.csv", "s3.csv", "s4.csv")
 #legendNames <- c("s1", "s2", "s3", "s4")
 
@@ -76,7 +79,7 @@ if(length(unique(bandwidthData[["Switch"]])) == 1) {
 }
 # save cdf_plot as pdf
 width <- 15.0; height <- 7.0
-ggsave(paste(outFilePath, "_aggr.pdf", sep=""), plot = figure, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, "_aggr_", strftime(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
 rm(width, height)
 
 #TODO: Do not depend on legend names!
@@ -86,6 +89,7 @@ throughputData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
 throughput <- getThroughput(throughputData[, c("s1", "s3")], 2000, "s1", "s3")
 rm(throughputData, getThroughput)
 print(paste("Mean of throughput: ", mean(throughput), sep=""))
+result <- c(result, mean(throughput))
 
 # calculate the fairness
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getLinkFairness.r")
@@ -93,6 +97,7 @@ linkFairnessData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll"
 linkFairness <- getLinkFairness(linkFairnessData[, c("s2", "s4")])
 rm(linkFairnessData, getLinkFairness)
 print(paste("Mean of link fairness: ", mean(linkFairness), sep=""))
+result <- c(result, mean(linkFairness))
 
 rm(bandwidthData)
 
@@ -120,7 +125,7 @@ if(length(unique(bandwidthData[["Switch"]])) == 1) {
 
 # save plot as pdf
 width <- 15.0; height <- 20.0
-ggsave(paste(outFilePath, "_diff.pdf", sep=""), plot = figure, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, "_diff_", strftime(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
 
 rm(width, height)
 
@@ -131,11 +136,21 @@ flowFairnessData <- dcast(bandwidthData, time ~ src, value.var="bandwidth", fun.
 flowFairness <- getFlowFairness(flowFairnessData[, 2:ncol(flowFairnessData)], rep(200, 12))
 rm(flowFairnessData, getFlowFairness)
 print(paste("Mean of flow fairness: ", mean(flowFairness), sep=""))
+result <- c(result, mean(flowFairness))
 
 # calculate the flow reallocation
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getReallocation.r")
 reallocations <- getReallocation(bandwidthData[, c("time", "bandwidth", "src", "Switch")])
 rm(getReallocation)
 print(paste("Flow reallocations: ", sum(reallocations), sep=""))
+result <- c(result, sum(reallocations))
 
 rm(bandwidthData)
+
+
+# write results to output file
+csvFile <- paste(outFilePath, ".csv", sep="")
+if(!file.exists(csvFile)) {
+  write.table(t(resultHeader), file=csvFile, row.names=FALSE, col.names=FALSE, na="", sep=",", append=FALSE)
+}
+write.table(t(result), file=csvFile, row.names=FALSE, col.names=FALSE, na="", sep=",", append=TRUE)

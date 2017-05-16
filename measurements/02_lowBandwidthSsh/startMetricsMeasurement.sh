@@ -50,7 +50,15 @@ while getopts "t:d:hc:r:u" opt; do
 done
 
 
-# repeat measurement
+# create results folder with date and time
+leftVmFolder="$HOME/Masterthesis/vm/leftVm"
+STARTTIME=$(date +%F_%H-%M-%S)
+resultFolder="$leftVmFolder/captures/metrics/${TYPE}_${STARTTIME}"
+mkdir $resultFolder
+
+
+### repeat measurement ###
+
 for run in `seq 1 $REP`; do
 
 # monitor traffic with tcpdump to file
@@ -67,6 +75,8 @@ sleep 1
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s1-eth3 -Z ubuntu -w "$TYPE"_s1-eth3.cap'\""
 sleep 1
 
+# TODO: check if all four cap files exist
+
 if [ "$TYPE" == "NMS" ]; then
   # start network management system
   nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $(($DURATION + 20))"
@@ -79,7 +89,7 @@ fi
 sleep 5
 
 # start iperf bandwidth test
-iperfCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c $COUNT -b 200"
+iperfCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c $COUNT -b 400"
 if [ "$USEUDP" == true ]; then
   # use UDP rather than TCP
   iperfCommand="$iperfCommand -u"
@@ -102,24 +112,21 @@ gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 's
 
 
 
-### create results
-leftVmFolder="$HOME/Masterthesis/vm/leftVm"
-folderName="$leftVmFolder/captures/metrics/${TYPE}_$(date +%F_%H-%M-%S)"
-# create new folder with date and time
-mkdir $folderName
-# move capture to the new folder
-mv $leftVmFolder/captures/*.cap $folderName
+### create results ###
+
+# move captures to the new folder
+mv $leftVmFolder/captures/*.cap $resultFolder
 
 capFiles=""
 legendNames=""
-for f in $folderName/*.cap; do
+for f in $resultFolder/*.cap; do
 
   # echo "File: $f"
   fileBaseName=$(basename "$f") # example: ./out.pdf -> out.pdf
   # echo "FileBaseName: $fileBaseName"
   fileName="${fileBaseName%.*}" # example: out.pdf -> out
   # echo "FileName: $fileName"
-  #fileFolderName="$folderName/$fileName"
+  #fileFolderName="$resultFolder/$fileName"
   # get the legend name
   legendNamePos=`expr index "$fileName" "_"`
   legendName=${fileName:$legendNamePos:2}
@@ -150,16 +157,18 @@ fi
 rCommand="$rCommand -i \"${capFiles}\""
 rCommand="$rCommand -n \"${legendNames}\""
 rCommand="$rCommand -r $leftVmFolder/python/rScripts/computeMetrics/computeMetrics.r"
-rCommand="$rCommand -o $folderName/${fileName}-metrics"
+rCommand="$rCommand -o $resultFolder/metrics"
 
 eval $rCommand
 unset rCommand
 
 # move iperf result to the new folder
-mv $leftVmFolder/captures/*.txt $folderName
+mv $leftVmFolder/captures/*.txt $resultFolder
 
-unset leftVmFolder folderName fileBaseName fileName fileName2 fileFolderName
+unset fileBaseName fileName fileName2 fileFolderName
 
 sleep 10
 
 done
+
+unset resultFolder STARTTIME leftVmFolder
