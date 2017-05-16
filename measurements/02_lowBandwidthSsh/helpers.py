@@ -34,6 +34,14 @@ def put(url, data):
     info('POST /tasks/ {}'.format(response.status_code))
     print(response)
   return response
+  
+def delete(url):
+  response = requests.delete(url, auth=(USER, PASSWORD))
+  if response.status_code != 204:
+    info('+++ ApiError')
+    info('DELETE /tasks/ {}'.format(response.status_code))
+    print(response)
+  return response
 
 
 def printDict(d,depth=0):

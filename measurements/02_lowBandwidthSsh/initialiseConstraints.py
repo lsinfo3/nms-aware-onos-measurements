@@ -6,14 +6,13 @@ Manage the network links by annotation
 
 from mininet.log import setLogLevel, info
 from urllib import quote
-from helpers import get, put, post
+from helpers import get, put, post, delete
 import getIperfClients
 import json, time
 
 
 INTENTURL='http://192.168.33.20:8181/onos/v1/intents'
 
-CLIENTCOUNT='8'
 RESULTPATH='/home/ubuntu/iperf_test_1.txt'
 
 ADVCONST = '{\"key\": \"bandwidth\", \
@@ -83,13 +82,23 @@ def addConstraint(appId, intentKey, newConstraint):
 
 def getIntentKeys(clientPortMap):
   
-  # get all installed intents in ONOS as json
-  response = get(INTENTURL)
-  # print("All Intents:" + str(response.json()) + "\n")
-
-  # gather the intent keys of the iperf clients
-  return findIperfIntents(response.json(), clientPortMap)
+  # map of the corresponding iperf intents of onos
+  iperfIntentKeyMap = findIperfIntents(get(INTENTURL).json(),
+        clientPortMap)
+  # run loop until all intents are provisioned in onos
+  while len(iperfIntentKeyMap) < len(clientPortMap):
+    info("+++ Missing iperf intents in ONOS, trying again.\n" + 
+        "\tOnly found: " + str(iperfIntentKeyMap.keys()) + "\n")
+    try:
+      time.sleep(1)
+    except KeyboardInterrupt:
+      print('\n\nKeyboard exception received. Exiting.')
+      exit()
+    iperfIntentKeyMap = findIperfIntents(get(INTENTURL).json(),
+        clientPortMap)
+  
   # print("Iperf Intent Key Map" + str(iperfIntentKeyMap) + "\n")
+  return iperfIntentKeyMap
 
 
 def initialiseConstraints(clientPortMap):
@@ -97,19 +106,9 @@ def initialiseConstraints(clientPortMap):
   # info("+++ Client Port Map:\n")
   # print(str(clientPortMap) + "\n")
   
-  # map of the corresponding iperf intents of onos
+  # map of the corresponding iperf intents in onos
   iperfIntentKeyMap = getIntentKeys(clientPortMap)
-  # run loop until all intents are provisioned in onos
-  while len(iperfIntentKeyMap) < len(clientPortMap):
-    info("+++ Missing iperf intents in ONOS, trying again.\n" + 
-        "\tOnly found: " + str(iperfIntentKeyMap.keys()) + "\n")
-    iperfIntentKeyMap = getIntentKeys(clientPortMap)
-    try:
-        time.sleep(1)
-    except KeyboardInterrupt:
-      print('\n\nKeyboard exception received. Exiting.')
-      exit()
-
+  
   # update constraint to add
   advConstraint = json.loads(ADVCONST)
   advConstraint["threshold"] = clientPortMap.values()[1]['bandwidth']
@@ -121,9 +120,19 @@ def initialiseConstraints(clientPortMap):
     addConstraint(appId, intentKey, advConstraint)
 
 
+# remove the intents from the client port map
+def removeIntents(clientPortMap):
+  
+  # map of the corresponding iperf intents in onos
+  iperfIntentKeyMap = getIntentKeys(clientPortMap)
+  
+  for intentKey, appId in iperfIntentKeyMap.items():
+    delete(INTENTURL + "/" + appId + "/" + quote(intentKey, safe=''))
+  
+
 if __name__ == '__main__':
   setLogLevel( 'info' )
   
-  clientPortMap = getIperfClients.getIperfClients(resultIperf=RESULTPATH, clientCount=int(CLIENTCOUNT),
+  clientPortMap = getIperfClients.getIperfClients(resultIperf=RESULTPATH, clientCount=8,
       bandwidth='200000', serverPort='5001')
   initialiseConstraints(clientPortMap)
