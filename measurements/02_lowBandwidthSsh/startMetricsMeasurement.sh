@@ -76,10 +76,11 @@ gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'c
 sleep 1
 
 # TODO: check if all four cap files exist
+# TODO: adapt nms runtime to connection arrival time
 
 if [ "$TYPE" == "NMS" ]; then
   # start network management system
-  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $(($DURATION + 20))"
+  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $(($DURATION + $COUNT*20 + 20))"
   if [ "$USEUDP" == true ]; then
 	nmsCommand="$nmsCommand -u"
   fi
@@ -88,20 +89,15 @@ fi
 
 sleep 5
 
-# start iperf bandwidth test
-iperfCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c $COUNT -b 400"
+
+# start iperf instances
+iperfCommand="./iperfParameter/runIperf.sh -c $COUNT -d $DURATION -b 400 -a 20 -t $TYPE"
 if [ "$USEUDP" == true ]; then
-  # use UDP rather than TCP
-  iperfCommand="$iperfCommand -u"
+	iperfCommand="$iperfCommand -u"
 fi
-if [ "$TYPE" == "NMS" ]; then
-  # add constraints if NMS is used
-  iperfCommand="$iperfCommand -a"
-fi
-iperfResultName="iperfResult1.txt"
-# execute command and move iperf result to captures folder at the end
-gnome-terminal -e "$iperfCommand -p 5001 -n iperf1 -r /home/ubuntu/${iperfResultName}; cp /home/ubuntu/${iperfResultName} ./captures/${iperfResultName}'\""
-unset iperfCommand iperfResultName
+eval $iperfCommand
+unset iperfCommand
+
 
 sleep $DURATION
 sleep 10
