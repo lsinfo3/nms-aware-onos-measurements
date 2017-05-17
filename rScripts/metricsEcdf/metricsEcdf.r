@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(ggplot2)
+library(reshape2)
 
 # remove all objects in workspace
 rm(list=ls())
@@ -22,13 +23,25 @@ rm(args)
 
 # read csv metrics file
 metrics <- read.csv(csvFile, header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
+metrics <- melt(metrics[2:5], measure.vars=1:4)
+labels <- c(throughput="Throughput", linkFairness="Link Fairness", flowFairness="Flow Fairness", reallocations="Reallocations")
 
-figure <- ggplot(data=metrics) +
-  stat_ecdf(aes(x=throughput, color=0), geom="step") +
-  stat_ecdf(aes(x=flowFairness, color=1), geom="step") +
-  stat_ecdf(aes(x=linkFairness, color=0.5), geom="step") +
-  labs(title="Empirical Cumulative Density Function", x="throughput", y="F(throughput)") +
+# round the values to max 3 digits
+myBreaks <- function(x){
+  breaks <- c(ceiling(min(x)*100)/100,round(median(x),2),floor(max(x)*100)/100)
+  names(breaks) <- attr(breaks,"labels")
+  breaks
+}
+
+figure <- ggplot(data=metrics, aes(x=value)) +
+  stat_ecdf(geom="step") +
+  facet_grid(. ~ variable, scales="free_x", labeller=labeller(variable=labels)) +
+  scale_x_continuous(breaks=myBreaks)+
+  labs(x="metrics", y="Cumulative Probability") +
   theme_bw() +
-  theme(text = element_text(size=12))
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
+        panel.spacing.x = unit(0.75, "lines"))
 
-figure
+# save plot as pdf
+width <- 15.0; height <- 7.0
+ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
