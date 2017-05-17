@@ -187,8 +187,8 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     removeClientsFromList(clientListPath=CLIENTLISTPATH, instanceName=iperfName)
     
     if addConstraints:
-      info("+++ Remove the intents with constraints in ONOS created for this iPerf instance.\n")
-      initialiseConstraints.removeIntents(clientPortMap=clientPortMap)
+      info("+++ Remove all intents created for this iPerf instance.\n")
+      initialiseConstraints.removeIperfIntents(clientPortMap=clientPortMap)
     
     
     # kill the iperf server on host 2

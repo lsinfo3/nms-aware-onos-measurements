@@ -120,15 +120,19 @@ def initialiseConstraints(clientPortMap):
     addConstraint(appId, intentKey, advConstraint)
 
 
-# remove the intents from the client port map
-def removeIntents(clientPortMap):
+def removeIperfIntents(clientPortMap):
   
   # map of the corresponding iperf intents in onos
-  iperfIntentKeyMap = getIntentKeys(clientPortMap)
+  intentsMap = get(INTENTURL).json()
+  # iperf server port
+  iperfServerPort = clientPortMap.values()[1]['dst']
   
-  for intentKey, appId in iperfIntentKeyMap.items():
-    delete(INTENTURL + "/" + appId + "/" + quote(intentKey, safe=''))
-  
+  for intent in intentsMap['intents']:
+    key = intent['key']
+    appId = intent['appId']
+    if iperfServerPort in key:
+      delete(INTENTURL + "/" + appId + "/" + quote(key, safe=''))
+
 
 if __name__ == '__main__':
   setLogLevel( 'info' )
