@@ -31,7 +31,7 @@ def findIperfIntents(intentsMap, clientPortMap):
   relevantIntentKeyMap = {}
   
   # iperf server port
-  iperfServerPort = clientPortMap.values()[1]['dst']
+  iperfServerPort = clientPortMap.values()[0]['dst']
   # list of only the source tp ports
   iperfClientPorts = []
   for clientInfo in clientPortMap.values():
@@ -111,7 +111,7 @@ def initialiseConstraints(clientPortMap):
   
   # update constraint to add
   advConstraint = json.loads(ADVCONST)
-  advConstraint["threshold"] = clientPortMap.values()[1]['bandwidth']
+  advConstraint["threshold"] = clientPortMap.values()[0]['bandwidth']
   
   # info("+++ iperf intents updated:\n")
   # add desired constraint to the intents
@@ -125,7 +125,7 @@ def removeIperfIntents(clientPortMap):
   # map of the corresponding iperf intents in onos
   intentsMap = get(INTENTURL).json()
   # iperf server port
-  iperfServerPort = clientPortMap.values()[1]['dst']
+  iperfServerPort = clientPortMap.values()[0]['dst']
   
   for intent in intentsMap['intents']:
     key = intent['key']
