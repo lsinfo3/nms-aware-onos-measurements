@@ -28,7 +28,17 @@ labels <- c(throughput="Throughput", linkFairness="Link Fairness", flowFairness=
 
 # round the values to max 3 digits
 myBreaks <- function(x){
-  breaks <- c(ceiling(min(x)*100)/100,round(median(x),2),floor(max(x)*100)/100)
+  precission <- 1
+  fac <- 10^precission # factor
+  breaks <- c(ceiling(min(x)*fac)/fac,round(median(x),precission),floor(max(x)*fac)/fac)
+  while(length(unique(breaks)) < length(unique(x))+1) {
+    precission <- precission + 1
+    fac <- 10^precission # factor
+    breaks <- c(ceiling(min(x)*fac)/fac,round(median(x),precission),floor(max(x)*fac)/fac)
+  }
+  if(breaks[1] < 0){
+    breaks[1] <- 0
+  }
   names(breaks) <- attr(breaks,"labels")
   breaks
 }
@@ -37,7 +47,7 @@ figure <- ggplot(data=metrics, aes(x=value)) +
   stat_ecdf(geom="step") +
   facet_grid(. ~ variable, scales="free_x", labeller=labeller(variable=labels)) +
   scale_x_continuous(breaks=myBreaks)+
-  labs(x="metrics", y="Cumulative Probability") +
+  labs(x="Metrics", y="Cumulative Probability") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"))
