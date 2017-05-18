@@ -65,7 +65,7 @@ def removeClientsFromList(clientListPath, instanceName):
     f.close()
 
 # thread running an iperf client
-class myThread (threading.Thread):
+class clientThread (threading.Thread):
   
   def __init__(self, threadID, name, duration, clientCount, resultIperf,
 		bandwidth, serverPort, useUdp):
@@ -80,13 +80,13 @@ class myThread (threading.Thread):
     self.useUdp = useUdp
   
   def run(self):
-    info("+++ Starting thread " + self.name + "\n")
+    info("+++ Starting client thread " + self.name + "\n")
     # run iperf ssh command here
     startIperfClient(threadName=self.name, duration=self.duration, 
         clientCount=self.clientCount, resultIperf=self.resultIperf,
         bandwidth=self.bandwidth, serverPort=self.serverPort,
         useUdp=self.useUdp)
-    info("+++ Exiting thread " + self.name + "\n")
+    info("+++ Exiting client thread " + self.name + "\n")
 
 
 # start an iperf client on host via ssh
@@ -100,7 +100,6 @@ def startIperfClient(threadName, duration='10', clientCount='1',
     h1.login(hostname1, username, password)
     
     # starting iperf client bandwidth measurement
-    info('+++ Start iperf client:\nRuntime: {}\nServerPort: {}\nUDP: {}\n'.format(duration, serverPort, useUdp))
     cmd =  'stdbuf -i0 -o0 -e0'
     cmd += ' iperf3'
     cmd += ' -c ' + hostname2
@@ -117,13 +116,65 @@ def startIperfClient(threadName, duration='10', clientCount='1',
     cmd += ' -l 1470'
     cmd += ' | tee ' + resultIperf
     h1.sendline(cmd)
+    info('+++ Started iperf client:\nRuntime: {}\nServerPort: {}\nUDP: {}\n'.format(duration, serverPort, useUdp))
     # wait until finished and match the next shell prompt
     time.sleep(float(duration))
-    h1.prompt()
     
-    info('+++ iperf client ended\n')
-    time.sleep(5)
+    if not h1.prompt():
+      info('+++ iPerf client: Could not match the prompt! Sending SIGKILL.\n')
+      h1.kill(9)
+    else:
+      info('+++ iPerf client ended\n')
+    info('+++ iPerf client session content:\n{}'.format(h1.before))
+    
     h1.logout()
+    
+  except pxssh.ExceptionPxssh, e:
+    print "pxssh failed on login."
+    print str(e)
+  except KeyboardInterrupt:
+      print('\n\nKeyboard exception received. Exiting.')
+      exit()
+
+
+# thread running an iperf client
+class serverThread (threading.Thread):
+  
+  def __init__(self, threadID, serverPort, duration):
+    threading.Thread.__init__(self)
+    self.threadID = threadID
+    self.serverPort = serverPort
+    self.duration = duration
+
+
+  def run(self):
+    info("+++ Starting server thread\n")
+    # run iperf ssh command
+    startIperfServer(serverPort=self.serverPort, duration=self.duration)
+    info("+++ Exiting server thread\n")
+
+
+# start an iperf server on host via ssh
+def startIperfServer(serverPort='5001', duration='10'):
+  
+  try:
+    # log in to host1 via ssh
+    h2 = pxssh.pxssh()
+    h2.login(hostname2, username, password)
+    
+    # start iperf server on host 2
+    h2.sendline('timeout {}s iperf3 -s -p {}'.format(float(duration)+5, serverPort))
+    info("+++ Started iPerf server\n")
+    time.sleep(float(duration)+6)
+    
+    if not h2.prompt():
+      info('+++ iPerf server: Could not match the prompt! Sending SIGKILL.\n')
+      h2.kill(9)
+    else:
+      info('+++ iPerf server ended\n')
+    info('+++ iPerf server session content:\n{}'.format(h2.before))
+    
+    h2.logout()
     
   except pxssh.ExceptionPxssh, e:
     print "pxssh failed on login."
@@ -140,17 +191,10 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
   
   try:
     
-    # log in to host2 via ssh
-    h2 = pxssh.pxssh()
-    h2.login(hostname2, username, password)
-
-    # start iperf server on host 2
-    info("+++ Start iperf server\n")
-    h2.sendline('iperf3 -s -D -p '+serverPort)
-    # is prompt needed here?
-    h2.prompt()
-    
-    h2.logout()
+    # run iPerf server in thread    
+    st = serverThread(1, serverPort, duration)
+    st.start()
+    time.sleep(1)
     
     # remove old iperf result files
     if os.path.isfile(resultIperf):
@@ -158,35 +202,40 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
                                               stderr=subprocess.PIPE)
     
     # create iperf client measurement thread
-    thread = myThread(1, "IperfClientMeasurementThread-1", duration,
+    ct = clientThread(2, "IperfClientMeasurementThread-1", duration,
 		clientCount, resultIperf, bandwidth, serverPort, useUdp)
     # start thread
-    thread.start()
+    ct.start()
     
     info("+++ Get iPerf clients from output\n")
     # read iperf output and append it to the client list
+    # TODO script gets stuck here after several executions
+    # FIXME: no content in iPerf file!
     clientPortMap = getIperfClients.getIperfClients(resultIperf=resultIperf,
       clientCount=clientCount, bandwidth=bandwidth+'000',
       serverPort=serverPort)
     
-    info("+++ Adding clients to list\n")
-    addClientsToList(clientListPath=CLIENTLISTPATH, clientPortMap=clientPortMap,
-        instanceName=iperfName)
+    # add clients to list if clients where found
+    if clientPortMap:
+      info("+++ Adding clients to list\n")
+      addClientsToList(clientListPath=CLIENTLISTPATH, clientPortMap=clientPortMap,
+          instanceName=iperfName)
     
-    if addConstraints:
+    if addConstraints and clientPortMap:
       info("+++ Adding constraints to intents\n")
       # add constraints to intents
       initialiseConstraints.initialiseConstraints(clientPortMap=clientPortMap)
     
     # wait until iperf client has finished measurement
-    info("+++ Waiting for iperf client to finish\n")
-    thread.join()
+    info("+++ Waiting for iperf client and server to finish\n")
+    ct.join()
+    st.join()
     
     # remove clients from client list
     info("+++ Remove iperf clients from clientList\n")
     removeClientsFromList(clientListPath=CLIENTLISTPATH, instanceName=iperfName)
     
-    if addConstraints:
+    if addConstraints and clientPortMap:
       info("+++ Remove all intents created for this iPerf instance.\n")
       initialiseConstraints.removeIperfIntents(clientPortMap=clientPortMap)
     
