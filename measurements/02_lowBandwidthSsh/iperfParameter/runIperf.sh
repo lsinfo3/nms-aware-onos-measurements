@@ -14,6 +14,10 @@ runCommand="runIperf.sh [-i <inter arrival time in seconds>] \
 [-c <number of flows per iPerf instance>] [-d <overall measurement duration in seconds>] \
 [-u] -t {ORG|MOD|NMS}"
 
+vmUser="ubuntu"
+vmIp="192.168.33.10"
+mininetServerIp="100.0.1.201"
+
 while getopts "i:b:l:c:d:ut:h" opt; do
   case $opt in
 	i)
@@ -74,8 +78,9 @@ createCommand ()
 	conNum=$1
 	serverPort=$2
 	
-	iperfCommand="bash -c \"cd $leftVmPath;"
-	iperfCommand="$iperfCommand vagrant ssh -c"
+	#iperfCommand="bash -c \"cd $leftVmPath;"
+	#iperfCommand="$iperfCommand vagrant ssh -c"
+	iperfCommand="ssh ${vmUser}@${vmIp}"
 	iperfCommand="$iperfCommand '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py"
 	iperfCommand="$iperfCommand -d $FLOWDUR -c $COUNT -b $BANDWIDTH"
 	if [ "$USEUDP" == true ]; then
@@ -87,7 +92,32 @@ createCommand ()
 	iperfResultName="iperfResult${conNum}.txt"
 	iperfCommand="$iperfCommand -p $serverPort -n iperf${conNum}"
 	iperfCommand="$iperfCommand -r /home/ubuntu/${iperfResultName};"
-	iperfCommand="$iperfCommand cp /home/ubuntu/${iperfResultName} ./captures/${iperfResultName}'\""
+	#iperfCommand="$iperfCommand cp /home/ubuntu/${iperfResultName} ./captures/${iperfResultName}'\""
+	iperfCommand="$iperfCommand cp /home/ubuntu/${iperfResultName} ./captures/${iperfResultName}'"
+}
+
+getServerPort ()
+{
+	#printf "Search for unused server port.\n"
+	serverPort='5001'
+	ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $serverPort" 2> /dev/null
+	while [ $? == 0 ]; do
+		serverPort=$(($serverPort + 1))
+		ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $serverPort" 2> /dev/null
+	done
+	#printf "Found unused port %s.\n" "$serverPort"
+}
+
+waitForServer ()
+{
+	port=$1
+	#printf "Waiting for server on port %s.\n" "$port"
+	ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $port" 2> /dev/null
+	while [ $? == 1 ]; do
+	  sleep 0.1
+	  ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $port" 2> /dev/null
+	done
+	#printf "Server on port %s is listening.\n" "$port"
 }
 
 
@@ -97,22 +127,72 @@ if [ "$IAT" == "0" ]; then
 	gnome-terminal -e "$iperfCommand"
 	unset iperfCommand
 else
-	timeCounter=0
-	counter=1
+	
+	measStartTime=$(date +%s.%N)	# measurement start time
+	timeError=0
+	counter=0
+	calcIatCounter=0 # calculated IAT sum
+	
 	# run as long as the measurement time is not over
-	while [ $(echo "$timeCounter < $DURATION" | bc -l) == 1 ]; do
+	# measurementTime = currentTime - measurementStartTime
+	while [ $(echo "($(date +%s.%N) - $measStartTime) < $DURATION" | bc -l) == 1 ]; do
+		
+		startTime=$(date +%s.%N)
+		counter=$(($counter + 1))
+		printf "### iPerf run nr. %s ###\n" "$counter"
+		
+		#printf "Start Time: %s\n" "$startTime"
+		#printf "Time Error: %s\n" "$timeError"
+		
 		# calculate next connection start in seconds
 		# (negative exponential distribution function)
-		nextTime=$(bc -l <<< "-l(1.0 - $RANDOM/32767.0) * $IAT")
+		nextIat=$(bc -l <<< "-l(1.0 - $RANDOM/32767.0) * $IAT")
+		calcIatCounter=$(bc -l <<< "$calcIatCounter + $nextIat")
+		#printf "Next IAT: %s\n" "$nextIat"
+		
+		# remove the time error from the previous run
+		nextTime=$(bc -l <<< "$nextIat - $timeError")
+		#printf "Next Time: %s\n" "$nextTime"
+		
+		if [ $(echo "$nextIat < $timeError" | bc -l) == 1 ]; then
+			timeError=$(bc -l <<< "$timeError - $nextIat")
+		else
+			timeError=0
+		fi
+		#printf "Remaining Time Error: %s\n" "$timeError"
+		
+		# get an unused iPerf server port
+		getServerPort
+		
 		# linux supports floating point numbers but solaris not
-		sleep $nextTime
-		timeCounter=$(bc -l <<< "$timeCounter + $nextTime")
-	
-		printf "Time: %s\tCounter: %s\tServer Port: %s\tAverage IAT: %s\n" "$timeCounter" \
-		"$counter" "$((5000 + $counter))" "$(bc -l <<< "$timeCounter / $counter")"
-		createCommand $counter $((5000 + $counter))
+		# only wait if the iperf start time is bigger as the already passed time
+		if [ $(echo "$nextTime > ($(date +%s.%N) - $startTime)" | bc -l) == 1 ]; then
+			sleep $(bc -l <<< "$nextTime - ($(date +%s.%N) - $startTime)")
+		fi
+		
+		# print infos
+		measTime=$(bc -l <<< "$(date +%s.%N) - $measStartTime")
+		LANG=C printf "Overall Time: %.2f\tServer Port: %s\tAverage real IAT: %.3f\n" \
+		"$measTime" "$serverPort" "$(bc -l <<< "$measTime / $counter")"
+		LANG=C printf "Calculated IAT: %.3f\t Average calculated IAT: %.3f\n" \
+		"$nextIat" "$(bc -l <<< "$calcIatCounter / $counter")"
+	  
+	  # run the iPerf server and client
+		createCommand $counter $serverPort
 		gnome-terminal -e "$iperfCommand"
-		counter=$(($counter + 1))
+		# wait for the iPerf server to start
+		waitForServer $serverPort
 		unset iperfCommand
+		
+		runTime=$(bc -l <<< "$(date +%s.%N) - $startTime")
+		# calculate the time error = loopRunTime - interArrivalTime + remainingTimeError
+		timeError=$(bc -l <<< "$runTime - $nextIat + $timeError")
+		if [ $(echo "$timeError < 0" | bc -l) == 1 ]; then
+			timeError=0
+		fi
+		
+		# print final infos
+		LANG=C printf "Run Time: %.2f\tTime Error: %.3f\n" \
+		"$runTime" "$timeError"
 	done
 fi
