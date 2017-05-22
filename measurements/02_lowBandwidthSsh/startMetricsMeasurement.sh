@@ -1,12 +1,19 @@
 #!/bin/bash
 
-REP="1"
-COUNT="1"
-DURATION="120"
-TYPE="ORG"
-USEUDP=false
+REP="1" 		# measurement repetitions
+COUNT="1"		# simultanious connections per iPerf instance
+DURATION="120"	# complete measurment duration
+IAT="0"			# inter arrival time
+FLOWS="8"		# amount of flows
+BWD="200"		# bandwidth
+TYPE="ORG"		# measurement type
+USEUDP=false	# use udp traffic
+runCommand="startMetricsMeasurement.sh [-r <measurement runs>] \
+[-i <inter arrival time in seconds>] [-f <number of simultaneous flows>] \
+[-b <bandwidth per flow in kbit/s>] [-c <number of flows per iPerf instance>] \
+[-d <overall measurement duration in seconds>] [-u] -t {ORG|MOD|NMS}"
 
-while getopts "t:d:hc:r:u" opt; do
+while getopts "i:f:b:t:d:c:r:uh" opt; do
   case $opt in
 	t)
 	  TYPE=$OPTARG
@@ -18,6 +25,18 @@ while getopts "t:d:hc:r:u" opt; do
 		  exit 1
 	  fi
 	  ;;
+    i)
+      echo "Flow inter arrival time: $OPTARG seconds" >&2
+      IAT=$OPTARG
+      ;;
+    f)
+      echo "Number simultaneous of flows: $OPTARG" >&2
+      FLOWS=$OPTARG
+      ;;
+    b)
+      echo "Bandwidht per flow: $OPTARG kbit/s" >&2
+      BWD=$OPTARG
+      ;;
     d)
       echo "Measurement duration: $OPTARG seconds" >&2
       DURATION=$OPTARG
@@ -35,7 +54,7 @@ while getopts "t:d:hc:r:u" opt; do
       USEUDP=true
       ;;
     h)
-      echo -e "Usage:\nstartMetricsMeasurement.sh [-r REPETITIONS] [-c COUNT] [-d DURATION] [-u] -t {ORG|MOD|NMS}"
+      echo -e "Usage:\n$runCommand"
       exit 1
       ;;
     \?)
@@ -48,6 +67,17 @@ while getopts "t:d:hc:r:u" opt; do
       ;;
   esac
 done
+unset runCommand
+
+# if no iat is given the flow duration corresponds to the measurement
+# duration, otherwise the flow duration is determined by the iat and
+# the flow amount
+if [ "$IAT" == "0" ]; then
+	FLOWDUR=$DURATION
+else
+	FLOWDUR=$(($IAT * $FLOWS / $COUNT))
+fi
+echo "Duration per flow: $FLOWDUR s." >&2
 
 
 # create results folder with date and time
@@ -93,16 +123,14 @@ sleep 5
 
 
 # start iperf instances
-iperfCommand="./iperfParameter/runIperf.sh -c $COUNT -d $DURATION -b 400 -a 0 -t $TYPE"
+iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE"
 if [ "$USEUDP" == true ]; then
 	iperfCommand="$iperfCommand -u"
 fi
 eval $iperfCommand
 unset iperfCommand
 
-
-sleep $DURATION
-sleep 12
+sleep 5
 # kill iperf server on mininet vm in vagrant vm
 #gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall iperf3'\""
 # kill tcpdump in vagrant vm
