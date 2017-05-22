@@ -7,24 +7,25 @@ BANDWIDTH="400"
 COUNT="1"
 DURATION="120"
 FLOWDUR=$DURATION
+TIMEDELAY="0"
 USEUDP=false
 TYPE="ORG"
 runCommand="runIperf.sh [-i <inter arrival time in seconds>] \
 [-b <bandwidth per flow in kbit/s>] [-l <duration per flow>] \
 [-c <number of flows per iPerf instance>] [-d <overall measurement duration in seconds>] \
-[-u] -t {ORG|MOD|NMS}"
+[-e <time delay in seconds>] [-u] -t {ORG|MOD|NMS}"
 
 vmUser="ubuntu"
 vmIp="192.168.33.10"
 mininetServerIp="100.0.1.201"
 
-while getopts "i:b:l:c:d:ut:h" opt; do
+while getopts "i:b:l:c:d:e:ut:h" opt; do
   case $opt in
-	i)
+	  i)
       #echo "Flow inter arrival time: $OPTARG seconds" >&2
       IAT=$OPTARG
       ;;
-	b)
+	  b)
       #echo "IPerf connection bandwidth: $OPTARG kbit/s" >&2
       BANDWIDTH=$OPTARG
       ;;
@@ -39,6 +40,10 @@ while getopts "i:b:l:c:d:ut:h" opt; do
     d)
       #echo "Measurement duration: $OPTARG seconds" >&2
       DURATION=$OPTARG
+      ;;
+    e)
+      echo "Time delay: $OPTARG seconds" >&2
+      TIMEDELAY=$OPTARG
       ;;
     u)
       #echo "Use UDP rather than TCP." >&2
@@ -129,7 +134,7 @@ if [ "$IAT" == "0" ]; then
 else
 	
 	measStartTime=$(date +%s.%N)	# measurement start time
-	timeError=0
+	timeError=$TIMEDELAY
 	counter=0
 	calcIatCounter=0 # calculated IAT sum
 	
@@ -139,29 +144,20 @@ else
 		
 		startTime=$(date +%s.%N)
 		counter=$(($counter + 1))
-		printf "### iPerf run nr. %s ###\n" "$counter"
-		
-		#printf "Start Time: %s\n" "$startTime"
-		#printf "Time Error: %s\n" "$timeError"
+		printf "\n### iPerf run %s ###\n" "$counter"
 		
 		# calculate next connection start in seconds
 		# (negative exponential distribution function)
 		nextIat=$(bc -l <<< "-l(1.0 - $RANDOM/32767.0) * $IAT")
 		calcIatCounter=$(bc -l <<< "$calcIatCounter + $nextIat")
-		#printf "Next IAT: %s\n" "$nextIat"
 		
 		# remove the time error from the previous run
 		nextTime=$(bc -l <<< "$nextIat - $timeError")
-		#printf "Next Time: %s\n" "$nextTime"
 		
-		if [ $(echo "$nextIat < $timeError" | bc -l) == 1 ]; then
-			timeError=$(bc -l <<< "$timeError - $nextIat")
-		else
-			timeError=0
-		fi
-		#printf "Remaining Time Error: %s\n" "$timeError"
+		LANG=C printf "Previous time error: %.3f\tNew calc. IAT: %.3f\tTime to wait: %.3f\n" \
+		"$timeError" "$nextIat" "$nextTime"
 		
-		# get an unused iPerf server port
+		# find an unused port for the iPerf server
 		getServerPort
 		
 		# linux supports floating point numbers but solaris not
@@ -169,13 +165,6 @@ else
 		if [ $(echo "$nextTime > ($(date +%s.%N) - $startTime)" | bc -l) == 1 ]; then
 			sleep $(bc -l <<< "$nextTime - ($(date +%s.%N) - $startTime)")
 		fi
-		
-		# print infos
-		measTime=$(bc -l <<< "$(date +%s.%N) - $measStartTime")
-		LANG=C printf "Overall Time: %.2f\tServer Port: %s\tAverage real IAT: %.3f\n" \
-		"$measTime" "$serverPort" "$(bc -l <<< "$measTime / $counter")"
-		LANG=C printf "Calculated IAT: %.3f\t Average calculated IAT: %.3f\n" \
-		"$nextIat" "$(bc -l <<< "$calcIatCounter / $counter")"
 	  
 	  # run the iPerf server and client
 		createCommand $counter $serverPort
@@ -184,15 +173,20 @@ else
 		waitForServer $serverPort
 		unset iperfCommand
 		
+		# print infos
+		measTime=$(bc -l <<< "$(date +%s.%N) - $measStartTime")
+		LANG=C printf "iPerf start Time: %.3f\tServer Port: %s\tAvr. real IAT: %.3f\tAvr. calc. IAT: %.3f\n" \
+		"$measTime" "$serverPort" "$(bc -l <<< "$measTime / $counter")" "$(bc -l <<< "$calcIatCounter / $counter")"
+		
 		runTime=$(bc -l <<< "$(date +%s.%N) - $startTime")
 		# calculate the time error = loopRunTime - interArrivalTime + remainingTimeError
-		timeError=$(bc -l <<< "$runTime - $nextIat + $timeError")
+		timeError=$(bc -l <<< "($runTime - $nextIat) + $timeError")
 		if [ $(echo "$timeError < 0" | bc -l) == 1 ]; then
 			timeError=0
 		fi
 		
 		# print final infos
-		LANG=C printf "Run Time: %.2f\tTime Error: %.3f\n" \
+		LANG=C printf "Run Time: %.2f\tNew time Error: %.3f\n" \
 		"$runTime" "$timeError"
 	done
 fi
