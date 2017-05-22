@@ -93,6 +93,32 @@ for run in `seq 1 $REP`; do
 
 echo "--------------Run #${run}--------------" >&2
 
+
+INITTIME=$(bc -l <<< "$FLOWDUR * 1.2")
+
+# FIXME: Nms runs much to long?!
+if [ "$TYPE" == "NMS" ]; then
+  # start network management system
+  LANG=C printf -v NMSDURATION "%.0f" "$(bc -l <<< \"$DURATION + $INITTIME + 10\")"
+  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $NMSDURATION"
+  if [ "$USEUDP" == true ]; then
+	nmsCommand="$nmsCommand -u"
+  fi
+  gnome-terminal -e "$nmsCommand'\""
+fi
+unset nmsCommand NMSDURATION
+
+# iPerf traffic initialisation phase
+iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $INITTIME -t $TYPE"
+if [ "$USEUDP" == true ]; then
+	iperfCommand="$iperfCommand -u"
+fi
+eval $iperfCommand
+# measure time of tcpdump startup
+TIMEA=$(date +%s.%N)
+unset iperfCommand INITTIME
+
+
 # monitor traffic with tcpdump to file
 # output of switch 2 (first data stream)
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s2-eth2 -Z ubuntu -w "$TYPE"_s2-eth2.cap'\""
@@ -106,29 +132,17 @@ sleep 1
 # output of switch 1 (both data streams before limitation)
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s1-eth3 -Z ubuntu -w "$TYPE"_s1-eth3.cap'\""
 sleep 1
-
 # TODO: check if all four cap files exist
-# TODO: adapt nms runtime to connection arrival time
-
-if [ "$TYPE" == "NMS" ]; then
-  # start network management system
-  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $(($DURATION + $COUNT*0 + 16))"
-  if [ "$USEUDP" == true ]; then
-	nmsCommand="$nmsCommand -u"
-  fi
-  gnome-terminal -e "$nmsCommand'\""
-fi
-
-sleep 5
 
 
 # start iperf instances
-iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE"
+TIMEDIFF=$(bc -l <<< "$(date +%s.%N) - $TIMEA")
+iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE -e $TIMEDIFF"
 if [ "$USEUDP" == true ]; then
 	iperfCommand="$iperfCommand -u"
 fi
 eval $iperfCommand
-unset iperfCommand
+unset iperfCommand TIMEA TIMEDIFF
 
 sleep 5
 # kill iperf server on mininet vm in vagrant vm
@@ -136,6 +150,7 @@ sleep 5
 # kill tcpdump in vagrant vm
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
 
+sleep 5
 
 
 ### create results ###
