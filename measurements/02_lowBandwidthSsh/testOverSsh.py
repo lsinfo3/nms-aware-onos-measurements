@@ -5,6 +5,7 @@ from pexpect import pxssh
 import getIperfClients
 import threading, subprocess
 import os.path, json, sys, getopt, time
+import socket
 import initialiseConstraints
 
 
@@ -194,12 +195,21 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     # run iPerf server in thread    
     st = serverThread(1, serverPort, duration)
     st.start()
-    time.sleep(1)
     
     # remove old iperf result files
     if os.path.isfile(resultIperf):
       subprocess.Popen(['rm', resultIperf], stdout=subprocess.PIPE, 
                                               stderr=subprocess.PIPE)
+    
+    # check if the server port is available
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = 0
+    while not result:
+      result = sock.connect_ex(('127.0.0.1', int(serverPort)))
+      print('### IPerf server port {} not open.'.format(serverPort))
+      time.sleep(1)
+    print('+++ Server is running and port {} open for client connection'
+        .format(serverPort))
     
     # create iperf client measurement thread
     ct = clientThread(2, "IperfClientMeasurementThread-1", duration,
