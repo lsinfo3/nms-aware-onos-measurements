@@ -157,6 +157,14 @@ else
 		LANG=C printf "Previous time error: %.3f\tNew calc. IAT: %.3f\tTime to wait: %.3f\n" \
 		"$timeError" "$nextIat" "$nextTime"
 		
+		# exit if the next iperf instance start is too late
+		if [ $(echo "(($(date +%s.%N) - $measStartTime) + $nextTime) > $DURATION" | bc -l) == 1 ]; then
+			# wait until measurement duration is over
+			sleep $(bc -l <<< "$DURATION - ($(date +%s.%N) - $measStartTime)")
+			printf "Exit iPerf instance creation script. Duration of %s is over.\n" "$DURATION"
+			break
+		fi
+		
 		# find an unused port for the iPerf server
 		getServerPort
 		
