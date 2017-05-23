@@ -206,9 +206,10 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     result = 0
     while not result:
       result = sock.connect_ex(('127.0.0.1', int(serverPort)))
-      print('### IPerf server port {} not open.'.format(serverPort))
-      time.sleep(1)
-    print('+++ Server is running and port {} open for client connection'
+      if result == 0:
+        info('### IPerf server port {} not open.\n'.format(serverPort))
+        time.sleep(1)
+    info('+++ Server is running and port {} open for client connection\n'
         .format(serverPort))
     
     # create iperf client measurement thread

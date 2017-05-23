@@ -153,8 +153,10 @@ unset iperfCommand TIMEA TIMEDIFF
 sleep 5
 # kill tcpdump in vagrant vm
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
-# kill iperf server on mininet vm in vagrant vm
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 kill $(ps -ax | grep '[i]perf3' | awk '{print $1}')'\""
+# kill iperf server and client on mininet vm in vagrant vm
+ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $1}'"'"')\" | xargs kill -15"'
+# kill iperf python script on mininet vm in vagrant vm
+ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $1}'"'"')\" | xargs kill -15"'
 
 sleep 5
 
