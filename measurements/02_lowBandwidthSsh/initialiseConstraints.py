@@ -8,7 +8,7 @@ from mininet.log import setLogLevel, info
 from urllib import quote
 from helpers import get, put, post, delete
 import getIperfClients
-import json, time
+import json, time, sys, getopt
 
 
 INTENTURL='http://192.168.33.20:8181/onos/v1/intents'
@@ -122,7 +122,7 @@ def initialiseConstraints(clientPortMap):
 
 def removeIperfIntents(clientPortMap):
   
-  # map of the corresponding iperf intents in onos
+  # map of all intents in onos
   intentsMap = get(INTENTURL).json()
   # iperf server port
   iperfServerPort = clientPortMap.values()[0]['dst']
@@ -134,9 +134,34 @@ def removeIperfIntents(clientPortMap):
       delete(INTENTURL + "/" + appId + "/" + quote(key, safe=''))
 
 
+def removeAllIntents():
+  
+  # map of all intents in onos
+  intentsMap = get(INTENTURL).json()
+  
+  for intent in intentsMap['intents']:
+    key = intent['key']
+    appId = intent['appId']
+    delete(INTENTURL + "/" + appId + "/" + quote(key, safe=''))
+
+
 if __name__ == '__main__':
   setLogLevel( 'info' )
   
-  clientPortMap = getIperfClients.getIperfClients(resultIperf=RESULTPATH, clientCount=8,
-      bandwidth='200000', serverPort='5001')
-  initialiseConstraints(clientPortMap)
+  cmd='Usage:\n{} [-r]'.format(sys.argv[0])
+  argv = sys.argv[1:]
+  
+  try:
+    opts, args = getopt.getopt(argv,"rh",
+		["remove", "help"])
+  except getopt.GetoptError:
+    print cmd
+    sys.exit(2)
+  
+  for opt, arg in opts:
+    if opt == '-h':
+      print cmd
+      sys.exit()
+    elif opt in ("-r", "--remove"):
+      removeAllIntents()
+

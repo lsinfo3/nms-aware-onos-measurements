@@ -271,13 +271,6 @@ if __name__ == '__main__':
   [-u] [-a]'.format(sys.argv[0])
   argv = sys.argv[1:]
   
-  # check mandatory arguments
-  ### TODO: any is wrong here! Which arguments are mandatory?
-#  if not any(x in ["-d", "--duration", "-r", "--resultIperf", "-h"]
-#      for x in argv):
-#    print cmd
-#    sys.exit(2)
-  
   # parsing commandline arguments
   ### TODO: Missing arguments: clientListPath, host1, host2?
   try:

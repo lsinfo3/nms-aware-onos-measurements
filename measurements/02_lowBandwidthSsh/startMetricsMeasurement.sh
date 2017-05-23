@@ -91,15 +91,19 @@ mkdir $resultFolder
 
 for run in `seq 1 $REP`; do
 
-echo "--------------Run #${run}--------------" >&2
+echo "\n--------------Run #${run}--------------" >&2
+
+# reset intents in ONOS
+printf "Reseting ONOS intents.\n"
+ssh ubuntu@192.168.33.10 "/home/ubuntu/python/measurements/02_lowBandwidthSsh/initialiseConstraints.py -r"
 
 
 INITTIME=$(bc -l <<< "$FLOWDUR * 1.2")
 
-# FIXME: Nms runs much to long?!
 if [ "$TYPE" == "NMS" ]; then
   # start network management system
-  LANG=C printf -v NMSDURATION "%.0f" "$(bc -l <<< \"$DURATION + $INITTIME + 10\")"
+  LANG=C printf -v NMSDURATION "%.0f" "$(bc -l <<< "$DURATION + $INITTIME + 10")"
+  printf "Starting NMS with runtime %s s.\n" "$NMSDURATION"
   nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $NMSDURATION"
   if [ "$USEUDP" == true ]; then
 	nmsCommand="$nmsCommand -u"
@@ -108,7 +112,9 @@ if [ "$TYPE" == "NMS" ]; then
 fi
 unset nmsCommand NMSDURATION
 
+
 # iPerf traffic initialisation phase
+printf "Starting initial iPerf traffic phase for %s s" "$INITTIME"
 iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $INITTIME -t $TYPE"
 if [ "$USEUDP" == true ]; then
 	iperfCommand="$iperfCommand -u"
@@ -145,10 +151,10 @@ eval $iperfCommand
 unset iperfCommand TIMEA TIMEDIFF
 
 sleep 5
-# kill iperf server on mininet vm in vagrant vm
-#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall iperf3'\""
 # kill tcpdump in vagrant vm
 gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
+# kill iperf server on mininet vm in vagrant vm
+gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'ssh ubuntu@100.0.1.201 kill $(ps -ax | grep '[i]perf3' | awk '{print $1}')'\""
 
 sleep 5
 
