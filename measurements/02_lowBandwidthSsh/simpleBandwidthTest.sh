@@ -1,10 +1,19 @@
 #!/bin/bash
 
-DURATION="120"
-TYPE="ORG"
-USEUDP=false
+REP="1" 		# measurement repetitions
+COUNT="1"		# simultanious connections per iPerf instance
+DURATION="120"	# complete measurment duration
+IAT="0"			# inter arrival time
+FLOWS="8"		# amount of flows
+BWD="200"		# bandwidth
+TYPE="ORG"		# measurement type
+USEUDP=false	# use udp traffic
+runCommand="simpleBandwidthTest.sh [-r <measurement runs>] \
+[-i <inter arrival time in seconds>] [-f <number of simultaneous flows>] \
+[-b <bandwidth per flow in kbit/s>] [-c <number of flows per iPerf instance>] \
+[-d <overall measurement duration in seconds>] [-u] -t {ORG|MOD|NMS}"
 
-while getopts "t:d:hu" opt; do
+while getopts "i:f:b:t:d:c:r:uh" opt; do
   case $opt in
 	t)
 	  TYPE=$OPTARG
@@ -16,16 +25,36 @@ while getopts "t:d:hu" opt; do
 		  exit 1
 	  fi
 	  ;;
+    i)
+      echo "Flow inter arrival time: $OPTARG seconds" >&2
+      IAT=$OPTARG
+      ;;
+    f)
+      echo "Number simultaneous of flows: $OPTARG" >&2
+      FLOWS=$OPTARG
+      ;;
+    b)
+      echo "Bandwidht per flow: $OPTARG kbit/s" >&2
+      BWD=$OPTARG
+      ;;
     d)
       echo "Measurement duration: $OPTARG seconds" >&2
       DURATION=$OPTARG
+      ;;
+    c)
+      echo "Connection count: $OPTARG" >&2
+      COUNT=$OPTARG
+      ;;
+    r)
+      echo "Measurement repetitions: $OPTARG" >&2
+      REP=$OPTARG
       ;;
     u)
       echo "Use UDP rather than TCP." >&2
       USEUDP=true
       ;;
     h)
-      echo -e "Usage:\nsimpleBandwidthTest.sh [-d DURATION] [-u] -t {ORG|MOD|NMS}"
+      echo -e "Usage:\n$runCommand"
       exit 1
       ;;
     \?)
@@ -38,52 +67,76 @@ while getopts "t:d:hu" opt; do
       ;;
   esac
 done
+unset runCommand
 
-# monitor traffic with tcpdump to file
-# output of switch 2 (first data stream)
-#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s2-eth2 -Z ubuntu -w "$TYPE"_s2-eth2.cap'\""
-#sleep 1
-# output of switch 4 (second data stream)
-#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s4-eth1 -Z ubuntu -w "$TYPE"_s4-eth1.cap'\""
-#sleep 1
-# output of switch 3 (both data streams)
-#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s3-eth3 -Z ubuntu -w "$TYPE"_s3-eth3.cap'\""
-#sleep 1
-# output of switch 1 (both data streams before limitation)
-#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s1-eth3 -Z ubuntu -w "$TYPE"_s1-eth3.cap'\""
-#sleep 1
+# if no iat is given the flow duration corresponds to the measurement
+# duration, otherwise the flow duration is determined by the iat and
+# the flow amount
+if [ "$IAT" == "0" ]; then
+	FLOWDUR=$DURATION
+else
+	FLOWDUR=$(($IAT * $FLOWS / $COUNT))
+fi
+echo "Duration per flow: $FLOWDUR s." >&2
+
+
+# create results folder with date and time
+leftVmFolder="$HOME/Masterthesis/vm/leftVm"
+STARTTIME=$(date +%F_%H-%M-%S)
+
+
+### repeat measurement ###
+
+for run in `seq 1 $REP`; do
+
+printf "\n--------------Run #%s--------------\n" "$run" >&2
+
+# reset intents in ONOS
+printf "Reseting ONOS intents.\n"
+ssh ubuntu@192.168.33.10 "/home/ubuntu/python/measurements/02_lowBandwidthSsh/initialiseConstraints.py -r"
+
 
 if [ "$TYPE" == "NMS" ]; then
   # start network management system
-  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $(($DURATION + 100))"
+  LANG=C printf -v NMSDURATION "%.0f" "$(bc -l <<< "$DURATION + 10")"
+  printf "Starting NMS with runtime %s s.\n" "$NMSDURATION"
+  nmsCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $NMSDURATION"
   if [ "$USEUDP" == true ]; then
 	nmsCommand="$nmsCommand -u"
   fi
-  gnome-terminal -e "$nmsCommand; exec bash'\""
+  gnome-terminal -e "$nmsCommand'\""
 fi
+unset nmsCommand NMSDURATION
+
+
+# iPerf traffic initialisation phase
+printf "Starting iPerf traffic phase for %s s" "$DURATION"
+iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE"
+if [ "$USEUDP" == true ]; then
+	iperfCommand="$iperfCommand -u"
+fi
+eval $iperfCommand
+# measure time of tcpdump startup
+unset iperfCommand
+
+
+sleep 5
+# kill tcpdump in vagrant vm
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
+# kill iperf server on mininet vm in vagrant vm
+#ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $0}'"'"')\""'
+ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $1}'"'"')\" | xargs kill -15"'
+#ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $0}'"'"')\""'
+ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $1}'"'"')\" | xargs kill -15"'
 
 sleep 5
 
-# start iperf bandwidth test
-iperfCommand="bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py -d $DURATION -c 4 -b 200"
-if [ "$USEUDP" == true ]; then
-  # use UDP rather than TCP
-  iperfCommand="$iperfCommand -u"
-fi
-if [ "$TYPE" == "NMS" ]; then
-  # add constraints if NMS is used
-  iperfCommand="$iperfCommand -a"
-fi
-gnome-terminal -e "$iperfCommand -p 5001 -n iperf1 -r /home/ubuntu/iperfResult1.txt'\""
-unset iperfCommand
 
-killIperf()
-{
-	# kill iperf server on mininet vm in vagrant vm
-	gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall iperf3'\""
-	exit 1
-}
-trap killIperf SIGINT
+# remove capture files and iPerf results
+#rm $leftVmFolder/captures/*.cap
+rm $leftVmFolder/captures/*.txt
 
-sleep $DURATION & wait
-sleep 10 & wait
+
+done
+
+unset resultFolder STARTTIME leftVmFolder
