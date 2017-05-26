@@ -107,18 +107,6 @@ createCommand ()
 	unset conNumArg serverPortArg flowDurationArg iperfResultName
 }
 
-#getServerPort ()
-#{
-#	#printf "Search for unused server port.\n"
-#	serverPort='5001'
-#	ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $serverPort" 2> /dev/null
-#	while [ $? == 0 ]; do
-#		serverPort=$(($serverPort + 1))
-#		ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $serverPort" 2> /dev/null
-#	done
-#	#printf "Found unused port %s.\n" "$serverPort"
-#}
-
 getServerPort ()
 {
 	#printf "Search for unused server port.\n"
@@ -198,13 +186,13 @@ else
 			break
 		fi
 		
-		# find an unused port for the iPerf server
+		# find the next unused port for the iPerf server
 		getServerPort $serverPort
 		
 		# linux sleep function supports floating point numbers but solaris not
 		# only wait if the iperf start time is bigger as the already passed time
-		if [ $(echo "$nextTime > ($(date +%s.%N) - $startTime)" | bc -l) == 1 ]; then
-			sleep $(bc -l <<< "$nextTime - ($(date +%s.%N) - $startTime)")
+		if [ $(echo "$nextTime > ($(date +%s.%N) - $loopStartTime)" | bc -l) == 1 ]; then
+			sleep $(bc -l <<< "$nextTime - ($(date +%s.%N) - $loopStartTime)")
 		fi
 	  
 		# run the iPerf server and client
@@ -223,7 +211,7 @@ else
 		iperfNumber=$(($iperfNumber + 1))
 		serverPort=$(($serverPort + 1))
 		
-		runTime=$(bc -l <<< "$(date +%s.%N) - $startTime")
+		runTime=$(bc -l <<< "$(date +%s.%N) - $loopStartTime")
 		# calculate the time error = loopRunTime - interArrivalTime + remainingTimeError
 		timeError=$(bc -l <<< "($runTime - $nextIat) + $timeError")
 		if [ $(echo "$timeError < 0" | bc -l) == 1 ]; then
