@@ -5,7 +5,7 @@ from pexpect import pxssh
 import getIperfClients
 import threading, subprocess
 import os.path, json, sys, getopt, time
-import socket
+import socket, errno
 import initialiseConstraints
 
 
@@ -92,7 +92,7 @@ class clientThread (threading.Thread):
 
 # start an iperf client on host via ssh
 def startIperfClient(threadName, duration='10', clientCount='1',
-      interval='2', resultIperf='$HOME/iperfResult.txt',
+      interval='2', resultIperf='$HOME/iperfClientResult.txt',
       bandwidth='200', serverPort='5001', useUdp=False):
   
   try:
@@ -115,7 +115,11 @@ def startIperfClient(threadName, duration='10', clientCount='1',
     cmd += ' -i ' + interval
     cmd += ' -p ' + serverPort
     cmd += ' -l 1470'
+    #cmd += ' -V -d'
+    cmd += ' 2>&1'
     cmd += ' | tee ' + resultIperf
+    
+    info("+++ Starting client with command: {}\n".format(cmd))
     h1.sendline(cmd)
     info('+++ Started iperf client:\nRuntime: {}\nServerPort: {}\nUDP: {}\n'.format(duration, serverPort, useUdp))
     # wait until finished and match the next shell prompt
@@ -134,29 +138,34 @@ def startIperfClient(threadName, duration='10', clientCount='1',
     print "pxssh failed on login."
     print str(e)
   except KeyboardInterrupt:
-      print('\n\nKeyboard exception received. Exiting.')
-      exit()
+    print('\n\nKeyboard exception received. Exiting.')
+    exit()
+  except:
+    print('Exception received in client thread.')
+    h1.logout()
 
 
 # thread running an iperf client
 class serverThread (threading.Thread):
   
-  def __init__(self, threadID, serverPort, duration):
+  def __init__(self, threadID, serverPort, duration, resultIperf):
     threading.Thread.__init__(self)
     self.threadID = threadID
     self.serverPort = serverPort
     self.duration = duration
+    self.resultIperf = resultIperf
 
 
   def run(self):
     info("+++ Starting server thread\n")
     # run iperf ssh command
-    startIperfServer(serverPort=self.serverPort, duration=self.duration)
+    startIperfServer(serverPort=self.serverPort, duration=self.duration,
+        resultIperf=self.resultIperf)
     info("+++ Exiting server thread\n")
 
 
 # start an iperf server on host via ssh
-def startIperfServer(serverPort='5001', duration='10'):
+def startIperfServer(resultIperf, serverPort='5001', duration='10'):
   
   try:
     # log in to host1 via ssh
@@ -164,7 +173,13 @@ def startIperfServer(serverPort='5001', duration='10'):
     h2.login(hostname2, username, password)
     
     # start iperf server on host 2
-    h2.sendline('timeout {}s iperf3 -s -p {}'.format(float(duration)+5, serverPort))
+    cmd = "timeout {}s".format(float(duration)+5)
+    cmd += " iperf3 -s -p {}".format(serverPort)
+    cmd += " -V -d 2>&1"
+    cmd += " | tee {}".format(resultIperf)
+    
+    info("+++ Starting server with command: {}\n".format(cmd))
+    h2.sendline(cmd)
     info("+++ Started iPerf server\n")
     time.sleep(float(duration)+6)
     
@@ -181,8 +196,11 @@ def startIperfServer(serverPort='5001', duration='10'):
     print "pxssh failed on login."
     print str(e)
   except KeyboardInterrupt:
-      print('\n\nKeyboard exception received. Exiting.')
-      exit()
+    print('\n\nKeyboard exception received. Exiting.')
+    exit()
+  except:
+    print('Exception received in server thread.')
+    h2.logout()
 
 
 # connect to both hosts and run iperf server and client on them
@@ -193,7 +211,7 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
   try:
     
     # run iPerf server in thread    
-    st = serverThread(1, serverPort, duration)
+    st = serverThread(1, serverPort, duration, resultIperf+"_server.txt")
     st.start()
     
     # remove old iperf result files
@@ -203,18 +221,22 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     
     # check if the server port is available
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = 0
-    while not result:
-      result = sock.connect_ex(('127.0.0.1', int(serverPort)))
-      if result == 0:
-        info('### IPerf server port {} not open.\n'.format(serverPort))
+    result = 1
+    while result != 0:
+      # returns 0 if operation succeeded
+      result = sock.connect_ex((hostname2, int(serverPort)))
+      if result != 0:
+        info('### IPerf server port {} not open. Error: {}\n'.format(serverPort, errno.errorcode[result]))
         time.sleep(1)
     info('+++ Server is running and port {} open for client connection\n'
         .format(serverPort))
+    sock.close()
+    #time.sleep(3)
+    
     
     # create iperf client measurement thread
     ct = clientThread(2, "IperfClientMeasurementThread-1", duration,
-		clientCount, resultIperf, bandwidth, serverPort, useUdp)
+		clientCount, resultIperf+"_client.txt", bandwidth, serverPort, useUdp)
     # start thread
     ct.start()
     
@@ -222,7 +244,7 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     # read iperf output and append it to the client list
     # TODO script gets stuck here after several executions
     # FIXME: no content in iPerf file!
-    clientPortMap = getIperfClients.getIperfClients(resultIperf=resultIperf,
+    clientPortMap = getIperfClients.getIperfClients(resultIperf=resultIperf+"_client.txt",
       clientCount=clientCount, bandwidth=bandwidth+'000',
       serverPort=serverPort)
     
@@ -231,11 +253,13 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
       info("+++ Adding clients to list\n")
       addClientsToList(clientListPath=CLIENTLISTPATH, clientPortMap=clientPortMap,
           instanceName=iperfName)
-    
-    if addConstraints and clientPortMap:
-      info("+++ Adding constraints to intents\n")
-      # add constraints to intents
-      initialiseConstraints.initialiseConstraints(clientPortMap=clientPortMap)
+      
+      if addConstraints:
+        info("+++ Adding constraints to intents\n")
+        # add constraints to intents
+        initialiseConstraints.initialiseConstraints(clientPortMap=clientPortMap)
+    else:
+      info("### No clients found! Client port-map list empty!\nList: {}\n".format(clientPortMap))
     
     # wait until iperf client has finished measurement
     info("+++ Waiting for iperf client and server to finish\n")
@@ -249,15 +273,6 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     if addConstraints and clientPortMap:
       info("+++ Remove all intents created for this iPerf instance.\n")
       initialiseConstraints.removeIperfIntents(clientPortMap=clientPortMap)
-    
-    
-    # kill the iperf server on host 2
-    # TODO: WARNING do not kill the iperf server! other clients lose connection!
-    # info('+++ kill iperf server\n')
-    # h2.sendline('sudo killall iperf')
-    # h2.prompt()
-    
-    # h2.logout()
 
   except pxssh.ExceptionPxssh, e:
     print "pxssh failed on login."
@@ -285,7 +300,7 @@ if __name__ == '__main__':
   # setting default values
   durationArg = '10'
   clientCountArg = '1'
-  resultIperfArg = '/home/ubuntu/iperfResult.txt'
+  resultIperfArg = '/home/ubuntu/iperfResult'
   bandwidthArg = '200'
   iperfNameArg = 'iperfInstance'
   serverPortArg = '5001'
