@@ -94,9 +94,12 @@ for run in `seq 1 $REP`; do
 
 printf "\n--------------Run #%s--------------\n" "${run}"
 
-# reset intents in ONOS
-printf "Reseting ONOS intents.\n"
-ssh ubuntu@192.168.33.10 "/home/ubuntu/python/measurements/02_lowBandwidthSsh/initialiseConstraints.py -r"
+if [ "$TYPE" == "NMS" ] || [ "$TYPE" == "MOD" ]; then
+  # reset intents in ONOS
+  printf "Resetting ONOS intents.\n"
+  ssh ubuntu@192.168.33.10 "/home/ubuntu/python/measurements/02_lowBandwidthSsh/initialiseConstraints.py -r"
+fi
+
 # remove files from previous measurements
 ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
 
