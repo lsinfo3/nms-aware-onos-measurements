@@ -5,9 +5,11 @@ Read iperf output and return iperf clients in a map with additional
 information
 """
 
+from mininet.log import setLogLevel, info
 import os.path, subprocess, time
 
 SKIPLINES=1
+MAXTRIES=20
 
 # return the line count of a file
 def file_len(fname):
@@ -23,32 +25,31 @@ def file_len(fname):
 def waitForClientInformation(resultIperf, clientCount):
   # wait until file contains client information
   lines = 0
-  maxTries = 20
   tries = 0
   try:
-    while lines < (SKIPLINES + int(clientCount)) and tries < maxTries:
+    while lines < (SKIPLINES + int(clientCount)) and tries < MAXTRIES:
       if os.path.isfile(resultIperf): 
         try:
           lines = file_len(resultIperf)
         except IOError, e:
-          print 'IOError:\n{}Trying again.'.format(e)
+          info('IOError:\n{}Trying again.\n'.format(e))
         if lines < (SKIPLINES + int(clientCount)):
-          print 'Result file containing {} lines has no client information'.format(lines)
+          info('Result file containing {} lines has no client information\n'.format(lines))
           time.sleep(1)
           tries = tries + 1
       else:
-        print 'No iPerf result file {} found!'.format(resultIperf)
+        info('No iPerf result file {} found!\n'.format(resultIperf))
         time.sleep(1)
         tries = tries + 1
   except KeyboardInterrupt:
-    print('\n\nKeyboard exception received. Exiting.')
+    info('\n\nKeyboard exception received. Exiting.\n')
     exit()
   
-  if tries < maxTries:
-    print('+++ Client information found.')
+  if tries < MAXTRIES:
+    info('+++ Client information found.\n')
     return True
   else:
-    print('+++ No client information found!')
+    info('+++ No client information found!\n')
     return False
     
 
@@ -80,4 +81,9 @@ def getIperfClients(resultIperf, clientCount, bandwidth, serverPort):
     f.close()
     return clientPortMap
   else:
+    info("### No client information found in result file!\n")
     return {}
+
+
+if __name__ == '__main__':
+  setLogLevel( 'info' )
