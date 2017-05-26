@@ -7,13 +7,17 @@
 # base: bandwidth base for output
 getBandwidth <- function(time, traffic, base=1) {
   
-  # round off time values
-  traffic[, 1] <- floor(traffic[, 1])
-  # aggregate the bandwidth over the time values
-  bandwidth <- aggregate(x=traffic[, 2], by=list(traffic[, 1]), FUN=sum)
-  # rename columns
-  names(bandwidth)[names(bandwidth)=="Group.1"] <- "time"
-  names(bandwidth)[names(bandwidth)=="x"] <- "bandwidth"
+  if(nrow(traffic)==0) {
+    bandwidth <- data.frame("time"=integer(), "bandwidth"=integer())
+  } else {
+    # round off time values
+    traffic[, 1] <- floor(traffic[, 1])
+    # aggregate the bandwidth over the time values
+    bandwidth <- aggregate(x=traffic[, 2], by=list(traffic[, 1]), FUN=sum)
+    # rename columns
+    names(bandwidth)[names(bandwidth)=="Group.1"] <- "time"
+    names(bandwidth)[names(bandwidth)=="x"] <- "bandwidth"
+  }
   
   # create dataframe to merge bandwidth with
   timeFrame <- data.frame("time"=time)

@@ -133,7 +133,7 @@ rm(width, height)
 # TODO: Adapt requested bandwidth!
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getFlowFairness.r")
 flowFairnessData <- dcast(bandwidthData, time ~ src, value.var="bandwidth", fun.aggregate=sum)
-flowFairness <- getFlowFairness(flowFairnessData[, 2:ncol(flowFairnessData)], rep(200, 12))
+flowFairness <- getFlowFairness(flowFairnessData[, 2:ncol(flowFairnessData)], rep(200, ncol(flowFairnessData)-1))
 rm(flowFairnessData, getFlowFairness)
 print(paste("Mean of flow fairness: ", mean(flowFairness), sep=""))
 result <- c(result, mean(flowFairness))
