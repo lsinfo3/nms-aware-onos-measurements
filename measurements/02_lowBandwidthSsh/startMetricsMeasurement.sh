@@ -8,6 +8,7 @@ FLOWS="8"		# amount of flows
 BWD="200"		# bandwidth
 TYPE="ORG"		# measurement type
 USEUDP=false	# use udp traffic
+
 runCommand="startMetricsMeasurement.sh [-r <measurement runs>] \
 [-i <inter arrival time in seconds>] [-f <number of simultaneous flows>] \
 [-b <bandwidth per flow in kbit/s>] [-c <number of flows per iPerf instance>] \
@@ -91,11 +92,13 @@ mkdir $resultFolder
 
 for run in `seq 1 $REP`; do
 
-echo "\n--------------Run #${run}--------------" >&2
+printf "\n--------------Run #%s--------------\n" "${run}"
 
 # reset intents in ONOS
 printf "Reseting ONOS intents.\n"
 ssh ubuntu@192.168.33.10 "/home/ubuntu/python/measurements/02_lowBandwidthSsh/initialiseConstraints.py -r"
+# remove files from previous measurements
+ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
 
 
 INITTIME=$(bc -l <<< "$FLOWDUR * 1.2")
@@ -114,12 +117,13 @@ unset nmsCommand NMSDURATION
 
 
 # iPerf traffic initialisation phase
-printf "Starting initial iPerf traffic phase for %s s" "$INITTIME"
+printf "Starting initial iPerf traffic phase for %s s\n" "$INITTIME"
 iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $INITTIME -t $TYPE"
 if [ "$USEUDP" == true ]; then
 	iperfCommand="$iperfCommand -u"
 fi
 eval $iperfCommand
+iperfInstanceCount=$?
 # measure time of tcpdump startup
 TIMEA=$(date +%s.%N)
 unset iperfCommand INITTIME
@@ -141,9 +145,13 @@ sleep 1
 # TODO: check if all four cap files exist
 
 
+# remove files from previous measurements
+#ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
+
+
 # start iperf instances
 TIMEDIFF=$(bc -l <<< "$(date +%s.%N) - $TIMEA")
-iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE -e $TIMEDIFF"
+iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE -e $TIMEDIFF -r $(($iperfInstanceCount + 1))"
 if [ "$USEUDP" == true ]; then
 	iperfCommand="$iperfCommand -u"
 fi
@@ -157,6 +165,9 @@ gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 's
 ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $1}'"'"')\" | xargs kill -15"'
 # kill iperf python script on mininet vm in vagrant vm
 ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $1}'"'"')\" | xargs kill -15"'
+# kill all remaining ssh connections
+ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "killall /usr/bin/ssh"'
+ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.101 "killall /usr/bin/ssh"'
 
 sleep 5
 
