@@ -5,8 +5,12 @@ from pexpect import pxssh
 import getIperfClients
 import threading, subprocess
 import os.path, json, sys, getopt, time
-import socket, errno
 import initialiseConstraints
+try:
+    from subprocess import DEVNULL # py3k
+except ImportError:
+    import os
+    DEVNULL = open(os.devnull, 'wb')
 
 
 CLIENTLISTPATH='/home/ubuntu/clientList.txt'
@@ -203,6 +207,15 @@ def startIperfServer(resultIperf, serverPort='5001', duration='10'):
     h2.logout()
 
 
+def isPortOpen(port, name='iperf3', user='ubuntu', ip='100.0.1.201'):
+  try:
+    subprocess.check_call(["ssh", user+"@"+ip, "netstat -ntlp", "|", "grep", port, 
+        "|", "grep", name], stdout=DEVNULL, stderr=DEVNULL)
+  except subprocess.CalledProcessError:
+    return False
+  return True
+
+
 # connect to both hosts and run iperf server and client on them
 # write the active connections to a file for network management
 def performanceTest(duration, clientCount, resultIperf, bandwidth,
@@ -210,29 +223,23 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
   
   try:
     
+    # remove old iperf result files
+    if os.path.isfile(resultIperf):
+      subprocess.Popen(['rm', resultIperf+"_server.txt"], stdout=subprocess.PIPE, 
+                                              stderr=subprocess.PIPE)
+      subprocess.Popen(['rm', resultIperf+"_client.txt"], stdout=subprocess.PIPE, 
+                                              stderr=subprocess.PIPE)
+    
     # run iPerf server in thread    
     st = serverThread(1, serverPort, duration, resultIperf+"_server.txt")
     st.start()
     
-    # remove old iperf result files
-    if os.path.isfile(resultIperf):
-      subprocess.Popen(['rm', resultIperf], stdout=subprocess.PIPE, 
-                                              stderr=subprocess.PIPE)
-    
-    # check if the server port is available
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = 1
-    while result != 0:
-      # returns 0 if operation succeeded
-      result = sock.connect_ex((hostname2, int(serverPort)))
-      if result != 0:
-        info('### IPerf server port {} not open. Error: {}\n'.format(serverPort, errno.errorcode[result]))
-        time.sleep(1)
+    # check if the server port is available via netstat
+    while not isPortOpen(port=serverPort):
+      info('### IPerf server port {} not open.\n'.format(serverPort))
+      time.sleep(1)
     info('+++ Server is running and port {} open for client connection\n'
         .format(serverPort))
-    sock.close()
-    #time.sleep(3)
-    
     
     # create iperf client measurement thread
     ct = clientThread(2, "IperfClientMeasurementThread-1", duration,
