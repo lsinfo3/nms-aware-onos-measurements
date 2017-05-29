@@ -94,11 +94,8 @@ for run in `seq 1 $REP`; do
 
 printf "\n--------------Run #%s--------------\n" "${run}"
 
-if [ "$TYPE" == "NMS" ] || [ "$TYPE" == "MOD" ]; then
-  # reset intents in ONOS
-  printf "Resetting ONOS intents.\n"
-  ssh ubuntu@192.168.33.10 "/home/ubuntu/python/measurements/02_lowBandwidthSsh/initialiseConstraints.py -r"
-fi
+# start measurement environment
+./startEnvironment.sh
 
 # remove files from previous measurements
 ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
@@ -148,10 +145,6 @@ sleep 1
 # TODO: check if all four cap files exist
 
 
-# remove files from previous measurements
-#ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
-
-
 # start iperf instances
 TIMEDIFF=$(bc -l <<< "$(date +%s.%N) - $TIMEA")
 iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE -e $TIMEDIFF -r $(($iperfInstanceCount + 1))"
@@ -171,6 +164,8 @@ ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/
 # kill all remaining ssh connections
 ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "killall /usr/bin/ssh"'
 ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.101 "killall /usr/bin/ssh"'
+# kill measurement environment
+./killEnvironment.sh
 
 sleep 5
 

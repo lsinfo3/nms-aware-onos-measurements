@@ -30,7 +30,7 @@ printf "ONOS is available\n"
 while [ true ]; do
   printf "Starting mininet\n"
   # start mininet in vm
-  gnome-terminal -x sh -c "cd $mnVmFolder;vagrant ssh -c \"sudo $mnLocation -c $onosVmIp\";exec bash"
+  gnome-terminal -x sh -c "cd $mnVmFolder;vagrant ssh -c \"sudo $mnLocation -c $onosVmIp\""
 
   waitTime=0
   mnIsNotAvailable=1
