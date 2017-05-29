@@ -77,7 +77,7 @@ figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidthAll, color=Switch)) 
 if(length(unique(bandwidthData[["Switch"]])) == 1) {
   figure <- figure + theme(legend.position = "none")
 }
-# save cdf_plot as pdf
+# save as pdf
 width <- 15.0; height <- 7.0
 ggsave(paste(outFilePath, "_aggr_", strftime(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
 rm(width, height)
