@@ -88,6 +88,14 @@ resultFolder="$leftVmFolder/captures/metrics/${TYPE}_${STARTTIME}"
 mkdir $resultFolder
 
 
+# write measurement values to file
+infoFile="${resultFolder}/meas_info.txt"
+if [ ! -e $infoFile ]; then
+  printf "Repetitions: %s\nMeasurement duration: %s\nInter arrival time: %s\nAvg. simultaneous flows: %s\nBandwidth per flow: %s\nAvg. flow duration: %s\nIperf flow number: %s\nType: %s\nUDP: %s\n"\
+    "$REP" "$DURATION" "$IAT" "$FLOWS" "$BWD" "$FLOWDUR" "$COUNT" "$TYPE" "$USEUDP" >> $infoFile
+fi
+
+
 ### repeat measurement ###
 
 for run in `seq 1 $REP`; do
