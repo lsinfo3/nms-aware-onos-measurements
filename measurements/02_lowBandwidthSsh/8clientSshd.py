@@ -105,7 +105,7 @@ def sshd( network, cmd='/usr/sbin/sshd', opts='-D',
     network.stop()
 
 
-def sbyodTestingNetwork( controllerIp, args ):
+def setupSdnNetwork( controllerIp, args ):
     """Create a topology, run an ssh client on every host and restrict
     the bandwidth of the two central routers"""
 
@@ -153,4 +153,4 @@ if __name__ == '__main__':
         print cmd
         sys.exit()
       elif opt in ("-c", "--controllerIp"):
-        sbyodTestingNetwork( controllerIp=arg, args=args )
+        setupSdnNetwork( controllerIp=arg, args=args )
