@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Public ssh key has to be install in the ONOS and mininet VM!
 
 onosVmFolder="$HOME/Masterthesis/vm/firstOnosVm"
 mnVmFolder="$HOME/Masterthesis/vm/leftVm"
