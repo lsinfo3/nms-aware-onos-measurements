@@ -9,6 +9,9 @@ BWD="200"		# bandwidth
 TYPE="ORG"		# measurement type
 USEUDP=false	# use udp traffic
 
+mnVmIp="192.168.33.10"		# mininet VM's IP address
+onosVmIp="192.168.33.20"	# ONOS VM's IP address
+
 runCommand="startMetricsMeasurement.sh [-r <measurement runs>] \
 [-i <inter arrival time in seconds>] [-f <number of simultaneous flows>] \
 [-b <bandwidth per flow in kbit/s>] [-c <number of flows per iPerf instance>] \
@@ -139,21 +142,56 @@ unset iperfCommand INITTIME
 
 # monitor traffic with tcpdump to file
 # output of switch 2 (first data stream)
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s2-eth2 -Z ubuntu -w "$TYPE"_s2-eth2.cap'\""
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s2-eth2 -Z ubuntu -w "$TYPE"_s2-eth2.cap'\""
+ssh ubuntu@$mnVmIp 'sudo -b nohup tcpdump -i s2-eth2 -Z ubuntu -w '"$TYPE"'_s2-eth2.cap &'
 sleep 1
 # output of switch 4 (second data stream)
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s4-eth1 -Z ubuntu -w "$TYPE"_s4-eth1.cap'\""
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s4-eth1 -Z ubuntu -w "$TYPE"_s4-eth1.cap'\""
+ssh ubuntu@$mnVmIp 'sudo -b nohup tcpdump -i s4-eth1 -Z ubuntu -w '"$TYPE"'_s4-eth1.cap &'
 sleep 1
 # output of switch 3 (both data streams)
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s3-eth3 -Z ubuntu -w "$TYPE"_s3-eth3.cap'\""
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s3-eth3 -Z ubuntu -w "$TYPE"_s3-eth3.cap'\""
+ssh ubuntu@$mnVmIp 'sudo -b nohup tcpdump -i s3-eth3 -Z ubuntu -w '"$TYPE"'_s3-eth3.cap &'
 sleep 1
 # output of switch 1 (both data streams before limitation)
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s1-eth3 -Z ubuntu -w "$TYPE"_s1-eth3.cap'\""
+#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s1-eth3 -Z ubuntu -w "$TYPE"_s1-eth3.cap'\""
+ssh ubuntu@$mnVmIp 'sudo -b nohup tcpdump -i s1-eth3 -Z ubuntu -w '"$TYPE"'_s1-eth3.cap &'
 sleep 1
 # TODO: check if all four cap files exist
 
+# output of controller
+ssh ubuntu@$onosVmIp 'sudo -b nohup tcpdump -i enp0s8 -Z ubuntu -w '"$TYPE"'_enp0s8.cap &'
 # start system load measurement of ONOS
-ssh ubuntu@192.168.33.20 "nohup /vagrant/onosLoad.sh 1 > /vagrant/systemLoad.csv 2>&1 &"
+ssh ubuntu@$onosVmIp 'nohup /vagrant/onosLoad.sh 1 > /vagrant/systemLoad.csv 2>&1 &'
+
+
+killScripts () {
+  trap SIGINT
+  # kill tcpdump in vagrant vm
+  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
+  # kill tcpdump in onos vm
+  ssh ubuntu@192.168.33.20 "sudo killall tcpdump"
+  # move result to vagrant folder
+  ssh ubuntu@192.168.33.20 "mv *.cap /vagrant/"
+
+  # kill onosLoad script
+  ssh ubuntu@192.168.33.20 'ps -ax | grep [o]nosLoad.sh | awk '"'"'{ printf "%s", $1 }'"'"' | xargs kill -15'
+  # kill iperf server and client on mininet vm in vagrant vm
+  ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $1}'"'"')\" | xargs kill -15"'
+  # kill iperf python script on mininet vm in vagrant vm
+  ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $1}'"'"')\" | xargs kill -15"'
+  # kill all remaining ssh connections
+  ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "killall /usr/bin/ssh"'
+  ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.101 "killall /usr/bin/ssh"'
+}
+
+interruptScript () {
+  killScripts
+  exit 1
+}
+
+# Set up SIGINT trap to call function.
+trap "interruptScript" INT
 
 
 # start iperf instances
@@ -166,19 +204,11 @@ eval $iperfCommand
 unset iperfCommand TIMEA TIMEDIFF
 
 sleep 5
-# kill tcpdump in vagrant vm
-gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
-# kill onosLoad script
-ssh ubuntu@192.168.33.20 'ps -ax | grep [o]nosLoad.sh | awk '"'"'{ printf "%s", $1 }'"'"' | xargs kill -15'
-# kill iperf server and client on mininet vm in vagrant vm
-ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $1}'"'"')\" | xargs kill -15"'
-# kill iperf python script on mininet vm in vagrant vm
-ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $1}'"'"')\" | xargs kill -15"'
-# kill all remaining ssh connections
-ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "killall /usr/bin/ssh"'
-ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.101 "killall /usr/bin/ssh"'
+
+killScripts
 # kill measurement environment
 ./killEnvironment.sh
+
 
 sleep 5
 
