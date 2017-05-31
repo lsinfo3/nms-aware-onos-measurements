@@ -111,7 +111,6 @@ printf "\n--------------Run #%s--------------\n" "${run}"
 # remove files from previous measurements
 ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
 
-
 INITTIME=$(bc -l <<< "$FLOWDUR * 1.2")
 
 if [ "$TYPE" == "NMS" ]; then
@@ -125,7 +124,6 @@ if [ "$TYPE" == "NMS" ]; then
   gnome-terminal -e "$nmsCommand'\""
 fi
 unset nmsCommand NMSDURATION
-
 
 # iPerf traffic initialisation phase
 printf "Starting initial iPerf traffic phase for %s s\n" "$INITTIME"
@@ -142,47 +140,49 @@ unset iperfCommand INITTIME
 
 # monitor traffic with tcpdump to file
 # output of switch 2 (first data stream)
-#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s2-eth2 -Z ubuntu -w "$TYPE"_s2-eth2.cap'\""
-ssh ubuntu@$mnVmIp 'sudo -b nohup tcpdump -i s2-eth2 -Z ubuntu -w '"$TYPE"'_s2-eth2.cap &'
+IFACE="s2-eth2"
+ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
 sleep 1
 # output of switch 4 (second data stream)
-#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s4-eth1 -Z ubuntu -w "$TYPE"_s4-eth1.cap'\""
-ssh ubuntu@$mnVmIp 'sudo -b nohup tcpdump -i s4-eth1 -Z ubuntu -w '"$TYPE"'_s4-eth1.cap &'
+IFACE="s4-eth1"
+ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
 sleep 1
 # output of switch 3 (both data streams)
-#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s3-eth3 -Z ubuntu -w "$TYPE"_s3-eth3.cap'\""
-ssh ubuntu@$mnVmIp 'sudo -b nohup tcpdump -i s3-eth3 -Z ubuntu -w '"$TYPE"'_s3-eth3.cap &'
+IFACE="s3-eth3"
+ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
 sleep 1
 # output of switch 1 (both data streams before limitation)
-#gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'cd /home/ubuntu/captures/; sudo tcpdump -i s1-eth3 -Z ubuntu -w "$TYPE"_s1-eth3.cap'\""
-ssh ubuntu@$mnVmIp 'sudo -b nohup tcpdump -i s1-eth3 -Z ubuntu -w '"$TYPE"'_s1-eth3.cap &'
+IFACE="s1-eth3"
+ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
 sleep 1
 # TODO: check if all four cap files exist
 
 # output of controller
-ssh ubuntu@$onosVmIp 'sudo -b nohup tcpdump -i enp0s8 -Z ubuntu -w '"$TYPE"'_enp0s8.cap &'
+IFACE="enp0s8"
+ssh ubuntu@$onosVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
+unset IFACE
+
 # start system load measurement of ONOS
-ssh ubuntu@$onosVmIp 'nohup /vagrant/onosLoad.sh 1 > /vagrant/systemLoad.csv 2>&1 &'
+ssh ubuntu@$onosVmIp 'screen -dm bash -c "/vagrant/onosLoad.sh 1 > /vagrant/systemLoad.csv 2>&1"'
 
 
 killScripts () {
   trap SIGINT
-  # kill tcpdump in vagrant vm
-  gnome-terminal -e "bash -c \"cd $HOME/Masterthesis/vm/leftVm/; vagrant ssh -c 'sudo killall tcpdump'\""
-  # kill tcpdump in onos vm
-  ssh ubuntu@192.168.33.20 "sudo killall tcpdump"
-  # move result to vagrant folder
-  ssh ubuntu@192.168.33.20 "mv *.cap /vagrant/"
+  # kill tcpdump in vagrant vm and move results to "/vagrant" folder
+  ssh ubuntu@$mnVmIp "sudo killall tcpdump"
+  # kill tcpdump in onos vm and move results to "/vagrant" folder
+  ssh ubuntu@$onosVmIp "sudo killall tcpdump"
 
   # kill onosLoad script
-  ssh ubuntu@192.168.33.20 'ps -ax | grep [o]nosLoad.sh | awk '"'"'{ printf "%s", $1 }'"'"' | xargs kill -15'
+  ssh ubuntu@$onosVmIp 'ps -ax | grep [/]bin/bash\ /vagrant/onosLoad.sh | awk '"'"'{ printf "%s", $1 }'"'"' | xargs kill -15'
+  
   # kill iperf server and client on mininet vm in vagrant vm
-  ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $1}'"'"')\" | xargs kill -15"'
+  ssh ubuntu@$mnVmIp 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $1}'"'"')\" | xargs kill -15"'
   # kill iperf python script on mininet vm in vagrant vm
-  ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $1}'"'"')\" | xargs kill -15"'
-  # kill all remaining ssh connections
-  ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.201 "killall /usr/bin/ssh"'
-  ssh ubuntu@192.168.33.10 'ssh ubuntu@100.0.1.101 "killall /usr/bin/ssh"'
+  ssh ubuntu@$mnVmIp 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $1}'"'"')\" | xargs kill -15"'
+  # kill all remaining ssh connections on mininet vm
+  ssh ubuntu@$mnVmIp 'ssh ubuntu@100.0.1.201 "killall /usr/bin/ssh"'
+  ssh ubuntu@$mnVmIp 'ssh ubuntu@100.0.1.101 "killall /usr/bin/ssh"'
 }
 
 interruptScript () {
@@ -209,14 +209,13 @@ killScripts
 # kill measurement environment
 ./killEnvironment.sh
 
-
 sleep 5
 
 
 ### create results ###
 
 # move captures to the new folder
-mv $leftVmFolder/captures/*.cap $resultFolder
+mv $leftVmFolder/*.cap $resultFolder
 
 capFiles=""
 legendNames=""

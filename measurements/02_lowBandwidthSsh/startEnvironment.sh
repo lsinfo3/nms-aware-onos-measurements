@@ -24,7 +24,7 @@ nc -z -v -w5 $onosVmIp $onosUiPort
 while [ $? -ne 0 ]; do
   printf "ONOS not yet available\n"
   sleep 10
-  nc -z -v -w5 $onosVmIp $onosUiPort
+  nc -z -v -w5 $onosVmIp $onosUiPort >/dev/null 2>&1
 done
 printf "ONOS is available\n"
 
@@ -37,11 +37,13 @@ while [ true ]; do
   mnIsNotAvailable=1
   printf "Waiting for mininet hosts to be available\n"
   while [ $mnIsNotAvailable -ne 0 ] && [ "$waitTime" -le 15 ]; do
-    ssh ubuntu@$mnVmIp "nc -z -v -w5 100.0.1.101 22"
+    ssh ubuntu@$mnVmIp "nc -z -v -w5 100.0.1.101 22 >/dev/null 2>&1"
     mnIsNotAvailable=$?
     printf "Host is not available: %s\nWait time: %s\n" "$mnIsNotAvailable" "$waitTime"
-    sleep 5
-    waitTime=$(($waitTime + 5))
+    if [ $mnIsNotAvailable -ne 0 ]; then
+	  sleep 5
+      waitTime=$(($waitTime + 5))
+    fi
   done
   unset waitTime
 

@@ -89,9 +89,10 @@ createCommand ()
 	conNumArg=$1
 	serverPortArg=$2
 	flowDurationArg=$3
+	iperfResultName="iperfResult${conNumArg}"
 	
 	iperfCommand="ssh ${vmUser}@${vmIp}"
-	iperfCommand="$iperfCommand '/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py"
+	iperfCommand="$iperfCommand 'screen -dm bash -c \"/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py"
 	iperfCommand="$iperfCommand -d $flowDurationArg -c $COUNT -b $BANDWIDTH"
 	if [ "$USEUDP" == true ]; then
 	  iperfCommand="$iperfCommand -u"
@@ -99,10 +100,9 @@ createCommand ()
 	if [ "$TYPE" == "NMS" ]; then
 	  iperfCommand="$iperfCommand -a"
 	fi
-	iperfResultName="iperfResult${conNumArg}"
 	iperfCommand="$iperfCommand -p $serverPortArg -n iperf${conNumArg}"
 	iperfCommand="$iperfCommand -r /home/ubuntu/${iperfResultName};"
-	iperfCommand="$iperfCommand cp /home/ubuntu/${iperfResultName}*.txt /home/ubuntu/captures/'"
+	iperfCommand="$iperfCommand cp /home/ubuntu/${iperfResultName}*.txt /home/ubuntu/captures/\"'"
 	
 	unset conNumArg serverPortArg flowDurationArg iperfResultName
 }
@@ -197,7 +197,7 @@ else
 	  
 		# run the iPerf server and client
 		createCommand $iperfNumber $serverPort $flowDuration
-		gnome-terminal -e "$iperfCommand"
+		eval "$iperfCommand"
 		# wait for the iPerf server to start
 		#waitForServer $serverPort
 		unset iperfCommand
