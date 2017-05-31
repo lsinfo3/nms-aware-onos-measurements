@@ -14,7 +14,8 @@ numCpu="$(lscpu | grep Core\(s\)\ per\ socket: | awk '{ printf "%s\n", $4}')"
 #printf "Cpu(s): %s" "$numCpu"
 
 while [ true ]; do
-  row="\"$(date +%s.%N)\""
+  loopStartTime="$(date +%s.%N)"
+  row="\"${loopStartTime}\""
   
   # get the program id of onos-karaf
   onosPid="$(ps -ax | grep [/]home/ubuntu/onos/tools/dev/bin/onos-karaf | awk '{ printf "%s", $1}')"
@@ -33,7 +34,9 @@ while [ true ]; do
   # print system memory usage
   row="${row},\"$(free -m | awk 'NR==2{printf "%.2f", $3/$2 }')\""
   printf "%s\n" "$row"
-  sleep $waitTime
+  
+  # sleep wait time minus the elapsed time
+  sleep $(bc -l <<< "$waitTime - ($(date +%s.%N) - $loopStartTime)")
 done
 
 unset waitTime row onosPid
