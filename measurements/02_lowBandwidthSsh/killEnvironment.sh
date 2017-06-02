@@ -8,12 +8,14 @@ mnVmIp="192.168.33.10"
 onosVmIp="192.168.33.20"
 
 # kill mininet
-ssh ubuntu@$mnVmIp "sudo killall /usr/bin/python; sudo mn -c"
+ssh ubuntu@$mnVmIp "sudo killall /usr/bin/python; sudo mn -c" > /dev/null 2>&1
 
 # kill onos via karaf shell
 ssh -p 8101 -i ~/.ssh/id_rsa lorry@$onosVmIp "shutdown -f"
 
 unset mnVmIp onosVmIp
 
-gnome-terminal -x sh -c "cd $mnVmFolder;vagrant halt"
-gnome-terminal -x sh -c "cd $onosVmFolder;vagrant halt"
+printf "\nKill Mininet VM:\n\n" >> vagrant_log.txt
+( cd $mnVmFolder ; vagrant halt ) >> vagrant_log.txt 2>&1
+printf "\nKill ONOS VM:\n\n" >> vagrant_log.txt
+( cd $onosVmFolder ; vagrant halt ) >> vagrant_log.txt 2>&1
