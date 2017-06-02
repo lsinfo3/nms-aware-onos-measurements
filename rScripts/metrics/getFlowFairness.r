@@ -3,8 +3,8 @@
 # function calculating the flow based fairness
 # Assumption: bandwidth equals zero -> no bandwidth requested at all
 #
-# traffic: dataframe holding traffic bandwidth in each row divided by connection
-# req: the requested traffic bandwidth divided by connection
+# traffic: dataframe holding traffic bandwidth in each row partitioned by connection
+# req: the requested traffic bandwidth partitioned by connection
 
 getFlowFairness <- function(traffic, req) {
   
@@ -20,8 +20,12 @@ getFlowFairness <- function(traffic, req) {
   
   # Jain's fairness index.
   jain <- function(x) {return(sum(x)^2 / (length(x) * sum(x^2)))}
+  # Hossfelds fairness index. (F = 1 - sigma / sigma_max)
+  # sqrt(0.25) is the max standard deviation for n values ranging between 0 and 1
+  hoss <- function(x) {return(1-(sqrt(mean(x^2)-mean(x)^2)/sqrt(0.25)))}
+  
   # calculate fairness (Assumption: bandwidth == 0 -> no bandwidth requested)
-  fairness <- apply(traffic, 1, function(x) {return(jain(x[which(x != 0)]))})
+  fairness <- apply(traffic, 1, function(x) {return(hoss(x[which(x != 0)]))})
   # return only non NAN values
   return(fairness[!is.nan(fairness)])
 }
