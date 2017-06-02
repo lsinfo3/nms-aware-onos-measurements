@@ -13,6 +13,7 @@ getLinkFairness <- function(traffic) {
   # Hossfelds fairness index. (F = 1 - sigma / sigma_max)
   # sqrt(0.25) is the max standard deviation for n values ranging between 0 and 1
   hoss <- function(x) {return(1-(sqrt(mean(x^2)-mean(x)^2)/sqrt(0.25)))}
+  #hoss <- function(x) {return(1-(sqrt(mean(x^2)-mean(x)^2)/(max(x)-min(x))))}
   
   # calculate fairness
   fairness <- apply(traffic, 1, hoss)

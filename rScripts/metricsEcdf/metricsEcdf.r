@@ -10,20 +10,48 @@ rm(list=ls())
 args <- commandArgs(trailingOnly = TRUE)
 
 # default values
-csvFile <- "metrics.csv"
+csvFiles <- ""
+values <- ""
+parameter <- ""
 outFilePath <- "./out"
 
 if(length(args) >= 1){
-  csvFile <- as.character(args[1])
+  csvFiles <- strsplit(as.character(args[1]), " ")[[1]]
 }
 if(length(args) >= 2){
-  outFilePath <- as.character(args[2])
+  values <- strsplit(as.character(args[2]), " ")[[1]]
+}
+if(length(args) >= 3){
+  parameter <- as.character(args[3])
+}
+if(length(args) >= 4){
+  outFilePath <- as.character(args[4])
 }
 rm(args)
 
+csvFiles <- c("20.csv", "30.csv", "40.csv", "50.csv", "60.csv")
+values <- c("20", "30", "40", "50", "60")
+parameter <- "iat"
+
+# combine all csv data to long format
+for(i in 1:length(csvFiles)) {
+  metricsPart <- read.csv(csvFiles[i], header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
+  metricsPart[[parameter]] <- values[i]
+  
+  if(exists("metrics")) {
+    metrics <- rbind(metrics, metricsPart)
+  } else {
+    metrics <- metricsPart
+  }
+}
+rm(metricsPart)
+metrics2 <- metrics
+# normalize reallocations
+metrics[, "reallocations"] <- (1/(metrics[, "reallocations"]+1))^(1/10)
+
 # read csv metrics file
-metrics <- read.csv(csvFile, header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
-metrics <- melt(metrics[2:5], measure.vars=1:4)
+#metrics <- read.csv(csvFile, header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
+metrics <- melt(metrics[2:6], measure.vars=1:4, id=parameter)
 labels <- c(throughput="Throughput", linkFairness="Link Fairness", flowFairness="Flow Fairness", reallocations="Reallocations")
 
 # round the values to max 3 digits
@@ -43,11 +71,11 @@ myBreaks <- function(x){
   breaks
 }
 
-figure <- ggplot(data=metrics, aes(x=value)) +
+figure <- ggplot(data=metrics, aes(x=value, color=variable)) +
   stat_ecdf(geom="step") +
-  facet_grid(. ~ variable, scales="free_x", labeller=labeller(variable=labels)) +
+  facet_grid(iat ~ ., labeller=labeller(variable=labels)) +
   scale_x_continuous(breaks=myBreaks)+
-  labs(x="Metrics", y="Cumulative Probability") +
+  labs(x="IAT", y="Cumulative Probability") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"))
