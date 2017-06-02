@@ -9,19 +9,20 @@ DURATION="120"		# iPerf client creation duration
 FLOWDUR=$DURATION	# duration for each flow
 TIMEDELAY="0"		# time error to compensate from the actual measurement start
 RUN="1"				# iPerf client runs
+SEED="1"			# seed for the RANDOM variable
 USEUDP=false		# use udp traffic
 TYPE="ORG"			# measurement type
 
 runCommand="runIperf.sh [-i <inter arrival time in seconds>] \
 [-b <bandwidth per flow in kbit/s>] [-l <duration per flow>] \
 [-c <number of flows per iPerf instance>] [-d <overall measurement duration in seconds>] \
-[-e <time delay in seconds>] [-r <iPerf run number>] [-u] -t {ORG|MOD|NMS}"
+[-e <time delay in seconds>] [-r <iPerf run number>] [-s <seed>] [-u] -t {ORG|MOD|NMS}"
 
 vmUser="ubuntu"
 vmIp="192.168.33.10"
 mininetServerIp="100.0.1.201"
 
-while getopts "i:b:l:c:d:e:r:ut:h" opt; do
+while getopts "i:b:l:c:d:e:r:s:ut:h" opt; do
   case $opt in
 	i)
       #echo "Flow inter arrival time: $OPTARG seconds" >&2
@@ -50,6 +51,10 @@ while getopts "i:b:l:c:d:e:r:ut:h" opt; do
     r)
       #echo "IPerf run number: $OPTARG" >&2
       RUN=$OPTARG
+      ;;
+    s)
+      #echo "Seed is: $OPTARG" >&2
+      SEED=$OPTARG
       ;;
     u)
       #echo "Use UDP rather than TCP." >&2
@@ -148,10 +153,14 @@ else
 	measStartTime=$(date +%s.%N)	# measurement start time
 	timeError=$TIMEDELAY			# initial time beyond actual measurement time
 	calcIatCounter=0 				# calculated IAT sum
+	serverPort=$((5000 + $iperfNumber))		# the port to use for the iPerf server
+	
 	# set the seed for the random variable
-	printf "Set seed to %s" "$iperfNumber"
-	RANDOM=$iperfNumber
-	serverPort=$((5000 + $iperfNumber))
+	RANDOM=$SEED
+	newSeed=$RANDOM
+	RANDOM=$newSeed
+	printf "Set seed to %s get new seed %s via random and set this as seed." "$SEED" "$newSeed"
+	unset newSeed
 	
 	# run as long as the measurement time is not over (measurementTime = currentTime - measurementStartTime)
 	while [ $(echo "($(date +%s.%N) - $measStartTime) < $DURATION" | bc -l) == 1 ]; do
