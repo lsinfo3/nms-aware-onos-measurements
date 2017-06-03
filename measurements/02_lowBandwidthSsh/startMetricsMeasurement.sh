@@ -147,6 +147,10 @@ unset iperfCommand INITTIME
 
 
 # monitor traffic with tcpdump to file
+# output of switch 1 (both data streams before limitation)
+IFACE="s1-eth3"
+ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
+sleep 1
 # output of switch 2 (first data stream)
 IFACE="s2-eth2"
 ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
@@ -157,10 +161,6 @@ ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w 
 sleep 1
 # output of switch 3 (both data streams)
 IFACE="s3-eth3"
-ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
-sleep 1
-# output of switch 1 (both data streams before limitation)
-IFACE="s1-eth3"
 ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
 sleep 1
 # TODO: check if all four cap files exist
@@ -276,8 +276,14 @@ unset rCommand
 # move iperf result and graphs to extra folder with timestamp
 dataFolder="${resultFolder}/$(date +%F_%H-%M-%S)"
 mkdir $dataFolder
-mv $leftVmFolder/captures/*.txt $dataFolder
+mkdir $dataFolder/iperfResult
+mv $leftVmFolder/captures/*.txt $dataFolder/iperfResult
 mv ${resultFolder}/*.pdf $dataFolder
+# move all csv files to data folder
+mv ${resultFolder}/*.csv $dataFolder
+# move metrics back to parent folder
+mv ${dataFolder}/metrics.csv $resultFolder
+
 # move onos load results
 onosVmFolder="$HOME/Masterthesis/vm/firstOnosVm"
 mv $onosVmFolder/*.csv $dataFolder
