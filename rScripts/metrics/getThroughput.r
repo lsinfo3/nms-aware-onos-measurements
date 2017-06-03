@@ -15,12 +15,11 @@ getThroughput <- function(traffic, trafficLimit, inName, outName) {
   traffic[traffic[[inName]] > trafficLimit, inName] <- trafficLimit
   
   # get quotient
-  throughput <- traffic[[outName]]/traffic[[inName]]
-  # filter out values higher than 1
-  #throughput[throughput > 1.0] <- 1
+  throughput <- data.frame("time"=traffic[, "time"])
+  throughput[["throughput"]] <- traffic[[outName]]/traffic[[inName]]
   
   # remove na values
-  throughput[is.na(throughput)] <- 0
+  throughput[is.na(throughput[["throughput"]]), "throughput"] <- 0
   
   return(throughput)
 }

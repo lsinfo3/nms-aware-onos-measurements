@@ -5,7 +5,9 @@
 # traffic: dataframe holding bandwidth values partitioned by links
 
 getLinkFairness <- function(traffic) {
-  
+  # result
+  fairness <- data.frame("time"=traffic[, "time"])
+  traffic <- traffic[, 2:ncol(traffic)]
   traffic <- traffic / apply(traffic, 1, function(x) {return(sum(x, na.rm=TRUE))})
   
   # Jain's fairness index.
@@ -16,7 +18,7 @@ getLinkFairness <- function(traffic) {
   #hoss <- function(x) {return(1-(sqrt(mean(x^2)-mean(x)^2)/(max(x)-min(x))))}
   
   # calculate fairness
-  fairness <- apply(traffic, 1, hoss)
+  fairness[["linkFairness"]] <- apply(traffic, 1, hoss)
   # return only non NAN values
-  return(fairness[!is.na(fairness)])
+  return(fairness[!is.na(fairness[["linkFairness"]]), ])
 }

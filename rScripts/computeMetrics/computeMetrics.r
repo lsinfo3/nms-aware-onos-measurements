@@ -82,22 +82,29 @@ width <- 15.0; height <- 7.0
 ggsave(paste(outFilePath, "_aggr_", strftime(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
 rm(width, height)
 
+
 #TODO: Do not depend on legend names!
 # calculate the percentage of the throughput
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getThroughput.r")
 throughputData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
-throughput <- getThroughput(throughputData[, c("s1", "s3")], 2000, "s1", "s3")
-#rm(throughputData, getThroughput)
-print(paste("Mean of throughput: ", mean(throughput), sep=""))
-result <- c(result, mean(throughput))
+throughput <- getThroughput(throughputData[, c("time", "s1", "s3")], 2000, "s1", "s3")
+rm(throughputData, getThroughput)
+
+print(paste("Mean of throughput: ", mean(throughput[,"throughput"]), sep=""))
+result <- c(result, mean(throughput[,"throughput"]))
+resultDetail <- melt(throughput, id.vars="time")
+rm(throughput)
+
 
 # calculate the fairness
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getLinkFairness.r")
 linkFairnessData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
-linkFairness <- getLinkFairness(linkFairnessData[, c("s2", "s4")])
-#rm(linkFairnessData, getLinkFairness)
-print(paste("Mean of link fairness: ", mean(linkFairness), sep=""))
-result <- c(result, mean(linkFairness))
+linkFairness <- getLinkFairness(linkFairnessData[, c("time", "s2", "s4")])
+rm(linkFairnessData, getLinkFairness)
+print(paste("Mean of link fairness: ", mean(linkFairness[, "linkFairness"]), sep=""))
+result <- c(result, mean(linkFairness[, "linkFairness"]))
+resultDetail <- rbind(resultDetail, melt(linkFairness, id.vars="time"))
+rm(linkFairness)
 
 rm(bandwidthData)
 
@@ -106,6 +113,7 @@ rm(bandwidthData)
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/mergeBandwidth.r")
 # calculate bandwidth data
 bandwidthData <- mergeBandwidth(csvFiles[c(2,4)], legendNames[c(2,4)], resolution, protocol)
+rm(mergeBandwidth, computeBandwidth)
 
 # plot the bandwidth
 figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=Switch, linetype=Switch)) +
@@ -129,28 +137,38 @@ ggsave(paste(outFilePath, "_diff_", strftime(Sys.time(), "%Y-%m-%d_%H-%M-%S"), "
 
 rm(width, height)
 
+
 # calculate the flow fairness
 # TODO: Adapt requested bandwidth!
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getFlowFairness.r")
 flowFairnessData <- dcast(bandwidthData, time ~ src, value.var="bandwidth", fun.aggregate=sum)
-flowFairness <- getFlowFairness(flowFairnessData[, 2:ncol(flowFairnessData)], rep(200, ncol(flowFairnessData)-1))
-#rm(flowFairnessData, getFlowFairness)
-print(paste("Mean of flow fairness: ", mean(flowFairness), sep=""))
-result <- c(result, mean(flowFairness))
+flowFairness <- getFlowFairness(flowFairnessData, rep(200, ncol(flowFairnessData)-1))
+rm(flowFairnessData, getFlowFairness)
+
+print(paste("Mean of flow fairness: ", mean(flowFairness[, "flowFairness"]), sep=""))
+result <- c(result, mean(flowFairness[, "flowFairness"]))
+resultDetail <- rbind(resultDetail, melt(flowFairness, id.vars="time"))
+rm(flowFairness)
+
 
 # calculate the flow reallocation
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getReallocation.r")
 reallocations <- getReallocation(bandwidthData[, c("time", "bandwidth", "src", "Switch")])
 print(paste("Flow reallocations: ", sum(reallocations), sep=""))
 result <- c(result, sum(reallocations))
-#rm(getReallocation, reallocations)
+rm(getReallocation, reallocations)
 
 rm(bandwidthData)
 
 
 # write results to output file
-csvFile <- paste(outFilePath, ".csv", sep="")
-if(!file.exists(csvFile)) {
-  write.table(t(resultHeader), file=csvFile, row.names=FALSE, col.names=FALSE, na="", sep=",", append=FALSE)
+csvFileName <- paste(outFilePath, ".csv", sep="")
+if(!file.exists(csvFileName)) {
+  write.table(t(resultHeader), file=csvFileName, row.names=FALSE, col.names=FALSE, na="", sep=",", append=FALSE)
 }
-write.table(t(result), file=csvFile, row.names=FALSE, col.names=FALSE, na="", sep=",", append=TRUE)
+write.table(t(result), file=csvFileName, row.names=FALSE, col.names=FALSE, na="", sep=",", append=TRUE)
+
+# write detail results to output file
+csvFileName <- paste(outFilePath, "_detail.csv", sep="")
+resultDetail <- dcast(resultDetail, time ~ variable, fill=0)
+write.table(resultDetail, file=csvFileName, row.names=FALSE, na="", sep=",", append=FALSE)
