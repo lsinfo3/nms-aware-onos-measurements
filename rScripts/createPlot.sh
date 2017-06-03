@@ -90,11 +90,12 @@ if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
       $rFilePath "6" $outFilePath "$csvFiles" "$legendNames"
     fi
     
-    # remove csv files
+    # move csv files to outFilePath
     for capFile in $capFilesList; do
       fileBaseName=$(basename "$capFile")
       fileName="${fileBaseName%.*}"
-      rm ./${fileName}.csv
+      outDir=$(dirname "$outFilePath")
+      mv ./${fileName}.csv $outDir
     done
     
 fi
