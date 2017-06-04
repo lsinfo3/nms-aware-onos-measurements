@@ -20,6 +20,8 @@ getThroughput <- function(traffic, trafficLimit, inName, outName) {
   
   # remove na values
   throughput[is.na(throughput[["throughput"]]), "throughput"] <- 0
+  # max throughput is 1
+  throughput[throughput[["throughput"]] > 1, "throughput"] <- 1
   
   return(throughput)
 }
