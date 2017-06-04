@@ -117,7 +117,7 @@ printf "\n"
 # remove files from previous measurements
 ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
 
-INITTIME=$(bc -l <<< "$FLOWDUR * 1.2")
+INITTIME=$(bc -l <<< "$FLOWDUR * 1.5")
 
 if [ "$TYPE" == "NMS" ]; then
   # start network management system

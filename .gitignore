@@ -8,3 +8,5 @@
 ./rScripts/test_files/
 .Rhistory
 .idea/
+measurements/02_lowBandwidthSsh/vagrant_log.txt
+measurements/02_lowBandwidthSsh/run.sh
