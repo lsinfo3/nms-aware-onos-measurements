@@ -20,6 +20,9 @@ legendNames <- ""
 outFilePath <- "./out"
 protocol <- "17"
 
+#csvFiles <- c("s1.csv", "s2.csv", "s3.csv", "s4.csv")
+#legendNames <- c("s1", "s2", "s3", "s4")
+
 if(length(args) >= 1){
   protocol <- as.character(args[1])
 }
@@ -38,9 +41,6 @@ rm(args)
 
 resultHeader <- c("time", "throughput", "linkFairness", "flowFairness", "reallocations")
 result <- c(strftime(Sys.time(), "%Y-%m-%d_%H-%M-%S"))
-
-#csvFiles <- c("s1.csv", "s2.csv", "s3.csv", "s4.csv")
-#legendNames <- c("s1", "s2", "s3", "s4")
 
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/computeBandwidth.r")
 
@@ -88,12 +88,12 @@ rm(width, height)
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getThroughput.r")
 throughputData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
 throughput <- getThroughput(throughputData[, c("time", "s1", "s3")], 2000, "s1", "s3")
-rm(throughputData, getThroughput)
+#rm(throughputData, getThroughput)
 
 print(paste("Mean of throughput: ", mean(throughput[,"throughput"]), sep=""))
 result <- c(result, mean(throughput[,"throughput"]))
 resultDetail <- melt(throughput, id.vars="time")
-rm(throughput)
+#rm(throughput)
 
 
 # calculate the fairness
