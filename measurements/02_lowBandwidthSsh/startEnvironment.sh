@@ -39,7 +39,7 @@ while [ true ]; do
   waitTime=0
   mnIsNotAvailable=1
   printf "Waiting for mininet hosts to be available\n"
-  while [ $mnIsNotAvailable -ne 0 ] && [ "$waitTime" -le 15 ]; do
+  while [ $mnIsNotAvailable -ne 0 ] && [ "$waitTime" -le 30 ]; do
     ssh ubuntu@$mnVmIp "nc -z -v -w5 100.0.1.101 22 >/dev/null 2>&1"
     mnIsNotAvailable=$?
     printf "Host is not available: %s\tWaited time: %s\n" "$mnIsNotAvailable" "$waitTime"

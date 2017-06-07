@@ -7,6 +7,7 @@ IAT="0"			# inter arrival time
 FLOWS="8"		# amount of flows
 BWD="200"		# bandwidth
 TYPE="ORG"		# measurement type
+NMSINT="10" 	# updated interval of the NMS
 SEED="1"		# seed for the RANDOM variable
 USEUDP=false	# use udp traffic
 
@@ -16,20 +17,14 @@ onosVmIp="192.168.33.20"	# ONOS VM's IP address
 runCommand="startMetricsMeasurement.sh [-r <measurement runs>] \
 [-i <inter arrival time in seconds>] [-f <number of simultaneous flows>] \
 [-b <bandwidth per flow in kbit/s>] [-c <number of flows per iPerf instance>] \
-[-d <overall measurement duration in seconds>] [-s <seed>] [-u] -t {ORG|MOD|NMS}"
+[-d <overall measurement duration in seconds>] [-s <seed>] [-n <nms interval>] [-u] -t {ORG|MOD|NMS}"
 
-while getopts "i:f:b:t:d:c:r:us:h" opt; do
+while getopts "r:i:f:b:c:d:s:n:ut:h" opt; do
   case $opt in
-	t)
-	  TYPE=$OPTARG
-	  if [ "$TYPE" == "ORG" ] || [ "$TYPE" == "MOD" ] || [ "$TYPE" == "NMS" ]
-		then
-		  echo "Measurement type: $OPTARG" >&2
-		else
-		  echo "Measurement type not valid!"
-		  exit 1
-	  fi
-	  ;;
+	r)
+      echo "Measurement repetitions: $OPTARG" >&2
+      REP=$OPTARG
+      ;;
     i)
       echo "Flow inter arrival time: $OPTARG seconds" >&2
       IAT=$OPTARG
@@ -42,26 +37,36 @@ while getopts "i:f:b:t:d:c:r:us:h" opt; do
       echo "Bandwidht per flow: $OPTARG kbit/s" >&2
       BWD=$OPTARG
       ;;
+    c)
+      echo "Number of flows per iPerf instance: $OPTARG" >&2
+      COUNT=$OPTARG
+      ;;
     d)
       echo "Measurement duration: $OPTARG seconds" >&2
       DURATION=$OPTARG
-      ;;
-    c)
-      echo "Connection count: $OPTARG" >&2
-      COUNT=$OPTARG
-      ;;
-    r)
-      echo "Measurement repetitions: $OPTARG" >&2
-      REP=$OPTARG
       ;;
     s)
       echo "Seed is: $OPTARG" >&2
       SEED=$OPTARG
       ;;
+    n)
+      echo "NMS update interval is: $OPTARG" >&2
+      NMSINT=$OPTARG
+      ;;
     u)
       echo "Use UDP rather than TCP." >&2
       USEUDP=true
       ;;
+    t)
+	  TYPE=$OPTARG
+	  if [ "$TYPE" == "ORG" ] || [ "$TYPE" == "MOD" ] || [ "$TYPE" == "NMS" ]
+		then
+		  echo "Measurement type: $OPTARG" >&2
+		else
+		  echo "Measurement type not valid!"
+		  exit 1
+	  fi
+	  ;;
     h)
       echo -e "Usage:\n$runCommand"
       exit 1
@@ -99,8 +104,18 @@ mkdir $resultFolder
 # write measurement values to file
 infoFile="${resultFolder}/meas_info.txt"
 if [ ! -e $infoFile ]; then
-  printf "Repetitions: %s\nMeasurement duration: %s\nInter arrival time: %s\nAvg. simultaneous flows: %s\nBandwidth per flow: %s\nAvg. flow duration: %s\nIperf flow number: %s\nType: %s\nUDP: %s\nSeed: %s\n"\
-    "$REP" "$DURATION" "$IAT" "$FLOWS" "$BWD" "$FLOWDUR" "$COUNT" "$TYPE" "$USEUDP" "$SEED" >> $infoFile
+  printf "Repetitions: %s\n\
+Measurement duration: %s\n\
+Inter arrival time: %s\n\
+Avg. simultaneous flows: %s\n\
+Bandwidth per flow: %s\n\
+Avg. flow duration: %s\n\
+Iperf flow number: %s\n\
+Type: %s\n\
+NMS update interval: %s\n\
+UDP: %s\n\
+Seed: %s\n"\
+    "$REP" "$DURATION" "$IAT" "$FLOWS" "$BWD" "$FLOWDUR" "$COUNT" "$TYPE" "$NMSINT" "$USEUDP" "$SEED" >> $infoFile
 fi
 
 
@@ -123,7 +138,7 @@ if [ "$TYPE" == "NMS" ]; then
   # start network management system
   LANG=C printf -v NMSDURATION "%.0f" "$(bc -l <<< "$DURATION + $INITTIME + 10")"
   printf "Starting NMS with runtime %s s.\n" "$NMSDURATION"
-  nmsCommand="ssh ubuntu@$mnVmIp 'screen -dm bash -c \"/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i 10 -r $NMSDURATION"
+  nmsCommand="ssh ubuntu@$mnVmIp 'screen -dm bash -c \"/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i $NMSINT -r $NMSDURATION"
   if [ "$USEUDP" == true ]; then
 	nmsCommand="$nmsCommand -u"
   fi
@@ -144,8 +159,11 @@ SEED=$(($SEED + 1))
 # measure time of tcpdump startup
 TIMEA=$(date +%s.%N)
 unset iperfCommand INITTIME
+printf "\nInitialisation phase is over. Starting tcpdump.\n\n"
 
 
+# remove old captures
+rm $leftVmFolder/*.cap
 # monitor traffic with tcpdump to file
 # output of switch 1 (both data streams before limitation)
 IFACE="s1-eth3"
