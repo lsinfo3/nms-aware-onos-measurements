@@ -30,7 +30,7 @@ while getopts "r:i:f:b:c:d:s:n:ut:h" opt; do
       IAT=$OPTARG
       ;;
     f)
-      echo "Number simultaneous of flows: $OPTARG" >&2
+      echo "Number of simultaneous flows: $OPTARG" >&2
       FLOWS=$OPTARG
       ;;
     b)

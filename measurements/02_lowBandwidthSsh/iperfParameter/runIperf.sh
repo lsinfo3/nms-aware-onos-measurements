@@ -172,7 +172,7 @@ else
 		# calculate next connection start in seconds
 		# (negative exponential distribution function)
 		random=$RANDOM
-		nextIat=$(bc -l <<< "-l(1.0 - ${random}/32767.0) * $IAT")
+		nextIat=$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $IAT")
 		# update iat counter
 		calcIatCounter=$(bc -l <<< "$calcIatCounter + $nextIat")
 		
@@ -182,7 +182,7 @@ else
 		# calculate the connections duration based on a negative
 		# exponential distribution function
 		random=$RANDOM
-		LANG=C printf -v flowDuration "%.0f" "$(bc -l <<< "-l(1.0 - ${random}/32767.0) * $FLOWDUR")"
+		LANG=C printf -v flowDuration "%.0f" "$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $FLOWDUR")"
 		
 		LANG=C printf "Previous time error: %.3f\tNew calc. IAT: %.3f\tTime to wait: %.3f\tCalc. flow duration: %s\n" \
 		"$timeError" "$nextIat" "$nextTime" "$flowDuration"
