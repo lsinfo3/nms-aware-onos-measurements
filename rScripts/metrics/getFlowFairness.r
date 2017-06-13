@@ -25,8 +25,18 @@ getFlowFairness <- function(traffic, req) {
   # Jain's fairness index.
   jain <- function(x) {return(sum(x)^2 / (length(x) * sum(x^2)))}
   # Hossfelds fairness index. (F = 1 - sigma / sigma_max)
-  # sqrt(0.25) is the max standard deviation for n values ranging between 0 and 1
-  hoss <- function(x) {return(1-(sqrt(mean(x^2)-mean(x)^2)/sqrt(0.25)))}
+  # max standard deviation for n values ranging between 0 and 1:
+  # n is even:  max sd is 0.5
+  # n is odd:   max sd is sqrt(1/4 - 1/(4*n^2))
+  hoss <- function(x) {
+    # if x has an even length
+    if (length(x) %% 2 == 0) {
+      maxsd <- 0.5
+    } else {
+      maxsd <- sqrt(1/4 - 1/(4*length(x)^2))
+    }
+    return(1-(sqrt(mean(x^2)-mean(x)^2)/maxsd))
+  }
   
   # calculate fairness (Assumption: bandwidth == 0 -> no bandwidth requested)
   fairness[["flowFairness"]] <- apply(traffic, 1, function(x) {return(hoss(x[which(x != 0)]))})
