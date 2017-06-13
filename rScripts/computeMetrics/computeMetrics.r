@@ -96,7 +96,7 @@ resultDetail <- melt(throughput, id.vars="time")
 #rm(throughput)
 
 
-# calculate the fairness
+# calculate the link fairness
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getLinkFairness.r")
 linkFairnessData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
 linkFairness <- getLinkFairness(linkFairnessData[, c("time", "s2", "s4")])

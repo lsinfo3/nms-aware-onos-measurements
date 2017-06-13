@@ -12,7 +12,7 @@ args <- commandArgs(trailingOnly = TRUE)
 # default values
 csvFiles <- ""
 values <- ""
-parameter <- ""
+parameterName <- ""
 outFilePath <- "./out"
 
 if(length(args) >= 1){
@@ -22,20 +22,25 @@ if(length(args) >= 2){
   values <- strsplit(as.character(args[2]), " ")[[1]]
 }
 if(length(args) >= 3){
-  parameter <- as.character(args[3])
+  parameterName <- as.character(args[3])
 }
 if(length(args) >= 4){
   outFilePath <- as.character(args[4])
 }
 rm(args)
 
-#csvFiles <- c("20.csv", "30.csv", "40.csv", "50.csv", "60.csv")
-#values <- c("20", "30", "40", "50", "60")
-#csvFiles <- c("metrics_detail.csv")
-#values <- c("10")
 
-#for(i in seq(20, 60, by=10)) {
-#  for(j in seq(1, 2)) {
+# --- create file and value vector ---
+detail=FALSE
+folderName="newIat"
+folders=seq(20, 60, by=10)
+numMeas=5
+
+#tempFiles <- c("avg10/1.csv", "avg10/2.csv")
+#tempValues <- c("10", "10")
+
+#for(i in seq(4, 12, by=2)) {
+#  for(j in seq(1, 1)) {
 #    if(exists("tempFiles")) {
 #      tempFiles <- c(tempFiles, paste("avg", i, "/", j, ".csv", sep=""))
 #    } else {
@@ -43,36 +48,123 @@ rm(args)
 #    }
 #  }
 #  if(exists("tempValues")) {
-#    tempValues <- c(tempValues, rep(toString(i), 2))
+#    tempValues <- c(tempValues, rep(toString(i), 1))
 #  } else {
-#    tempValues <- c(rep(toString(i), 2))
+#    tempValues <- c(rep(toString(i), 1))
 #  }
 #}
 
-for(i in seq(20, 60, by=10)) {
-  for(j in seq(6, 10)) {
-    if(exists("tempFiles")) {
-      tempFiles <- c(tempFiles, paste(i, "/", j, ".csv", sep=""))
+if(detail == FALSE) {
+  for(i in folders) {
+    for(j in seq(1, 1)) {
+      if(exists("tempFiles")) {
+        tempFiles <- c(tempFiles, paste(folderName, "/", i, "/metrics.csv", sep=""))
+      } else {
+        tempFiles <- c(paste(folderName, "/", i, "/metrics.csv", sep=""))
+      }
+    }
+    if(exists("tempValues")) {
+      tempValues <- c(tempValues, rep(toString(i), 1))
     } else {
-      tempFiles <- c(paste(i, "/", j, ".csv", sep=""))
+      tempValues <- c(rep(toString(i), 1))
     }
   }
-  if(exists("tempValues")) {
-    tempValues <- c(tempValues, rep(toString(i), 5))
+}
+
+#tempFiles <- c("10/1.csv", "10/2.csv", "10/3.csv", "10/4.csv", "10/5.csv", "10/6.csv", "10/7.csv", "10/8.csv", "10/9.csv", "10/10.csv")
+#tempValues <- c("10", "10", "10", "10", "10", "10", "10", "10", "10", "10")
+
+#for(i in seq(4, 12, by=2)) {
+#  for(j in seq(1, 5)) {
+#    if(exists("tempFiles")) {
+#      tempFiles <- c(tempFiles, paste(i, "/", j, ".csv", sep=""))
+#    } else {
+#      tempFiles <- c(paste(i, "/", j, ".csv", sep=""))
+#    }
+#  }
+#  if(exists("tempValues")) {
+#    tempValues <- c(tempValues, rep(toString(i), 5))
+#  } else {
+#    tempValues <- c(rep(toString(i), 5))
+#  }
+#}
+
+if(detail == TRUE) {
+  for(i in folders) {
+    for(j in seq(1, numMeas)) {
+      if(exists("tempFiles")) {
+        tempFiles <- c(tempFiles, paste(folderName, "/", i, "/", j, "/metrics_detail.csv", sep=""))
+      } else {
+        tempFiles <- c(paste(folderName, "/", i, "/", j, "/metrics_detail.csv", sep=""))
+      }
+    }
+    if(exists("tempValues")) {
+      tempValues <- c(tempValues, rep(toString(i), numMeas))
+    } else {
+      tempValues <- c(rep(toString(i), numMeas))
+    }
+  }
+}
+
+# get load measurement file names
+for(i in folders) {
+  for(j in seq(1, numMeas)) {
+    if(exists("tempLoadFiles")) {
+      tempLoadFiles <- c(tempLoadFiles, paste(folderName, "/", i, "/", j, "/systemLoad.csv", sep=""))
+    } else {
+      tempLoadFiles <- c(paste(folderName, "/", i, "/", j, "/systemLoad.csv", sep=""))
+    }
+  }
+  if(exists("tempLoadValues")) {
+    tempLoadValues <- c(tempLoadValues, rep(toString(i), numMeas))
   } else {
-    tempValues <- c(rep(toString(i), 5))
+    tempLoadValues <- c(rep(toString(i), numMeas))
   }
 }
 
 csvFiles <- tempFiles
 values <- tempValues
-rm(tempFiles, tempValues)
-parameter <- "iat"
+loadCsv <- tempLoadFiles
+loadValues <- tempLoadValues
+parameterName <- "IAT"
+rm(tempFiles, tempLoadFiles, tempValues, tempLoadValues, i, j, folders, numMeas)
 
-# combine all csv data to long format
+
+# get load measurement values
+for(i in 1:length(loadCsv)) {
+  loadPart <- read.csv(loadCsv[i], header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
+  loadPart[["parameter"]] <- loadValues[i]
+  
+  # remove non convertible time columns
+  loadPart <- loadPart[ !is.na(as.numeric(loadPart[, "time"])), ]
+  
+  # normalize time values to begin with 0
+  minTime = min(floor(as.numeric(loadPart[, "time"])))
+  loadPart[, "time"] <- floor(as.numeric(loadPart[, "time"])) - minTime
+  
+  # change onosLoad data into long format
+  loadPart <- loadPart[, c("cpu", "parameter")]
+  colnames(loadPart)[colnames(loadPart)=="cpu"] <- "value"
+  loadPart[, "value"] <- as.numeric(loadPart[, "value"])
+  loadPart[["variable"]] <- "cpuLoad"
+  
+  # build average if no detail information is wished
+  if(detail==FALSE) {
+    loadPart <- data.frame("parameter"=loadValues[i], "variable"="cpuLoad", "value"=mean(loadPart[, "value"], na.rm=TRUE))
+  }
+  
+  if(exists("onosLoad")) {
+    onosLoad <- rbind(onosLoad, loadPart)
+  } else {
+    onosLoad <- loadPart
+  }
+}
+rm(loadPart)
+
+# combine all csv data into wide format
 for(i in 1:length(csvFiles)) {
   metricsPart <- read.csv(csvFiles[i], header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
-  metricsPart[[parameter]] <- values[i]
+  metricsPart[["parameter"]] <- values[i]
   
   if(exists("metrics")) {
     metrics <- rbind(metrics, metricsPart)
@@ -81,17 +173,40 @@ for(i in 1:length(csvFiles)) {
   }
 }
 rm(metricsPart)
+
+rm(csvFiles, loadCsv, values, loadValues)
+
+
 metrics2 <- metrics
 # normalize reallocations
 #metrics[, "reallocations"] <- (1/(metrics[, "reallocations"]+1))^(1/10)
+#metrics[, "reallocations"] <- (1/(metrics[, "reallocations"]+1))
+#metrics[["reallocations"]] <- NULL
 
-# read csv metrics file
-#metrics <- read.csv(csvFile, header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
-#metrics <- melt(metrics[2:6], measure.vars=1:4, id=parameter)
-metrics <- melt(metrics[2:5], measure.vars=1:3, id=parameter)
-labels <- c(throughput="Throughput", linkFairness="Link Fairness", flowFairness="Flow Fairness", reallocations="Reallocations")
+# combine data into long format
+metrics <- melt(metrics[2:ncol(metrics)], measure.vars=1:(ncol(metrics)-2), id="parameter")
+metrics <- rbind(metrics, onosLoad)
+
+# remove rows with NA values
+metrics <- metrics[ !is.na(metrics[["value"]]), ]
+
 # set max value to 1
-metrics[metrics[["value"]] > 1, "value"] <- 1
+metrics[metrics[["value"]] > 1 & metrics[["variable"]] != "reallocations", "value"] <- 1
+# set levels of dataframe
+if(detail==TRUE) {
+  
+}
+
+labels <- c(throughput="Throughput",
+            linkFairness="Link Fairness",
+            flowFairness="Flow Fairness")
+if(detail==TRUE) {
+  labels <- c(labels, cpuLoad="CPU Load")
+} else {
+  labels <- c(labels, reallocations="Reallocations", cpuLoad="CPU Load")
+}
+levels(metrics$variable) <- labels
+#setattr(metrics$variable, "levels", labels)
 
 # round the values to max 3 digits
 myBreaks <- function(x){
@@ -110,20 +225,29 @@ myBreaks <- function(x){
   breaks
 }
 myFacetLabeler <- function(variable, value) {
-  return(paste("IAT=", value, sep=""))
+  return(paste("Interval=", value, "s", sep=""))
 }
-#levels(metrics[[parameter]]) <- c("IAT=20", "IAT=30", "IAT=40", "IAT=50", "IAT=60")
 
-figure <- ggplot(data=metrics, aes(x=value, color=variable)) +
+# set factor
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
+
+figure <- ggplot(data=metrics, aes(x=value, color=parameter)) +
   stat_ecdf(geom="step") +
-  facet_grid(iat ~ ., labeller=myFacetLabeler) +
-  scale_x_continuous(breaks=myBreaks)+
+  facet_grid(. ~ variable, scales="free_x")
+if(detail == TRUE) {
+  figure <- figure +
+    scale_x_continuous(breaks=c(0, .5, .75, .875, 1.0), trans=scales::exp_trans(exp(3)))
+}
+figure <- figure +  
   labs(x="Metric Values", y="Cumulative Probability") +
   theme_bw() +
-  scale_color_discrete(name="Metric", labels=labels) +
+  scale_color_manual(name=parameterName, labels=labels, values=c("blue", "#E69F00", "red", "#009E73", "#CC79A7", "#56B4E9", "#0072B2", "#D55E00")) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 
 # save plot as pdf
-width <- 15.0; height <- 20.0
+width <- 15.0; height <- 8.0
 ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
