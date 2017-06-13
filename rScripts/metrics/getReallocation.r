@@ -2,7 +2,7 @@
 
 # function calculating the flow reallocations
 #
-# traffic: dataframe holding the time, bandwidth, src and Switch data
+# traffic: dataframe holding the time, bandwidth, tp src port and Switch data
 
 getReallocation <- function(traffic) {
   
@@ -10,7 +10,7 @@ getReallocation <- function(traffic) {
   # calculate reallocation for every connection
   for(port in unique(traffic[,"src"])) {
     
-    # filter traffic for specific switch
+    # filter traffic for specific tp port
     portTraffic <- traffic[traffic[["src"]]==port, ]
     # dcast by switch name
     portTraffic <- dcast(portTraffic, time ~ Switch, value.var="bandwidth", fun.aggregate=sum)
@@ -37,6 +37,10 @@ getReallocation <- function(traffic) {
       reallocations <- c(reallocations, length(rle(diffTraffic)$values)-1)
     }
   }
+  
+  # normalize reallocations per minute
+  duration = max(traffic[, "time"] - min(traffic[, "time"])) / 60
+  reallocations <- reallocations / duration
   
   return(reallocations)
 }
