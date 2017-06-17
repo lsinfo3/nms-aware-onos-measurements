@@ -10,19 +10,20 @@ FLOWDUR=$DURATION	# duration for each flow
 TIMEDELAY="0"		# time error to compensate from the actual measurement start
 RUN="1"				# iPerf client runs
 SEED="1"			# seed for the RANDOM variable
+VIRTUAL=false		# only the flows after the runtime duration count
 USEUDP=false		# use udp traffic
 TYPE="ORG"			# measurement type
 
 runCommand="runIperf.sh [-i <inter arrival time in seconds>] \
 [-b <bandwidth per flow in kbit/s>] [-l <duration per flow>] \
 [-c <number of flows per iPerf instance>] [-d <overall measurement duration in seconds>] \
-[-e <time delay in seconds>] [-r <iPerf run number>] [-s <seed>] [-u] -t {ORG|MOD|NMS}"
+[-e <time delay in seconds>] [-r <iPerf run number>] [-s <seed>] [-v] [-u] -t {ORG|MOD|NMS}"
 
 vmUser="ubuntu"
 vmIp="192.168.33.10"
 mininetServerIp="100.0.1.201"
 
-while getopts "i:b:l:c:d:e:r:s:ut:h" opt; do
+while getopts "i:b:l:c:d:e:r:s:vut:h" opt; do
   case $opt in
 	i)
       #echo "Flow inter arrival time: $OPTARG seconds" >&2
@@ -55,6 +56,10 @@ while getopts "i:b:l:c:d:e:r:s:ut:h" opt; do
     s)
       #echo "Seed is: $OPTARG" >&2
       SEED=$OPTARG
+      ;;
+    v)
+      #echo "Use UDP rather than TCP." >&2
+      VIRTUAL=true
       ;;
     u)
       #echo "Use UDP rather than TCP." >&2
@@ -149,92 +154,175 @@ if [ "$IAT" == "0" ]; then
 	
 	exit $iperfNumber
 else
-	
-	measStartTime=$(date +%s.%N)	# measurement start time
-	timeError=$TIMEDELAY			# initial time beyond actual measurement time
-	calcIatCounter=0 				# calculated IAT sum
-	serverPort=$((5000 + $iperfNumber))		# the port to use for the iPerf server
-	
-	# set the seed for the random variable
-	RANDOM=$SEED
-	newSeed=$RANDOM
-	RANDOM=$newSeed
-	printf "Set seed to %s get new seed %s via random and set this as seed." "$SEED" "$newSeed"
-	unset newSeed
-	
-	# run as long as the measurement time is not over (measurementTime = currentTime - measurementStartTime)
-	while [ $(echo "($(date +%s.%N) - $measStartTime) < $DURATION" | bc -l) == 1 ]; do
+	if [ "$VIRTUAL" == "false" ]; then
+		# run iPerf instances in real time
 		
-		loopStartTime=$(date +%s.%N)
-		#counter=$(($counter + 1))
-		printf "\n### iPerf run %s ###\n" "$iperfNumber"
+		measStartTime=$(date +%s.%N)	# measurement start time
+		timeError=$TIMEDELAY			# initial time beyond actual measurement time
+		calcIatCounter=0 				# calculated IAT sum
+		serverPort=$((5000 + $iperfNumber))		# the port to use for the iPerf server
 		
-		# calculate next connection start in seconds
-		# (negative exponential distribution function)
-		random=$RANDOM
-		nextIat=$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $IAT")
-		# update iat counter
-		calcIatCounter=$(bc -l <<< "$calcIatCounter + $nextIat")
+		# set the seed for the random variable
+		RANDOM=$SEED
+		newSeed=$RANDOM
+		RANDOM=$newSeed
+		printf "Set seed to %s get new seed %s via random and set this as seed." "$SEED" "$newSeed"
+		unset newSeed
 		
-		# remove the time error from the previous run
-		nextTime=$(bc -l <<< "$nextIat - $timeError")
+		# run as long as the measurement time is not over (measurementTime = currentTime - measurementStartTime)
+		while [ $(echo "($(date +%s.%N) - $measStartTime) < $DURATION" | bc -l) == 1 ]; do
+			
+			loopStartTime=$(date +%s.%N)
+			#counter=$(($counter + 1))
+			printf "\n### iPerf run %s ###\n" "$iperfNumber"
+			
+			# calculate next connection start in seconds
+			# (negative exponential distribution function)
+			random=$RANDOM
+			nextIat=$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $IAT")
+			# update iat counter
+			calcIatCounter=$(bc -l <<< "$calcIatCounter + $nextIat")
+			
+			# remove the time error from the previous run
+			nextTime=$(bc -l <<< "$nextIat - $timeError")
+			
+			# calculate the connections duration based on a negative
+			# exponential distribution function
+			random=$RANDOM
+			LANG=C printf -v flowDuration "%.0f" "$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $FLOWDUR")"
+			
+			LANG=C printf "Previous time error: %.3f\tNew calc. IAT: %.3f\tTime to wait: %.3f\tCalc. flow duration: %s\n" \
+			"$timeError" "$nextIat" "$nextTime" "$flowDuration"
+			
+			# exit if the next iperf instance start is too late
+			if [ $(echo "(($(date +%s.%N) - $measStartTime) + $nextTime) > $DURATION" | bc -l) == 1 ]; then
+				# wait until measurement duration is over
+				sleep $(bc -l <<< "$DURATION - ($(date +%s.%N) - $measStartTime)")
+				printf "Exit iPerf instance creation script. Duration of %s is over.\n" "$DURATION"
+				break
+			fi
+			
+			# find the next unused port for the iPerf server
+			getServerPort $serverPort
+			
+			# linux sleep function supports floating point numbers but solaris not
+			# only wait if the iperf start time is bigger as the already passed time
+			if [ $(echo "$nextTime > ($(date +%s.%N) - $loopStartTime)" | bc -l) == 1 ]; then
+				sleep $(bc -l <<< "$nextTime - ($(date +%s.%N) - $loopStartTime)")
+			fi
+		  
+			# run the iPerf server and client
+			createCommand $iperfNumber $serverPort $flowDuration
+			eval "$iperfCommand"
+			# wait for the iPerf server to start
+			#waitForServer $serverPort
+			unset iperfCommand
+			
+			# print infos
+			measTime=$(bc -l <<< "$(date +%s.%N) - $measStartTime")
+			LANG=C printf "iPerf start Time: %.3f\tServer Port: %s\tAvr. real IAT: %.3f\tAvr. calc. IAT: %.3f\n" \
+			"$measTime" "$serverPort" "$(bc -l <<< "$measTime / ($iperfNumber - $RUN + 1)")" "$(bc -l <<< "$calcIatCounter / ($iperfNumber - $RUN + 1)")"
+			
+			# update loop variables
+			iperfNumber=$(($iperfNumber + 1))
+			serverPort=$(($serverPort + 1))
+			
+			runTime=$(bc -l <<< "$(date +%s.%N) - $loopStartTime")
+			# calculate the time error = loopRunTime - interArrivalTime + remainingTimeError
+			timeError=$(bc -l <<< "($runTime - $nextIat) + $timeError")
+			if [ $(echo "$timeError < 0" | bc -l) == 1 ]; then
+				timeError=0
+			fi
+			
+			# print final infos
+			LANG=C printf "Run Time: %.2f\tNew time Error: %.3f\n" \
+			"$runTime" "$timeError"
+			
+			unset flowDuration loopStartTime random nextIat nextTime measTime runTime
+			
+		done
+	else
+		# only run the iPerf instaces at the end of the script
 		
-		# calculate the connections duration based on a negative
-		# exponential distribution function
-		random=$RANDOM
-		LANG=C printf -v flowDuration "%.0f" "$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $FLOWDUR")"
+		measRunTime=0						# measurement start time
+		calcIatCounter=0 					# calculated IAT sum
+		serverPort=$((5000 + $iperfNumber))	# the port to use for the iPerf server
 		
-		LANG=C printf "Previous time error: %.3f\tNew calc. IAT: %.3f\tTime to wait: %.3f\tCalc. flow duration: %s\n" \
-		"$timeError" "$nextIat" "$nextTime" "$flowDuration"
+		relConNum=0			# number of relevant connections
 		
-		# exit if the next iperf instance start is too late
-		if [ $(echo "(($(date +%s.%N) - $measStartTime) + $nextTime) > $DURATION" | bc -l) == 1 ]; then
-			# wait until measurement duration is over
-			sleep $(bc -l <<< "$DURATION - ($(date +%s.%N) - $measStartTime)")
-			printf "Exit iPerf instance creation script. Duration of %s is over.\n" "$DURATION"
-			break
-		fi
+		# set the seed for the random variable
+		RANDOM=$SEED
+		newSeed=$RANDOM
+		RANDOM=$newSeed
+		printf "Set seed to %s get new seed %s via random and set this as seed." "$SEED" "$newSeed"
+		unset newSeed
 		
-		# find the next unused port for the iPerf server
-		getServerPort $serverPort
+		# run as long as the measurement time is not over
+		while [ $(echo "$measRunTime < $DURATION" | bc -l) == 1 ]; do
+			
+			printf "\n### iPerf run %s ###\n" "$iperfNumber"
+			
+			# calculate next connection start in seconds
+			# (negative exponential distribution function)
+			random=$RANDOM
+			nextIat=$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $IAT")
+			# update iat counter
+			calcIatCounter=$(bc -l <<< "$calcIatCounter + $nextIat")
+			
+			# calculate the connections duration based on a negative
+			# exponential distribution function
+			random=$RANDOM
+			LANG=C printf -v flowDuration "%.0f" "$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $FLOWDUR")"
+			
+			LANG=C printf "New calc. IAT: %.3f\tCalc. flow duration: %s\n" \
+			"$nextIat" "$flowDuration"
+			
+			# exit if the next iperf instance start is too late
+			if [ $(echo "($measRunTime + $nextIat) > $DURATION" | bc -l) == 1 ]; then
+				# wait until measurement duration is over
+				printf "Exit iPerf instance creation script. Duration of %s is over.\n" "$DURATION"
+				break
+			fi
+			
+			# find the next unused port for the iPerf server
+			getServerPort $serverPort
+			
+			# update measurement run time
+			measRunTime=$(bc -l <<< "$measRunTime + $nextIat")
+			
+			# check if the iPerf instance would run longer than the script duration
+			if [ $(echo "($measRunTime + $flowDuration) > $DURATION" | bc -l) == 1 ]; then
+				# increase relevent connection number
+				relConNum=$(bc -l <<< "$relConNum + 1")
+				# create array with duration values, server ports and iPerf number
+				durations[$relConNum]=$(bc -l <<< "($measRunTime + $flowDuration) - $DURATION")
+				ports[$relConNum]=$serverPort
+				iPerfNumbers[$relConNum]=$iperfNumber
+			fi
+			
+			# print infos
+			#measTime=$(bc -l <<< "$(date +%s.%N) - $measStartTime")
+			LANG=C printf "iPerf start Time: %.3f\tServer Port: %s\tAvr. real IAT: %.3f\tAvr. calc. IAT: %.3f\n" \
+			"$measRunTime" "$serverPort" "$(bc -l <<< "$measRunTime / ($iperfNumber - $RUN + 1)")" "$(bc -l <<< "$calcIatCounter / ($iperfNumber - $RUN + 1)")"
+			
+			# update loop variables
+			iperfNumber=$(($iperfNumber + 1))
+			serverPort=$(($serverPort + 1))
+			
+			unset flowDuration random nextIat
+			
+		done
 		
-		# linux sleep function supports floating point numbers but solaris not
-		# only wait if the iperf start time is bigger as the already passed time
-		if [ $(echo "$nextTime > ($(date +%s.%N) - $loopStartTime)" | bc -l) == 1 ]; then
-			sleep $(bc -l <<< "$nextTime - ($(date +%s.%N) - $loopStartTime)")
-		fi
-	  
-		# run the iPerf server and client
-		createCommand $iperfNumber $serverPort $flowDuration
-		eval "$iperfCommand"
-		# wait for the iPerf server to start
-		#waitForServer $serverPort
-		unset iperfCommand
+		# start remaining iPerf instances
+		for num in `seq 1 $relConNum`; do
+			createCommand ${iPerfNumbers[$num]} ${ports[$num]} ${durations[$num]}
+			eval "$iperfCommand"
+			unset iperfCommand
+		done
 		
-		# print infos
-		measTime=$(bc -l <<< "$(date +%s.%N) - $measStartTime")
-		LANG=C printf "iPerf start Time: %.3f\tServer Port: %s\tAvr. real IAT: %.3f\tAvr. calc. IAT: %.3f\n" \
-		"$measTime" "$serverPort" "$(bc -l <<< "$measTime / ($iperfNumber - $RUN + 1)")" "$(bc -l <<< "$calcIatCounter / ($iperfNumber - $RUN + 1)")"
+		unset iPerfNumbers ports durations relConNum
 		
-		# update loop variables
-		iperfNumber=$(($iperfNumber + 1))
-		serverPort=$(($serverPort + 1))
-		
-		runTime=$(bc -l <<< "$(date +%s.%N) - $loopStartTime")
-		# calculate the time error = loopRunTime - interArrivalTime + remainingTimeError
-		timeError=$(bc -l <<< "($runTime - $nextIat) + $timeError")
-		if [ $(echo "$timeError < 0" | bc -l) == 1 ]; then
-			timeError=0
-		fi
-		
-		# print final infos
-		LANG=C printf "Run Time: %.2f\tNew time Error: %.3f\n" \
-		"$runTime" "$timeError"
-		
-		unset flowDuration loopStartTime random nextIat nextTime measTime runTime
-		
-	done
-
+	fi
 fi
 
 unset IAT BANDWIDTH COUNT DURATION FLOWDUR TIMEDELAY RUN USEUDP TYPE
