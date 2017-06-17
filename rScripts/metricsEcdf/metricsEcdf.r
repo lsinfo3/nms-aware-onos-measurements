@@ -31,28 +31,14 @@ rm(args)
 
 
 # --- create file and value vector ---
-detail=FALSE
-folderName="newIat"
+detail=TRUE
+folderName="modIat"
 folders=seq(20, 60, by=10)
-numMeas=5
+numMeas=10
+parameterName <- "Inter-Arrival Time"
 
 #tempFiles <- c("avg10/1.csv", "avg10/2.csv")
 #tempValues <- c("10", "10")
-
-#for(i in seq(4, 12, by=2)) {
-#  for(j in seq(1, 1)) {
-#    if(exists("tempFiles")) {
-#      tempFiles <- c(tempFiles, paste("avg", i, "/", j, ".csv", sep=""))
-#    } else {
-#      tempFiles <- c(paste("avg", i, "/", j, ".csv", sep=""))
-#    }
-#  }
-#  if(exists("tempValues")) {
-#    tempValues <- c(tempValues, rep(toString(i), 1))
-#  } else {
-#    tempValues <- c(rep(toString(i), 1))
-#  }
-#}
 
 if(detail == FALSE) {
   for(i in folders) {
@@ -73,21 +59,6 @@ if(detail == FALSE) {
 
 #tempFiles <- c("10/1.csv", "10/2.csv", "10/3.csv", "10/4.csv", "10/5.csv", "10/6.csv", "10/7.csv", "10/8.csv", "10/9.csv", "10/10.csv")
 #tempValues <- c("10", "10", "10", "10", "10", "10", "10", "10", "10", "10")
-
-#for(i in seq(4, 12, by=2)) {
-#  for(j in seq(1, 5)) {
-#    if(exists("tempFiles")) {
-#      tempFiles <- c(tempFiles, paste(i, "/", j, ".csv", sep=""))
-#    } else {
-#      tempFiles <- c(paste(i, "/", j, ".csv", sep=""))
-#    }
-#  }
-#  if(exists("tempValues")) {
-#    tempValues <- c(tempValues, rep(toString(i), 5))
-#  } else {
-#    tempValues <- c(rep(toString(i), 5))
-#  }
-#}
 
 if(detail == TRUE) {
   for(i in folders) {
@@ -126,7 +97,6 @@ csvFiles <- tempFiles
 values <- tempValues
 loadCsv <- tempLoadFiles
 loadValues <- tempLoadValues
-parameterName <- "IAT"
 rm(tempFiles, tempLoadFiles, tempValues, tempLoadValues, i, j, folders, numMeas)
 
 
@@ -143,14 +113,17 @@ for(i in 1:length(loadCsv)) {
   loadPart[, "time"] <- floor(as.numeric(loadPart[, "time"])) - minTime
   
   # change onosLoad data into long format
-  loadPart <- loadPart[, c("cpu", "parameter")]
-  colnames(loadPart)[colnames(loadPart)=="cpu"] <- "value"
-  loadPart[, "value"] <- as.numeric(loadPart[, "value"])
-  loadPart[["variable"]] <- "cpuLoad"
+  colnames(loadPart)[colnames(loadPart)=="cpu"] <- "cpuLoad"
+  loadPart <- melt(loadPart,
+                   id.vars=c("parameter", "time"),
+                   measure.vars="cpuLoad")
+  loadPart <- loadPart[, c("parameter", "variable", "value")]
   
   # build average if no detail information is wished
   if(detail==FALSE) {
-    loadPart <- data.frame("parameter"=loadValues[i], "variable"="cpuLoad", "value"=mean(loadPart[, "value"], na.rm=TRUE))
+    loadPart <- data.frame("parameter"=loadValues[i],
+                           "variable"="cpuLoad",
+                           "value"=mean(loadPart[, "value"], na.rm=TRUE))
   }
   
   if(exists("onosLoad")) {
@@ -233,6 +206,8 @@ myFacetLabeler <- function(variable, value) {
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
 metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 
 figure <- ggplot(data=metrics, aes(x=value, color=parameter)) +
   stat_ecdf(geom="step") +
