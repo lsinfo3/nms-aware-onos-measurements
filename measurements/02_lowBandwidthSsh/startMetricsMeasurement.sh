@@ -132,13 +132,12 @@ printf "\n"
 # remove files from previous measurements
 ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
 
-#initTimeFactor="1.5"
-initTimeFactor="0"
+initTimeFactor="1.5"
 INITTIME=$(bc -l <<< "$FLOWDUR * $initTimeFactor")
 
 if [ "$TYPE" == "NMS" ]; then
   # start network management system
-  LANG=C printf -v NMSDURATION "%.0f" "$(bc -l <<< "$DURATION + $INITTIME + 10")"
+  LANG=C printf -v NMSDURATION "%.0f" "$(bc -l <<< "$DURATION + 20")"
   printf "Starting NMS with runtime %s s.\n" "$NMSDURATION"
   nmsCommand="ssh ubuntu@$mnVmIp 'screen -dm bash -c \"/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i $NMSINT -r $NMSDURATION"
   if [ "$USEUDP" == true ]; then
@@ -152,7 +151,7 @@ unset nmsCommand NMSDURATION
 if [ "$INITTIME" != "0" ]; then
 # iPerf traffic initialisation phase
 printf "Starting initial iPerf traffic phase for %s s\n" "$INITTIME"
-iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $INITTIME -t $TYPE -s $SEED"
+iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $INITTIME -t $TYPE -s $SEED -v"
 if [ "$USEUDP" == true ]; then
 	iperfCommand="$iperfCommand -u"
 fi
