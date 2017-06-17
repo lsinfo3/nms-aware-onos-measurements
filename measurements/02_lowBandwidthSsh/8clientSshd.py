@@ -23,15 +23,15 @@ def restrictBandwidth( net ):
   s2 = net.switches[1]
   s4 = net.switches[3]
   
-  info( '*** Throttling maximum network rate to 1000kbps for switch s2 and s4\n' )
-  s2.cmd('tc qdisc add dev s2-eth1 root tbf rate 1mbit burst 10kb \
-    latency 70ms peakrate 2mbit minburst 1540')
-  s2.cmd('tc qdisc add dev s2-eth2 root tbf rate 1mbit burst 10kb \
-    latency 70ms peakrate 2mbit minburst 1540')
-  s4.cmd('tc qdisc add dev s4-eth1 root tbf rate 1mbit burst 10kb \
-    latency 70ms peakrate 2mbit minburst 1540')
-  s4.cmd('tc qdisc add dev s4-eth2 root tbf rate 1mbit burst 10kb \
-    latency 70ms peakrate 2mbit minburst 1540')
+  info( '*** Throttling maximum network rate to 10000kbps for switch s2 and s4\n' )
+  s2.cmd('tc qdisc add dev s2-eth1 root tbf rate 10mbit burst 10kb \
+    latency 70ms')
+  s2.cmd('tc qdisc add dev s2-eth2 root tbf rate 10mbit burst 10kb \
+    latency 70ms')
+  s4.cmd('tc qdisc add dev s4-eth1 root tbf rate 10mbit burst 10kb \
+    latency 70ms')
+  s4.cmd('tc qdisc add dev s4-eth2 root tbf rate 10mbit burst 10kb \
+    latency 70ms')
 
 
 def restoreBandwidth( net ):
