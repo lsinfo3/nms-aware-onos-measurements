@@ -9,4 +9,6 @@
 .Rhistory
 .idea/
 measurements/02_lowBandwidthSsh/vagrant_log.txt
-measurements/02_lowBandwidthSsh/run.sh
+measurements/02_lowBandwidthSsh/run*.sh
+rScripts/metricsEcdf/*/
+rScripts/compareMetricsEcdf/*/
