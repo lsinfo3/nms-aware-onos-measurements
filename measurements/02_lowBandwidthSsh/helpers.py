@@ -47,20 +47,20 @@ def delete(url):
 def printDict(d,depth=0):
   
   if isinstance(d, list):
-    print ("  ")*depth + "["
+    info( ("  ")*depth + "[\n" )
     for item in d:
       printDict(item,depth+1)
-    print ("  ")*depth + "]"
+    info( ("  ")*depth + "]\n" )
   else:
     for k,v in d.items():
       if isinstance(v, dict):
-        print ("  ")*depth + ("%s:" % k) + " {"
+        info( ("  ")*depth + ("%s:" % k) + " {\n" )
         printDict(v,depth+1)
-        print ("  ")*depth + "}"
+        info( ("  ")*depth + "}\n" )
       elif isinstance(v, list):
-        print ("  ")*depth + ("%s:" % k) + " ["
+        info( ("  ")*depth + ("%s:" % k) + " [\n" )
         for item in v:
           printDict(item, depth+1)
-        print ("  ")*depth + "]"
+        info( ("  ")*depth + "]\n" )
       else:
-        print ("  ")*depth + "%s: %s" % (k, v)
+        info( ("  ")*depth + "%s: %s\n" % (k, v) )
