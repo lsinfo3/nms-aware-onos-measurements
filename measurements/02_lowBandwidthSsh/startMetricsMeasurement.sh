@@ -135,18 +135,6 @@ ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
 initTimeFactor="1.5"
 INITTIME=$(bc -l <<< "$FLOWDUR * $initTimeFactor")
 
-if [ "$TYPE" == "NMS" ]; then
-  # start network management system
-  LANG=C printf -v NMSDURATION "%.0f" "$(bc -l <<< "$DURATION + 20")"
-  printf "Starting NMS with runtime %s s.\n" "$NMSDURATION"
-  nmsCommand="ssh ubuntu@$mnVmIp 'screen -dm bash -c \"/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i $NMSINT -r $NMSDURATION"
-  if [ "$USEUDP" == true ]; then
-	nmsCommand="$nmsCommand -u"
-  fi
-  eval "$nmsCommand\"'"
-fi
-unset nmsCommand NMSDURATION
-
 # only run initialization phase if an init time is defined
 if [ "$INITTIME" != "0" ]; then
 # iPerf traffic initialisation phase
@@ -159,38 +147,52 @@ eval $iperfCommand
 iperfInstanceCount=$?
 # update seed
 SEED=$(($SEED + 1))
-printf "\nInitialisation phase is over. Starting tcpdump.\n\n"
+printf "\nInitialisation phase is over.\n\n"
 fi
 # measure time of tcpdump startup
 TIMEA=$(date +%s.%N)
 unset iperfCommand INITTIME
 
 
+if [ "$TYPE" == "NMS" ]; then
+  # start network management system
+  LANG=C printf -v NMSDURATION "%.0f" "$(bc -l <<< "$DURATION + 10")"
+  printf "Starting NMS with runtime %s s.\n\n" "$NMSDURATION"
+  nmsCommand="ssh ubuntu@$mnVmIp 'screen -dm bash -c \"/home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py -i $NMSINT -r $NMSDURATION"
+  if [ "$USEUDP" == true ]; then
+	nmsCommand="$nmsCommand -u"
+  fi
+  nmsCommand="$nmsCommand > nms_log.txt 2>&1"
+  eval "$nmsCommand\"'"
+fi
+unset nmsCommand NMSDURATION
 
+
+printf "Starting tcpdump packet capture.\n"
 # remove old captures
 rm $leftVmFolder/*.cap
 # monitor traffic with tcpdump to file
 # output of switch 1 (both data streams before limitation)
 IFACE="s1-eth3"
-ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
+ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1"'
 sleep 1
 # output of switch 2 (first data stream)
 IFACE="s2-eth2"
-ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
+ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1"'
 sleep 1
 # output of switch 4 (second data stream)
 IFACE="s4-eth1"
-ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
+ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1"'
 sleep 1
 # output of switch 3 (both data streams)
 IFACE="s3-eth3"
-ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
+ssh ubuntu@$mnVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1"'
 sleep 1
 # TODO: check if all four cap files exist
 
 # output of controller
 IFACE="enp0s8"
-ssh ubuntu@$onosVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1; mv /tmp/'"${TYPE}_${IFACE}"'.cap /vagrant/"'
+ssh ubuntu@$onosVmIp 'screen -dm bash -c "sudo tcpdump -i '"$IFACE"' -Z ubuntu -w /tmp/'"${TYPE}_${IFACE}"'.cap > tcpdump_'"$IFACE"'_log.txt 2>&1"'
 unset IFACE
 
 # start system load measurement of ONOS
@@ -200,9 +202,9 @@ ssh ubuntu@$onosVmIp 'screen -dm bash -c "/vagrant/onosLoad.sh 1 > /vagrant/syst
 killScripts () {
   trap SIGINT
   # kill tcpdump in vagrant vm and move results to "/vagrant" folder
-  ssh ubuntu@$mnVmIp "sudo killall tcpdump"
+  ssh ubuntu@$mnVmIp "sudo killall tcpdump; mv /tmp/*.cap /home/ubuntu/*_log.txt /vagrant/"
   # kill tcpdump in onos vm and move results to "/vagrant" folder
-  ssh ubuntu@$onosVmIp "sudo killall tcpdump"
+  ssh ubuntu@$onosVmIp "sudo killall tcpdump; mv /tmp/*.cap /home/ubuntu/*_log.txt /vagrant/"
 
   # kill onosLoad script
   ssh ubuntu@$onosVmIp 'ps -ax | grep [/]bin/bash\ /vagrant/onosLoad.sh | awk '"'"'{ printf "%s", $1 }'"'"' | xargs kill -15'
@@ -224,7 +226,7 @@ interruptScript () {
 # Set up SIGINT trap to call function.
 trap "interruptScript" INT
 
-
+printf "Starting main iPerf traffic phase for %s s\n" "$DURATION"
 # start iperf instances
 TIMEDIFF=$(bc -l <<< "$(date +%s.%N) - $TIMEA")
 iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE -e $TIMEDIFF -r $(($iperfInstanceCount + 1)) -s $SEED"
@@ -237,8 +239,9 @@ SEED=$(($SEED + 1))
 unset iperfCommand TIMEA TIMEDIFF
 
 
-sleep 5
+#sleep 5
 
+printf "\nKilling tcpdump, onosLoad, etc.\n"
 killScripts
 # kill measurement environment
 ./killEnvironment.sh
@@ -248,7 +251,20 @@ sleep 5
 
 ### create results ###
 
-# move captures to the new folder
+# wait for capture files to be available
+printf "\nWaiting for capture files to be available.\n"
+for f in $leftVmFolder/*.cap; do
+  while :
+  do
+    if [[ "lsof | grep $f" ]]; then
+      break
+    fi
+    sleep 0.5
+  done
+done
+
+# copy captures to the new folder
+printf "Copying capture files to result folder.\n"
 cp $leftVmFolder/*.cap $resultFolder
 
 capFiles=""

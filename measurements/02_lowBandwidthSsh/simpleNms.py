@@ -205,7 +205,7 @@ def manage(interval, runtime):
   while 1:
     
     startTime = time.time()
-    info("Updating config at {}.\n".format(int(startTime)))
+    info("Updating config at {}.\n".format(int(time.time() - startRuntime)))
     # get the active connections
     activeConnections = readConnectionInformation('/home/ubuntu/clientList.txt')
     
