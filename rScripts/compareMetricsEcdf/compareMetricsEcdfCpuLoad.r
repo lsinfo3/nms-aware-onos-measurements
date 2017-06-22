@@ -13,7 +13,7 @@ args <- commandArgs(trailingOnly = TRUE)
 csvFiles <- ""
 values <- ""
 parameterName <- ""
-outFilePath <- "./out"
+outFilePath <- "./out_cpuLoad"
 
 if(length(args) >= 1){
   csvFiles <- strsplit(as.character(args[1]), " ")[[1]]
@@ -32,11 +32,11 @@ rm(args)
 
 # --- create file and value vector ---
 
-detail <- FALSE
+detail <- TRUE
 folderNames=c("modIat", "iatNew")
 folders <- seq(20, 60, by=10)
 numMeas <- 10
-parameterName <- "Measurement Type"
+parameterName <- "Controller Type"
 
 for(folderName in folderNames) {
   
@@ -253,20 +253,16 @@ metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '4
 metrics[["measurement"]] <- factor(metrics[["measurement"]], levels=c("iatNew", "modIat"), labels=c("NMS", "MOD"))
 
 
-figure <- ggplot(data=metrics, aes(x=value, color=measurement)) +
+figure <- ggplot(data=metrics[metrics[["variable"]]=='CPU Load', ], aes(x=value, color=measurement)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
-  facet_grid(. ~ variable, scales="free_x")
-if(detail == TRUE) {
-  figure <- figure +
-    scale_x_continuous(breaks=c(0, .5, .75, .875, 1.0), trans=scales::exp_trans(exp(3)))
-}
-figure <- figure +  
-  labs(x="Metric Values", y="Cumulative Probability") +
+  scale_x_continuous(limits=c(0.0, 1.0), breaks=seq(0.0, 1.0, by=0.2)) +
+  labs(x="CPU Load", y="Cumulative Probability") +
   theme_bw() +
   scale_color_manual(name=parameterName, values=c("blue", "#E69F00", "red", "#009E73", "#CC79A7", "#56B4E9", "#0072B2", "#D55E00")) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom") +
+  guides(col=guide_legend(title.position = "top"))
 
 # save plot as pdf
-width <- 15.0; height <- 8.0
+width <- 6.0; height <- 8.0
 ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
