@@ -36,7 +36,7 @@ detail <- TRUE
 folderNames=c("modIat", "iatNew")
 folders <- seq(20, 60, by=10)
 numMeas <- 10
-parameterName <- "Controller Type"
+parameterName <- "Controller\nType"
 
 for(folderName in folderNames) {
   
@@ -250,7 +250,7 @@ metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '4
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 
-metrics[["measurement"]] <- factor(metrics[["measurement"]], levels=c("iatNew", "modIat"), labels=c("NMS", "MOD"))
+metrics[["measurement"]] <- factor(metrics[["measurement"]], levels=c("modIat", "iatNew"), labels=c("MOD", "NMS"))
 
 
 figure <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=value, color=measurement)) +
@@ -258,11 +258,11 @@ figure <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=v
   scale_x_continuous(limits=c(0.0, 1.0), breaks=seq(0.0, 1.0, by=0.2)) +
   labs(x="Link Fairness", y="Cumulative Probability") +
   theme_bw() +
-  scale_color_manual(name=parameterName, values=c("blue", "#E69F00", "red", "#009E73", "#CC79A7", "#56B4E9", "#0072B2", "#D55E00")) +
+  scale_color_manual(name=parameterName, values=c("blue", "red", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#0072B2", "#D55E00")) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom") +
-  guides(col=guide_legend(title.position = "top"))
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+#  guides(col=guide_legend(title.position = "right"))
 
 # save plot as pdf
-width <- 6.0; height <- 8.0
+width <- 8.5; height <- 7.0
 ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
