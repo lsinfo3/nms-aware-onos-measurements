@@ -13,7 +13,7 @@ args <- commandArgs(trailingOnly = TRUE)
 csvFiles <- ""
 values <- ""
 parameterName <- ""
-outFilePath <- "./out"
+outFilePath <- "./ecdf_throughput"
 
 if(length(args) >= 1){
   csvFiles <- strsplit(as.character(args[1]), " ")[[1]]
@@ -31,12 +31,12 @@ rm(args)
 
 
 # --- create file and value vector ---
-detail=FALSE
+detail=TRUE
 folderName="iatNew"
 folders=seq(20, 60, by=10)
 #folders=c(4, 8, 16, 32, 64)
 numMeas=10
-parameterName <- "Inter-Arrival Time"
+parameterName <- "Inter-\nArrival\nTime"
 
 #tempFiles <- c("avg10/1.csv", "avg10/2.csv")
 #tempValues <- c("10", "10")
@@ -210,20 +210,16 @@ metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '4
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
 
-figure <- ggplot(data=metrics, aes(x=value, color=parameter)) +
+figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
-  facet_grid(. ~ variable, scales="free_x")
-if(detail == TRUE) {
-  figure <- figure +
-    scale_x_continuous(breaks=c(0, .5, .75, .875, 1.0), trans=scales::exp_trans(exp(3)))
-}
-figure <- figure +  
-  labs(x="Metric Values", y="Cumulative Probability") +
+  scale_x_continuous(limits=c(0.75, 1.0)) +
+  labs(x="Throughput", y="Cumulative Probability") +
   theme_bw() +
   scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+#  guides(col=guide_legend(nrow=2, title.position = "top"))
 
 # save plot as pdf
-width <- 15.0; height <- 8.0
+width <- 8.5; height <- 7.0
 ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
