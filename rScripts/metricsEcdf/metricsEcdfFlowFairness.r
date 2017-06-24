@@ -36,7 +36,7 @@ folderName="iatNew"
 folders=seq(20, 60, by=10)
 #folders=c(4, 8, 16, 32, 64)
 numMeas=10
-parameterName <- "Inter-\nArrival\nTime"
+parameterName <- "Inter-Arrival Time"
 
 #tempFiles <- c("avg10/1.csv", "avg10/2.csv")
 #tempValues <- c("10", "10")
@@ -217,9 +217,9 @@ figure <- ggplot(data=metrics[metrics[["variable"]]=='Flow Fairness', ], aes(x=v
   theme_bw() +
   scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
-#  guides(col=guide_legend(nrow=2, title.position = "top"))
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom", legend.key.size = unit(1,"line")) +
+  guides(col=guide_legend(nrow=2, title.position = "top"))
 
 # save plot as pdf
-width <- 8.5; height <- 7.0
+width <- 5.5; height <- 8.0
 ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
