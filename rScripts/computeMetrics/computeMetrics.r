@@ -118,7 +118,7 @@ rm(mergeBandwidth, computeBandwidth)
 # plot the bandwidth
 figure <- ggplot(data=bandwidthData, aes(x=time, y=bandwidth, color=Switch, linetype=Switch)) +
   geom_line() +
-  facet_grid(dst + src ~ ., labeller=labeller(src = function(x) {paste("s:", x, sep="")}, dst = function(x) {paste("d:", x, sep="")})) +
+  facet_grid(dst + src ~ ., scales="free_y", labeller=labeller(src = function(x) {paste("s:", x, sep="")}, dst = function(x) {paste("d:", x, sep="")})) +
   scale_color_manual(values=c("blue", "red")) +
   scale_linetype_manual(values=c("solid","42")) +
   # scale_y_continuous(breaks=c(0,100,200)) +

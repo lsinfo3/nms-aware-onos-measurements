@@ -4,6 +4,7 @@ leftVmPath="/home/lorry/Masterthesis/vm/leftVm/"
 
 IAT="0" 			# inter arrival time
 BANDWIDTH="400"		# flow bandwidth
+VARIATION="0" 		# percentage of bandwidth deviation
 COUNT="1"			# simultanious connections per iPerf instance
 DURATION="120"		# iPerf client creation duration
 FLOWDUR=$DURATION	# duration for each flow
@@ -15,15 +16,15 @@ USEUDP=false		# use udp traffic
 TYPE="ORG"			# measurement type
 
 runCommand="runIperf.sh [-i <inter arrival time in seconds>] \
-[-b <bandwidth per flow in kbit/s>] [-l <duration per flow>] \
+[-b <bandwidth per flow in kbit/s>] [-v <bandwidth variation>] [-l <duration per flow>] \
 [-c <number of flows per iPerf instance>] [-d <overall measurement duration in seconds>] \
-[-e <time delay in seconds>] [-r <iPerf run number>] [-s <seed>] [-v] [-u] -t {ORG|MOD|NMS}"
+[-e <time delay in seconds>] [-r <iPerf run number>] [-s <seed>] [-f] [-u] -t {ORG|MOD|NMS}"
 
 vmUser="ubuntu"
 vmIp="192.168.33.10"
 mininetServerIp="100.0.1.201"
 
-while getopts "i:b:l:c:d:e:r:s:vut:h" opt; do
+while getopts "i:b:v:l:c:d:e:r:s:fut:h" opt; do
   case $opt in
 	i)
       #echo "Flow inter arrival time: $OPTARG seconds" >&2
@@ -32,6 +33,10 @@ while getopts "i:b:l:c:d:e:r:s:vut:h" opt; do
 	b)
       #echo "IPerf connection bandwidth: $OPTARG kbit/s" >&2
       BANDWIDTH=$OPTARG
+      ;;
+    v)
+      #echo "Bandwidth deviation: $OPTARG" >&2
+      VARIATION=$OPTARG
       ;;
     l)
       #echo "Flow duration: $OPTARG" >&2
@@ -57,7 +62,7 @@ while getopts "i:b:l:c:d:e:r:s:vut:h" opt; do
       #echo "Seed is: $OPTARG" >&2
       SEED=$OPTARG
       ;;
-    v)
+    f)
       #echo "Use UDP rather than TCP." >&2
       VIRTUAL=true
       ;;
@@ -99,11 +104,12 @@ createCommand ()
 	conNumArg=$1
 	serverPortArg=$2
 	flowDurationArg=$3
+	varBandwidthArg=$4
 	iperfResultName="iperfResult${conNumArg}"
 	
 	iperfCommand="ssh ${vmUser}@${vmIp}"
 	iperfCommand="$iperfCommand 'screen -dm bash -c \"/home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py"
-	iperfCommand="$iperfCommand -d $flowDurationArg -c $COUNT -b $BANDWIDTH"
+	iperfCommand="$iperfCommand -d $flowDurationArg -c $COUNT -b $varBandwidthArg -v $BANDWIDTH"
 	if [ "$USEUDP" == true ]; then
 	  iperfCommand="$iperfCommand -u"
 	fi
@@ -114,7 +120,7 @@ createCommand ()
 	iperfCommand="$iperfCommand -r /home/ubuntu/${iperfResultName};"
 	iperfCommand="$iperfCommand cp /home/ubuntu/${iperfResultName}*.txt /home/ubuntu/captures/\"'"
 	
-	unset conNumArg serverPortArg flowDurationArg iperfResultName
+	unset conNumArg serverPortArg flowDurationArg varBandwidthArg iperfResultName
 }
 
 getServerPort ()
@@ -191,8 +197,12 @@ else
 			random=$RANDOM
 			LANG=C printf -v flowDuration "%.0f" "$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $FLOWDUR")"
 			
-			LANG=C printf "Previous time error: %.3f\tNew calc. IAT: %.3f\tTime to wait: %.3f\tCalc. flow duration: %s\n" \
-			"$timeError" "$nextIat" "$nextTime" "$flowDuration"
+			# calculate the variaton of the bandwidth
+			random=$RANDOM
+			LANG=C printf -v varBandwidth "%.0f" "$(bc -l <<< "$BANDWIDTH + (($BANDWIDTH * $VARIATION * 2) * ${random}/32768.0 - ($BANDWIDTH * $VARIATION))")"
+			
+			LANG=C printf "Previous time error: %.3f\tNew calc. IAT: %.3f\tTime to wait: %.3f\tCalc. flow duration: %s\tBandwidth: %s\n" \
+			"$timeError" "$nextIat" "$nextTime" "$flowDuration" "$varBandwidth"
 			
 			# exit if the next iperf instance start is too late
 			if [ $(echo "(($(date +%s.%N) - $measStartTime) + $nextTime) > $DURATION" | bc -l) == 1 ]; then
@@ -212,11 +222,11 @@ else
 			fi
 		  
 			# run the iPerf server and client
-			createCommand $iperfNumber $serverPort $flowDuration
+			createCommand $iperfNumber $serverPort $flowDuration $varBandwidth
 			eval "$iperfCommand"
 			# wait for the iPerf server to start
 			#waitForServer $serverPort
-			unset iperfCommand
+			unset iperfCommand varBandwidth
 			
 			# print infos
 			measTime=$(bc -l <<< "$(date +%s.%N) - $measStartTime")
@@ -274,8 +284,12 @@ else
 			random=$RANDOM
 			LANG=C printf -v flowDuration "%.0f" "$(bc -l <<< "-l(1.0 - ${random}/32768.0) * $FLOWDUR")"
 			
-			LANG=C printf "New calc. IAT: %.3f\tCalc. flow duration: %s\n" \
-			"$nextIat" "$flowDuration"
+			# calculate the variaton of the bandwidth
+			random=$RANDOM
+			LANG=C printf -v varBandwidth "%.0f" "$(bc -l <<< "$BANDWIDTH + (($BANDWIDTH * $VARIATION * 2) * ${random}/32768.0 - ($BANDWIDTH * $VARIATION))")"
+			
+			LANG=C printf "New calc. IAT: %.3f\tCalc. flow duration: %s\tBandwidth: %s\n" \
+			"$nextIat" "$flowDuration" "$varBandwidth"
 			
 			# exit if the next iperf instance start is too late
 			if [ $(echo "($measRunTime + $nextIat) > $DURATION" | bc -l) == 1 ]; then
@@ -294,10 +308,11 @@ else
 			if [ $(echo "($measRunTime + $flowDuration) > $DURATION" | bc -l) == 1 ]; then
 				# increase relevent connection number
 				relConNum=$(bc -l <<< "$relConNum + 1")
-				# create array with duration values, server ports and iPerf number
+				# create array with duration values, server ports, iPerf number and bandwidth
 				durations[$relConNum]=$(bc -l <<< "($measRunTime + $flowDuration) - $DURATION")
 				ports[$relConNum]=$serverPort
 				iPerfNumbers[$relConNum]=$iperfNumber
+				bandwidths[$relConNum]=$varBandwidth
 			fi
 			
 			# print infos
@@ -309,18 +324,18 @@ else
 			iperfNumber=$(($iperfNumber + 1))
 			serverPort=$(($serverPort + 1))
 			
-			unset flowDuration random nextIat
+			unset flowDuration random nextIat varBandwidth
 			
 		done
 		
 		# start remaining iPerf instances
 		for num in `seq 1 $relConNum`; do
-			createCommand ${iPerfNumbers[$num]} ${ports[$num]} ${durations[$num]}
+			createCommand ${iPerfNumbers[$num]} ${ports[$num]} ${durations[$num]} ${bandwidths[$num]}
 			eval "$iperfCommand"
 			unset iperfCommand
 		done
 		
-		unset iPerfNumbers ports durations relConNum
+		unset iPerfNumbers ports durations bandwidths relConNum
 		
 	fi
 fi

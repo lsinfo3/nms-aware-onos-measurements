@@ -6,6 +6,7 @@ DURATION="120"	# complete measurment duration
 IAT="0"			# inter arrival time
 FLOWS="8"		# amount of flows
 BWD="200"		# bandwidth
+VARIATION="0" # percentage of bandwidth deviation
 TYPE="ORG"		# measurement type
 NMSINT="10" 	# updated interval of the NMS
 SEED="1"		# seed for the RANDOM variable
@@ -15,15 +16,20 @@ mnVmIp="192.168.33.10"		# mininet VM's IP address
 onosVmIp="192.168.33.20"	# ONOS VM's IP address
 
 runCommand="startMetricsMeasurement.sh [-r <measurement runs>] \
-[-i <inter arrival time in seconds>] [-f <number of simultaneous flows>] \
-[-b <bandwidth per flow in kbit/s>] [-c <number of flows per iPerf instance>] \
-[-d <overall measurement duration in seconds>] [-s <seed>] [-n <nms interval>] [-u] -t {ORG|MOD|NMS}"
+[-c <number of flows per iPerf instance>] [-i <inter arrival time in seconds>] \
+[-f <number of simultaneous flows>] [-b <bandwidth per flow in kbit/s>] \
+[-v <bandwidth variation>] [-d <overall measurement duration in seconds>] \
+[-s <seed>] [-n <nms interval>] [-u] -t {ORG|MOD|NMS}"
 
-while getopts "r:i:f:b:c:d:s:n:ut:h" opt; do
+while getopts "r:c:i:f:b:v:d:s:n:ut:h" opt; do
   case $opt in
-	r)
+    r)
       echo "Measurement repetitions: $OPTARG" >&2
       REP=$OPTARG
+      ;;
+    c)
+      echo "Number of flows per iPerf instance: $OPTARG" >&2
+      COUNT=$OPTARG
       ;;
     i)
       echo "Flow inter arrival time: $OPTARG seconds" >&2
@@ -37,9 +43,9 @@ while getopts "r:i:f:b:c:d:s:n:ut:h" opt; do
       echo "Bandwidht per flow: $OPTARG kbit/s" >&2
       BWD=$OPTARG
       ;;
-    c)
-      echo "Number of flows per iPerf instance: $OPTARG" >&2
-      COUNT=$OPTARG
+    v)
+      echo "Bandwidth deviation: $OPTARG" >&2
+      VARIATION=$OPTARG
       ;;
     d)
       echo "Measurement duration: $OPTARG seconds" >&2
@@ -110,12 +116,13 @@ Inter arrival time: %s\n\
 Avg. simultaneous flows: %s\n\
 Bandwidth per flow: %s\n\
 Avg. flow duration: %s\n\
+Bandwidth variation: %s\n\
 Iperf flow number: %s\n\
 Type: %s\n\
 NMS update interval: %s\n\
 UDP: %s\n\
 Seed: %s\n"\
-    "$REP" "$DURATION" "$IAT" "$FLOWS" "$BWD" "$FLOWDUR" "$COUNT" "$TYPE" "$NMSINT" "$USEUDP" "$SEED" >> $infoFile
+    "$REP" "$DURATION" "$IAT" "$FLOWS" "$BWD" "$FLOWDUR" "$VARIATION" "$COUNT" "$TYPE" "$NMSINT" "$USEUDP" "$SEED" >> $infoFile
 fi
 
 
@@ -139,7 +146,7 @@ INITTIME=$(bc -l <<< "$FLOWDUR * $initTimeFactor")
 if [ "$INITTIME" != "0" ]; then
 # iPerf traffic initialisation phase
 printf "Starting initial iPerf traffic phase for %s s\n" "$INITTIME"
-iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $INITTIME -t $TYPE -s $SEED -v"
+iperfCommand="./scheduleIperf.sh -i $IAT -b $BWD -v $VARIATION -l $FLOWDUR -c $COUNT -d $INITTIME -t $TYPE -s $SEED -f"
 if [ "$USEUDP" == true ]; then
 	iperfCommand="$iperfCommand -u"
 fi
@@ -229,7 +236,7 @@ trap "interruptScript" INT
 printf "Starting main iPerf traffic phase for %s s\n" "$DURATION"
 # start iperf instances
 TIMEDIFF=$(bc -l <<< "$(date +%s.%N) - $TIMEA")
-iperfCommand="./iperfParameter/runIperf.sh -i $IAT -b $BWD -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE -e $TIMEDIFF -r $(($iperfInstanceCount + 1)) -s $SEED"
+iperfCommand="./scheduleIperf.sh -i $IAT -b $BWD -v $VARIATION -l $FLOWDUR -c $COUNT -d $DURATION -t $TYPE -e $TIMEDIFF -r $(($iperfInstanceCount + 1)) -s $SEED"
 if [ "$USEUDP" == true ]; then
 	iperfCommand="$iperfCommand -u"
 fi

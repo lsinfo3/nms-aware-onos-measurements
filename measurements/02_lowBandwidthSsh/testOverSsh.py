@@ -219,7 +219,8 @@ def isPortOpen(port, name='iperf3', user='ubuntu', ip='100.0.1.201'):
 # connect to both hosts and run iperf server and client on them
 # write the active connections to a file for network management
 def performanceTest(duration, clientCount, resultIperf, bandwidth,
-    iperfName, serverPort='5001', addConstraints=False, useUdp=False):
+    nmsBandwidth, iperfName, serverPort='5001', addConstraints=False,
+    useUdp=False):
   
   try:
     
@@ -249,10 +250,8 @@ def performanceTest(duration, clientCount, resultIperf, bandwidth,
     
     info("+++ Get iPerf clients from output\n")
     # read iperf output and append it to the client list
-    # TODO script gets stuck here after several executions
-    # FIXME: no content in iPerf file!
     clientPortMap = getIperfClients.getIperfClients(resultIperf=resultIperf+"_client.txt",
-      clientCount=clientCount, bandwidth=bandwidth+'000',
+      clientCount=clientCount, bandwidth=nmsBandwidth+'000',
       serverPort=serverPort)
     
     # add clients to list if clients where found
@@ -290,16 +289,15 @@ if __name__ == '__main__':
   setLogLevel( 'info' )
   
   cmd='Usage:\n{} [-d <duration>] [-c <clientCount>] [-b <iperfBandwidthInKb>] \
-	[-p <iperfServerPort>] [-n <iperfInstanceName>] [-r <iperfResultPath>] \
-  [-u] [-a]'.format(sys.argv[0])
+	[-v <nmsBandwidthInKb>] [-p <iperfServerPort>] [-n <iperfInstanceName>] \
+  [-r <iperfResultPath>] [-u] [-a]'.format(sys.argv[0])
   argv = sys.argv[1:]
   
   # parsing commandline arguments
-  ### TODO: Missing arguments: clientListPath, host1, host2?
   try:
-    opts, args = getopt.getopt(argv,"d:c:r:b:n:p:ua",
+    opts, args = getopt.getopt(argv,"d:c:r:b:v:n:p:ua",
 		["duration=", "clientCount=", "resultIperf=", "bandwidth=", 
-    "iperfName=", "serverPort=", "addConstraints", "udp"])
+    "nmsBandwidth=", "iperfName=", "serverPort=", "addConstraints", "udp"])
   except getopt.GetoptError:
     print cmd
     sys.exit(2)
@@ -309,6 +307,7 @@ if __name__ == '__main__':
   clientCountArg = '1'
   resultIperfArg = '/home/ubuntu/iperfResult'
   bandwidthArg = '200'
+  nmsBandwidthArg = '200'
   iperfNameArg = 'iperfInstance'
   serverPortArg = '5001'
   addConstraintsArg = False
@@ -327,6 +326,8 @@ if __name__ == '__main__':
       resultIperfArg = arg
     elif opt in ("-b", "--bandwidth"):
       bandwidthArg = arg
+    elif opt in ("-v", "--nmsBandwidth"):
+      nmsBandwidthArg = arg
     elif opt in ("-n", "--iperfName"):
       iperfNameArg = arg
     elif opt in ("-p", "--serverPort"):
@@ -338,7 +339,8 @@ if __name__ == '__main__':
 
   performanceTest(duration=durationArg, clientCount=clientCountArg,
       resultIperf=resultIperfArg, bandwidth=bandwidthArg,
-      iperfName=iperfNameArg, serverPort=serverPortArg,
-      addConstraints=addConstraintsArg, useUdp=useUdp)
+      nmsBandwidth=nmsBandwidthArg, iperfName=iperfNameArg,
+      serverPort=serverPortArg, addConstraints=addConstraintsArg,
+      useUdp=useUdp)
 
 
