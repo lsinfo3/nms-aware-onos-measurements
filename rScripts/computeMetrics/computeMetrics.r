@@ -87,7 +87,7 @@ rm(width, height)
 # calculate the percentage of the throughput
 source("/home/lorry/Masterthesis/vm/leftVm/python/rScripts/metrics/getThroughput.r")
 throughputData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
-throughput <- getThroughput(throughputData[, c("time", "s1", "s3")], 10000, "s1", "s3")
+throughput <- getThroughput(throughputData[, c("time", "s1", "s3")], 2000, "s1", "s3")
 #rm(throughputData, getThroughput)
 
 print(paste("Mean of throughput: ", mean(throughput[,"throughput"]), sep=""))
