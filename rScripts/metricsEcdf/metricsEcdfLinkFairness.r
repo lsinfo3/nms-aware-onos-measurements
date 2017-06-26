@@ -212,7 +212,7 @@ metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '4
 
 figure <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
-  #scale_x_continuous(limits=c(0.3, 1.0)) +
+#  scale_x_continuous(limits=c(0.3, 1.0)) +
   coord_cartesian(xlim=c(0.3, 1.0)) +
   labs(x="Link Fairness", y="Cumulative Probability") +
   theme_bw() +
@@ -224,3 +224,19 @@ figure <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=v
 # save plot as pdf
 width <- 8.5; height <- 7.0
 ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
+
+
+figure <- ggplot(data=metrics[metrics[["variable"]]=="Link Fairness", ], aes(x=parameter, y=value, group=1)) +
+  stat_summary(geom="ribbon", fun.data=mean_cl_normal, 
+               fun.args=list(conf.int=0.95), fill="lightblue")+
+  stat_summary(geom="line", fun.y=mean, linetype="dashed")+
+  stat_summary(geom="point", fun.y=mean, color="red") +
+  labs(x="Link Fairness", y="Cumulative Probability") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+
+
+# save plot as pdf
+width <- 8.5; height <- 7.0
+ggsave(paste(outFilePath, "_conf.pdf", sep=""), plot = figure, width = width, height = height, units="cm")

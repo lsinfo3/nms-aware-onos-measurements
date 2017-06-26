@@ -210,42 +210,44 @@ metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '4
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
 
-#figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=value, color=parameter)) +
-#  stat_ecdf(geom="step", na.rm=TRUE) +
+figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=value, color=parameter)) +
+  stat_ecdf(geom="step", na.rm=TRUE) +
 #  scale_x_continuous(limits=c(0.75, 1.0)) +
-#  labs(x="Throughput", y="Cumulative Probability") +
-#  theme_bw() +
-#  scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
-#  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-#        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
-#  guides(col=guide_legend(nrow=2, title.position = "top"))
+  coord_cartesian(xlim=c(0.75, 1.0)) +
+  labs(x="Throughput", y="Cumulative Probability") +
+  theme_bw() +
+  scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+  guides(col=guide_legend(nrow=2, title.position = "top"))
+
+# save plot as pdf
+width <- 8.5; height <- 7.0
+ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
 
 
-#figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=parameter, y=value, group=1)) +
-#  stat_summary(geom="ribbon", fun.data=mean_cl_normal, 
-#               fun.args=list(conf.int=0.95), fill="lightblue")+
-#  stat_summary(geom="line", fun.y=mean, linetype="dashed")+
-#  stat_summary(geom="point", fun.y=mean, color="red") +
-#  labs(x="Throughput", y="Cumulative Probability") +
-#  theme_bw() +
-#  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-#        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
-
-
-figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=parameter, y=value)) +
-  geom_boxplot(outlier.color = NULL, outlier.shape = NULL, outlier.size = NULL, notch=TRUE)
-
-ylim1 = boxplot.stats(metrics[metrics[["vairable"]]=="Throughput", ]$value)$stats[c(1,5)]
-
-figure <- figure +
-#  coord_cartesian(ylim=c(0.0, 1.0)) +
-#  coord_cartesian(xlim=c(0.0, 1.0)) +
+figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=parameter, y=value, group=1)) +
+  stat_summary(geom="ribbon", fun.data=mean_cl_normal, 
+               fun.args=list(conf.int=0.95), fill="lightblue")+
+  stat_summary(geom="line", fun.y=mean, linetype="dashed")+
+  stat_summary(geom="point", fun.y=mean, color="red") +
   labs(x="Throughput", y="Cumulative Probability") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
 
 
+#figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=parameter, y=value)) +
+#  geom_boxplot(outlier.color = NULL, outlier.shape = NULL, outlier.size = NULL, notch=TRUE)
+
+#ylim1 = boxplot.stats(metrics[metrics[["vairable"]]=="Throughput", ]$value)$stats[c(1,5)]
+
+#figure <- figure +
+#  labs(x="Throughput", y="Cumulative Probability") +
+#  theme_bw() +
+#  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
+#        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+
 # save plot as pdf
 width <- 8.5; height <- 7.0
-ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, "_conf.pdf", sep=""), plot = figure, width = width, height = height, units="cm")

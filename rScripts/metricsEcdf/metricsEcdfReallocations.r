@@ -214,7 +214,7 @@ figure <- ggplot(data=metrics[metrics[["variable"]]=='Reallocations', ], aes(x=v
   stat_ecdf(geom="step", na.rm=TRUE) +
 #  scale_x_continuous(limits=c(0.0, 1.0)) +
 #  coord_cartesian(xlim=c(0.0, 1.0)) +
-  labs(x="Reallocations", y="Cumulative Probability") +
+  labs(x=expression(paste("Reallocations [", min^{-1}, "]") ), y="Cumulative Probability") +
   theme_bw() +
   scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
