@@ -36,7 +36,7 @@ folderName="iatNew"
 folders=seq(20, 60, by=10)
 #folders=c(4, 8, 16, 32, 64)
 numMeas=10
-parameterName <- "Inter-\nArrival\nTime"
+parameterName <- "Inter-Arrival Time"
 
 #tempFiles <- c("avg10/1.csv", "avg10/2.csv")
 #tempValues <- c("10", "10")
@@ -213,13 +213,14 @@ metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '4
 figure <- ggplot(data=metrics[metrics[["variable"]]=='Reallocations', ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
 #  scale_x_continuous(limits=c(0.0, 1.0)) +
+#  coord_cartesian(xlim=c(0.0, 1.0)) +
   labs(x="Reallocations", y="Cumulative Probability") +
   theme_bw() +
   scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
-#  guides(col=guide_legend(nrow=2, title.position = "top"))
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom") +
+  guides(col=guide_legend(nrow=1, byrow=TRUE, title.position = "top", label.position = "bottom"))
 
 # save plot as pdf
-width <- 8.5; height <- 7.0
+width <- 5.5; height <- 8.0
 ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")

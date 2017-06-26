@@ -212,7 +212,8 @@ metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '4
 
 figure <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
-  scale_x_continuous(limits=c(0.3, 1.0)) +
+  #scale_x_continuous(limits=c(0.3, 1.0)) +
+  coord_cartesian(xlim=c(0.3, 1.0)) +
   labs(x="Link Fairness", y="Cumulative Probability") +
   theme_bw() +
   scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
