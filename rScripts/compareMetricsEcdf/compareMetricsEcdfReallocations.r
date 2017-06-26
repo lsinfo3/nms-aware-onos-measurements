@@ -255,7 +255,6 @@ metrics[["measurement"]] <- factor(metrics[["measurement"]], levels=c("modIat", 
 
 figure <- ggplot(data=metrics[metrics[["variable"]]=='Reallocations', ], aes(x=value, color=measurement)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
-#  scale_x_continuous(limits=c(0.0, 1.0), breaks=seq(0.0, 1.0, by=0.2)) +
   labs(x=expression(paste("Reallocations [", min^{-1}, "]") ), y="Cumulative Probability") +
   theme_bw() +
   scale_color_manual(name=parameterName, values=c("blue", "red", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#0072B2", "#D55E00")) +
