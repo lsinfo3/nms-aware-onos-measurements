@@ -31,12 +31,13 @@ rm(args)
 
 
 # --- create file and value vector ---
-detail=FALSE
-folderName="iatNew"
-folders=seq(20, 60, by=10)
+detail=TRUE
+folderName="udpVsTcp"
+#folders=seq(20, 60, by=10)
 #folders=c(4, 8, 16, 32, 64)
+folders=c("udp", "tcp")
 numMeas=10
-parameterName <- "Inter-Arrival Time"
+parameterName <- "Transport Protocol"
 
 #tempFiles <- c("avg10/1.csv", "avg10/2.csv")
 #tempValues <- c("10", "10")
@@ -205,10 +206,11 @@ myFacetLabeler <- function(variable, value) {
 # set factor
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('tcp', 'udp'))
 
 figure <- ggplot(data=metrics, aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
@@ -227,3 +229,19 @@ figure <- figure +
 # save plot as pdf
 width <- 15.0; height <- 8.0
 ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
+
+
+figure <- ggplot(data=metrics, aes(x=parameter, y=value, group=1)) +
+  stat_summary(geom="ribbon", fun.data=mean_cl_normal, 
+               fun.args=list(conf.int=0.95), fill="lightblue") +
+  stat_summary(geom="line", fun.y=mean, linetype="dashed") +
+  stat_summary(geom="point", fun.y=mean, color="red") +
+  facet_grid(. ~ variable, scales="free_x") +
+  labs(x="Parameters", y="Metric Values") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+
+# save plot as pdf
+width <- 15.0; height <- 8.0
+ggsave(paste(outFilePath, "_conf.pdf", sep=""), plot = figure, width = width, height = height, units="cm")
