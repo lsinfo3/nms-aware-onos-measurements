@@ -57,7 +57,7 @@ metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '6
 figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
 #  scale_x_continuous(limits=c(0.75, 1.0)) +
-  coord_cartesian(xlim=c(0.75, 1.0)) +
+  coord_cartesian(xlim=c(0.6, 1.0)) +
   labs(x="Throughput", y="Cumulative Probability") +
   theme_bw() +
   scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +

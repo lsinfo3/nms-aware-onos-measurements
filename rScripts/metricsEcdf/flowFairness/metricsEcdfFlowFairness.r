@@ -77,5 +77,5 @@ figure <- ggplot(data=metrics[metrics[["variable"]]=="Flow Fairness", ], aes(x=p
         panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
 
 # save plot as pdf
-width <- 5.5; height <- 6.0
+width <- 4.9; height <- 6.0
 ggsave(paste(outFilePath, "_conf.pdf", sep=""), plot = figure, width = width, height = height, units="cm")

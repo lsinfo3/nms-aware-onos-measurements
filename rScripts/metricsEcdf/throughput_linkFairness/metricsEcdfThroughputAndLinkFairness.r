@@ -60,7 +60,7 @@ figure1 <- ggplot(data=metricsFig, aes(x=value, color=parameter)) +
   labs(x=NULL, y="Cumulative Probability") +
   coord_cartesian(xlim = c(0.6, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
 g1 <- ggplotGrob(figure1)
@@ -78,23 +78,22 @@ g2 <- ggplotGrob(figure2)
 
 # Replace the upper panels and upper axis of p1 with that of p2
 # Tweak panels of second plot - the upper panels
-#g2[["grobs"]][[1]] <- g1[["grobs"]][[1]]
-#g2[["grobs"]][[2]] <- g1[["grobs"]][[2]] # first figure
+#g1[["grobs"]][[1]] <- g2[["grobs"]][[1]]
+#g1[["grobs"]][[2]] <- g2[["grobs"]][[2]] # first figure
 g1[["grobs"]][[3]] <- g2[["grobs"]][[3]] # second figure
-#g2[["grobs"]][[4]] <- g1[["grobs"]][[4]]
-#g2[["grobs"]][[5]] <- g1[["grobs"]][[5]]
-#g2[["grobs"]][[6]] <- g1[["grobs"]][[6]] # first x-axis
+#g1[["grobs"]][[4]] <- g2[["grobs"]][[4]]
+#g1[["grobs"]][[5]] <- g2[["grobs"]][[5]]
+#g1[["grobs"]][[6]] <- g2[["grobs"]][[6]] # first x-axis
 g1[["grobs"]][[7]] <- g2[["grobs"]][[7]] # second x-axis
-#g2[["grobs"]][[8]] <- g1[["grobs"]][[8]]
-#g2[["grobs"]][[9]] <- g1[["grobs"]][[9]]
-
-
-#Tweak axis
-#g2[["grobs"]][[4]] <- g1[["grobs"]][[4]]
+#g1[["grobs"]][[8]] <- g2[["grobs"]][[8]]
+#g1[["grobs"]][[9]] <- g2[["grobs"]][[9]]
+#g1[["grobs"]][[10]] <- g2[["grobs"]][[10]]
+#g1[["grobs"]][[11]] <- g2[["grobs"]][[11]]
+#g1[["grobs"]][[12]] <- g2[["grobs"]][[12]]
 
 #grid.newpage()
-#grid.draw(g2)
+#grid.draw(g1)
 
 # save plot as pdf
 width <- 15; height <- 7.0
-ggsave(paste(outFilePath, "_ecdf1.pdf", sep=""), plot = g1, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, "_ecdf.pdf", sep=""), plot = g1, width = width, height = height, units="cm")
