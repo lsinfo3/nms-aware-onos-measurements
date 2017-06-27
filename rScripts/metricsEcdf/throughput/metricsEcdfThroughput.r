@@ -60,7 +60,7 @@ figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=valu
   coord_cartesian(xlim=c(0.6, 1.0)) +
   labs(x="Throughput", y="Cumulative Probability") +
   theme_bw() +
-  scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
 #  guides(col=guide_legend(nrow=2, title.position = "top"))

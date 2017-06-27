@@ -32,12 +32,12 @@ rm(args)
 
 # --- create file and value vector ---
 detail=TRUE
-folderName="../meas/nmsInt"
-#folders=seq(20, 60, by=10)
+folderName="../meas/iat"
+folders=seq(20, 60, by=10)
 #folders=c(4, 8, 16, 32, 64)
-folders=c(10, seq(30, 120, by=30))
+#folders=c(10, seq(30, 120, by=30))
 numMeas=10
-parameterName <- "Update\nInterval"
+parameterName <- "Inter-Arrival Time"
 
 # get ecdf data from measurement files
 source("../getEcdfData.r")
@@ -45,8 +45,8 @@ metrics <- getEcdfData(detail, folderName, folders, numMeas, parameterName)
 
 # set factor
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
-#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
@@ -58,22 +58,22 @@ figure1 <- ggplot(data=metricsFig, aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
   facet_grid(. ~ variable, scales="free_x") +
   labs(x=NULL, y="Cumulative Probability") +
-  coord_cartesian(xlim = c(0.6, 1.0)) +
+  coord_cartesian(xlim = c(0.75, 1.0)) +
   theme_bw() +
   scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g1 <- ggplotGrob(figure1)
 
 figure2 <- ggplot(data=metricsFig, aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
   facet_grid(. ~ variable, scales="free_x") +
   labs(x="Throughput", y="Cumulative Probability") +
-#  coord_cartesian(xlim = c(0.75, 1.0)) +
+  coord_cartesian(xlim = c(0.4, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, labels=labels, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g2 <- ggplotGrob(figure2)
 
 # Replace the upper panels and upper axis of p1 with that of p2
@@ -95,5 +95,5 @@ g1[["grobs"]][[7]] <- g2[["grobs"]][[7]] # second x-axis
 #grid.draw(g1)
 
 # save plot as pdf
-width <- 15; height <- 7.0
+width <- 15; height <- 9.0
 ggsave(paste(outFilePath, "_ecdf.pdf", sep=""), plot = g1, width = width, height = height, units="cm")
