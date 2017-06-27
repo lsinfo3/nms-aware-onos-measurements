@@ -31,13 +31,14 @@ rm(args)
 
 
 # --- create file and value vector ---
-detail=TRUE
-folderName="udpVsTcp"
+detail=FALSE
+folderName="nmsInt"
 #folders=seq(20, 60, by=10)
 #folders=c(4, 8, 16, 32, 64)
-folders=c("udp", "tcp")
+#folders=c("udp", "tcp")
+folders=c(10, seq(30, 120, by=30))
 numMeas=10
-parameterName <- "Transport Protocol"
+parameterName <- "Update Interval"
 
 #tempFiles <- c("avg10/1.csv", "avg10/2.csv")
 #tempValues <- c("10", "10")
@@ -205,12 +206,12 @@ myFacetLabeler <- function(variable, value) {
 
 # set factor
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
-#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('tcp', 'udp'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('tcp', 'udp'))
 
 figure <- ggplot(data=metrics, aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
@@ -228,7 +229,7 @@ figure <- figure +
 
 # save plot as pdf
 width <- 15.0; height <- 8.0
-ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, "_ecdf.pdf", sep=""), plot = figure, width = width, height = height, units="cm")
 
 
 figure <- ggplot(data=metrics, aes(x=parameter, y=value, group=1)) +

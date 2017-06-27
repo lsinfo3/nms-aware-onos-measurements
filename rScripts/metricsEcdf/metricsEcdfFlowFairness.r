@@ -13,7 +13,7 @@ args <- commandArgs(trailingOnly = TRUE)
 csvFiles <- ""
 values <- ""
 parameterName <- ""
-outFilePath <- "./ecdf_flowFairness"
+outFilePath <- "./flowFairness"
 
 if(length(args) >= 1){
   csvFiles <- strsplit(as.character(args[1]), " ")[[1]]
@@ -32,11 +32,12 @@ rm(args)
 
 # --- create file and value vector ---
 detail=TRUE
-folderName="iatNew"
-folders=seq(20, 60, by=10)
+folderName="nmsInt"
+#folders=seq(20, 60, by=10)
 #folders=c(4, 8, 16, 32, 64)
+folders=c(10, seq(30, 120, by=30))
 numMeas=10
-parameterName <- "Inter-Arrival Time"
+parameterName <- "Update Interval"
 
 #tempFiles <- c("avg10/1.csv", "avg10/2.csv")
 #tempValues <- c("10", "10")
@@ -204,8 +205,8 @@ myFacetLabeler <- function(variable, value) {
 
 # set factor
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
-#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
@@ -222,7 +223,7 @@ figure <- ggplot(data=metrics[metrics[["variable"]]=='Flow Fairness', ], aes(x=v
 
 # save plot as pdf
 width <- 5.5; height <- 8.0
-ggsave(paste(outFilePath, ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, "_ecdf.pdf", sep=""), plot = figure, width = width, height = height, units="cm")
 
 
 figure <- ggplot(data=metrics[metrics[["variable"]]=="Flow Fairness", ], aes(x=parameter, y=value, group=1)) +
@@ -230,7 +231,7 @@ figure <- ggplot(data=metrics[metrics[["variable"]]=="Flow Fairness", ], aes(x=p
                fun.args=list(conf.int=0.95), fill="lightblue")+
   stat_summary(geom="line", fun.y=mean, linetype="dashed")+
   stat_summary(geom="point", fun.y=mean, color="red") +
-  labs(x="Flow Fairness", y="Cumulative Probability") +
+  labs(x=paste(parameterName, " [s]", sep=""), y="Flow Fairness") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
