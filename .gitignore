@@ -11,4 +11,4 @@
 measurements/02_lowBandwidthSsh/vagrant_log.txt
 measurements/02_lowBandwidthSsh/run*.sh
 rScripts/metricsEcdf/meas/
-rScripts/compareMetricsEcdf/*/
+rScripts/compareMetricsEcdf/meas/

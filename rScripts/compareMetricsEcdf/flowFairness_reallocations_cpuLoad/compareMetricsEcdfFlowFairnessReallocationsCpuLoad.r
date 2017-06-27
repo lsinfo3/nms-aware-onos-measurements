@@ -13,7 +13,7 @@ args <- commandArgs(trailingOnly = TRUE)
 csvFiles <- ""
 values <- ""
 parameterName <- ""
-outFilePath <- "./flowFairness_reallocations_cpuLoad"
+outFilePath <- "./flowFairness_reallocations_cpuLoad_ecdf"
 
 if(length(args) >= 1){
   csvFiles <- strsplit(as.character(args[1]), " ")[[1]]
@@ -31,84 +31,69 @@ rm(args)
 
 
 # --- create file and value vector ---
-#detail=FALSE
-folderName="../meas/iat"
-folders=seq(20, 60, by=10)
-#folders=c(4, 8, 16, 32, 64)
-#folders=c(10, seq(30, 120, by=30))
-numMeas=10
-parameterName <- "Inter-Arrival Time"
 
-#tempFiles <- c("avg10/1.csv", "avg10/2.csv")
-#tempValues <- c("10", "10")
+detail <- TRUE
+folderNames=c("../meas/modIat", "../meas/iatNew")
+folders <- seq(20, 60, by=10)
+numMeas <- 10
+parameterName <- "Controller Type"
 
-# get ecdf data from measurement files
-source("../getEcdfData.r")
-metricsDetail <- getEcdfData(TRUE, folderName, folders, numMeas, parameterName)
-metricsAvg <- getEcdfData(FALSE, folderName, folders, numMeas, parameterName)
+source("../getEcdfCompareData.r")
+metricsAvg <- getEcdfCompareData(FALSE, folderName, folders, numMeas, parameterName)
+metricsDetail <- getEcdfCompareData(TRUE, folderName, folders, numMeas, parameterName)
 
 # set factor
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
-#metricsDetail[["parameter"]] <- factor(metricsDetail[["parameter"]], levels=c('10', '30', '60', '90', '120'))
-#metricsAvg[["parameter"]] <- factor(metricsAvg[["parameter"]], levels=c('10', '30', '60', '90', '120'))
-metricsDetail[["parameter"]] <- factor(metricsDetail[["parameter"]], levels=c('20', '30', '40', '50', '60'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
 metricsAvg[["parameter"]] <- factor(metricsAvg[["parameter"]], levels=c('20', '30', '40', '50', '60'))
+metricsDetail[["parameter"]] <- factor(metricsDetail[["parameter"]], levels=c('20', '30', '40', '50', '60'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
-#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
 
+metricsAvg[["measurement"]] <- factor(metricsAvg[["measurement"]], levels=folderNames, labels=c("MOD", "NMS"))
+metricsDetail[["measurement"]] <- factor(metricsDetail[["measurement"]], levels=folderNames, labels=c("MOD", "NMS"))
 
 metricsDetail <- metricsDetail[metricsDetail[["variable"]]=="Flow Fairness" | metricsDetail[["variable"]]=="Throughput" | metricsDetail[["variable"]]=="CPU Load", ]
 metricsAvg <- metricsAvg[metricsAvg[["variable"]]=="Flow Fairness" | metricsAvg[["variable"]]=="Reallocations" | metricsAvg[["variable"]]=="CPU Load", ]
 library('grid')
 
-figure1 <- ggplot(data=metricsDetail, aes(x=value, color=parameter)) +
+figure1 <- ggplot(data=metricsDetail, aes(x=value, color=measurement)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
   facet_grid(. ~ variable, scales="free_x") +
+  coord_cartesian(xlim=c(0.8, 1.0)) +
   labs(x=NULL, y="Cumulative Probability") +
-  coord_cartesian(xlim = c(0.85, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(2)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g1 <- ggplotGrob(figure1)
 
-figure2 <- ggplot(data=metricsAvg, aes(x=value, color=parameter)) +
+figure2 <- ggplot(data=metricsAvg, aes(x=value, color=measurement)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
   facet_grid(. ~ variable, scales="free_x") +
+#  coord_cartesian(xlim=c(0.0, 1.0)) +
   labs(x=NULL, y="Cumulative Probability") +
-#  coord_cartesian(xlim = c(0.0, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(2)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g2 <- ggplotGrob(figure2)
 
-figure3 <- ggplot(data=metricsDetail, aes(x=value, color=parameter)) +
+figure3 <- ggplot(data=metricsDetail, aes(x=value, color=measurement)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
   facet_grid(. ~ variable, scales="free_x") +
   labs(x="Throughput", y="Cumulative Probability") +
 #  coord_cartesian(xlim = c(0.75, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(2)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g3 <- ggplotGrob(figure3)
 
 # Copy second plot into first plot of first figure
 g1[["grobs"]][[2]] <- g1[["grobs"]][[3]] # second figure into first figure
-#g1[["grobs"]][[3]] <- g1[["grobs"]][[4]] # third figure into second figure
-#g1[["grobs"]][[4]] <- g1[["grobs"]][[5]]
-#g1[["grobs"]][[5]] <- g1[["grobs"]][[6]]
-#g1[["grobs"]][[6]] <- g1[["grobs"]][[7]]
-#g1[["grobs"]][[7]] <- g1[["grobs"]][[8]] # x-axis
-#g1[["grobs"]][[8]] <- g1[["grobs"]][[9]]
-#g1[["grobs"]][[9]] <- g1[["grobs"]][[10]]
-#g1[["grobs"]][[10]] <- g1[["grobs"]][[11]] # y-axis into last x-axis
-#g1[["grobs"]][[11]] <- g1[["grobs"]][[12]]
-#g1[["grobs"]][[12]] <- g1[["grobs"]][[13]]
 g1[["grobs"]][[13]] <- g1[["grobs"]][[14]] # second label to first label
-#g1[["grobs"]][[14]] <- g1[["grobs"]][[15]]
 
 # copy second plot of second figure into second plot of first figure
 g1[["grobs"]][[3]] <- g2[["grobs"]][[3]] # plot
@@ -124,4 +109,4 @@ g1[["grobs"]][[10]] <- g3[["grobs"]][[10]] # x-axis
 
 # save plot as pdf
 width <- 15; height <- 8.0
-ggsave(paste(outFilePath, "_ecdf.pdf", sep=""), plot = g1, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, ".pdf", sep=""), plot = g1, width = width, height = height, units="cm")
