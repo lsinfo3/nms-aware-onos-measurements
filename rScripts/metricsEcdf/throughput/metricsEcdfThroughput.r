@@ -95,6 +95,27 @@ width <- 6; height <- 7.0
 ggsave(paste(outFilePath, "_conf.pdf", sep=""), plot = figure2, width = width, height = height, units="cm")
 
 
+figure3 <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=parameter, y=value, fill=parameter, group=1)) +
+  stat_summary(geom="bar", fun.y=mean, color="black",
+               size = .3) +
+  stat_summary(geom="errorbar", fun.data=mean_cl_normal, 
+               fun.args=list(conf.int=0.95),
+               size = .3,    # Thinner lines
+               width = .5,
+               position = position_dodge(.9)) +
+  coord_cartesian(ylim=c(0.85, 1.0)) +
+  labs(x="Update Interval [s]", y="Throughput") +
+  theme_bw() +
+  scale_fill_manual(name=parameterName, values=colorRampPalette(c("cornflowerblue", "indianred1"))(5)) +
+#  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
+        panel.spacing.x = unit(0.75, "lines"), legend.position = "none")
+
+# save plot as pdf
+width <- 6; height <- 7.0
+ggsave(paste(outFilePath, "_conf2.pdf", sep=""), plot = figure3, width = width, height = height, units="cm")
+
+
 #figure3 <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=parameter, y=value)) +
 #  geom_boxplot(outlier.color = NULL, outlier.shape = NULL, outlier.size = NULL, notch=TRUE)
 
