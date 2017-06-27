@@ -247,18 +247,22 @@ figure2 <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=par
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
 
+# save plot as pdf
+width <- 6; height <- 7.0
+ggsave(paste(outFilePath, "_conf.pdf", sep=""), plot = figure2, width = width, height = height, units="cm")
 
-#figure <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=parameter, y=value)) +
+
+#figure3 <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=parameter, y=value)) +
 #  geom_boxplot(outlier.color = NULL, outlier.shape = NULL, outlier.size = NULL, notch=TRUE)
 
 #ylim1 = boxplot.stats(metrics[metrics[["vairable"]]=="Throughput", ]$value)$stats[c(1,5)]
 
-#figure <- figure +
-#  labs(x="Throughput", y="Cumulative Probability") +
+#figure3 <- figure3 +
+#  #labs(x="Throughput", y="Throughput") +
 #  theme_bw() +
 #  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
 #        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
 
 # save plot as pdf
-width <- 6; height <- 7.0
-ggsave(paste(outFilePath, "_conf.pdf", sep=""), plot = figure2, width = width, height = height, units="cm")
+#width <- 6; height <- 7.0
+#ggsave(paste(outFilePath, "_box.pdf", sep=""), plot = figure3, width = width, height = height, units="cm")
