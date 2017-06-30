@@ -62,13 +62,15 @@ metricsDetail <- metricsDetail[metricsDetail[["variable"]]=="Flow Fairness" | me
 metricsAvg <- metricsAvg[metricsAvg[["variable"]]=="Flow Fairness" | metricsAvg[["variable"]]=="Reallocations" | metricsAvg[["variable"]]=="CPU Load", ]
 library('grid')
 
+legendTitle=paste(parameterName, " [s]", sep="")
+
 figure1 <- ggplot(data=metricsDetail, aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
   facet_grid(. ~ variable, scales="free_x") +
   labs(x=NULL, y="Cumulative Probability") +
   coord_cartesian(xlim = c(0.85, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=legendTitle, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g1 <- ggplotGrob(figure1)
@@ -79,7 +81,7 @@ figure2 <- ggplot(data=metricsAvg, aes(x=value, color=parameter)) +
   labs(x=NULL, y="Cumulative Probability") +
 #  coord_cartesian(xlim = c(0.0, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=legendTitle, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g2 <- ggplotGrob(figure2)
@@ -90,7 +92,7 @@ figure3 <- ggplot(data=metricsDetail, aes(x=value, color=parameter)) +
   labs(x="Throughput", y="Cumulative Probability") +
 #  coord_cartesian(xlim = c(0.75, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=legendTitle, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g3 <- ggplotGrob(figure3)

@@ -37,7 +37,7 @@ folderName="../meas/nmsInt"
 #folders=c(4, 8, 16, 32, 64)
 folders=c(10, seq(30, 120, by=30))
 numMeas=10
-parameterName <- "Interval"
+parameterName <- "Update Interval"
 
 #tempFiles <- c("avg10/1.csv", "avg10/2.csv")
 #tempValues <- c("10", "10")
@@ -56,6 +56,7 @@ metricsAvg[["parameter"]] <- factor(metricsAvg[["parameter"]], levels=c('10', '3
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
 
+legendTitle=paste(parameterName, " [s]", sep="")
 
 metricsDetail <- metricsDetail[metricsDetail[["variable"]]=="Throughput" | metricsDetail[["variable"]]=="CPU Load", ]
 metricsAvg <- metricsAvg[metricsAvg[["variable"]]=="Reallocations" | metricsAvg[["variable"]]=="CPU Load", ]
@@ -63,22 +64,22 @@ library('grid')
 
 figure1 <- ggplot(data=metricsAvg, aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
-  facet_grid(. ~ variable, scales="free_x", switch="x") +
+  facet_grid(. ~ variable, scales="free_x") +
   labs(x=NULL, y="Cumulative Probability") +
 #  coord_cartesian(xlim = c(0.0, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=legendTitle, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g1 <- ggplotGrob(figure1)
 
 figure2 <- ggplot(data=metricsDetail, aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
-  facet_grid(. ~ variable, scales="free_x", switch="x") +
-  labs(x="Throughput", y="Cumulative Probability") +
+  facet_grid(. ~ variable, scales="free_x") +
+  labs(x=NULL, y="Cumulative Probability") +
 #  coord_cartesian(xlim = c(0.75, 1.0)) +
   theme_bw() +
-  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
+  scale_color_manual(name=legendTitle, values=colorRampPalette(c("blue", "red"))(5)) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom")
 g2 <- ggplotGrob(figure2)
@@ -103,5 +104,5 @@ g1[["grobs"]][[7]] <- g2[["grobs"]][[7]] # second x-axis
 #grid.draw(g1)
 
 # save plot as pdf
-width <- 9.5; height <- 8.0
+width <- 15; height <- 8.0
 ggsave(paste(outFilePath, "_ecdf.pdf", sep=""), plot = g1, width = width, height = height, units="cm")
