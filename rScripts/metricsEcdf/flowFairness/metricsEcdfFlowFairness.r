@@ -32,13 +32,14 @@ rm(args)
 
 # --- create file and value vector ---
 detail=TRUE
-folderName="../meas/nmsInt"
-#folders=seq(40, 140, by=20)
+folderName="../meas/udpVsTcp"
+#folders=seq(0, 40, by=10)
 #folders=c(4, 8, 16, 32, 64)
-folders=c(10, seq(30, 120, by=30))
+#folders=c(10, seq(30, 120, by=30))
 #folders=c(4,8,16,32,64)
+folders=c("udp", "tcp")
 numMeas=10
-parameterName <- "Update Interval"
+parameterName <- "Protocol"
 
 # get ecdf data from measurement files
 source("../getEcdfData.r")
@@ -46,27 +47,36 @@ metrics <- getEcdfData(detail, folderName, folders, numMeas, parameterName)
 
 # set factor
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('0', '10', '20', '30', '40'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
 
-legendTitle=paste(parameterName, " [s]", sep="")
+
+#legendTitle=paste(parameterName, " [%]", sep="")
+legendTitle=paste(parameterName, sep="")
 
 figure1 <- ggplot(data=metrics[metrics[["variable"]]=='Flow Fairness', ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
-  coord_cartesian(xlim=c(0.85, 1.0)) +
+  coord_cartesian(xlim=c(0.7, 1.0)) +
   labs(x="Flow Fairness", y="Cumulative Probability") +
   theme_bw() +
   scale_color_manual(name=legendTitle,
                      values=colorRampPalette(c("blue", "red"))(length(unique(metrics$parameter)))) +
-  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "bottom", legend.key.size = unit(1,"line")) +
-  guides(col=guide_legend(nrow=1, byrow=TRUE, title.position = "top", label.position = "bottom"))
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1),
+        text = element_text(size=12),
+        panel.spacing.x = unit(0.75, "lines"),
+        #legend.position = "bottom",
+        legend.position = c(.16, .81),
+        legend.background = element_rect(fill=alpha('white', 0.0)),
+        legend.key.size = unit(1,"line"))
+#  guides(col=guide_legend(nrow=1, byrow=TRUE, title.position = "top", label.position = "bottom"))
 
 # save plot as pdf
-width <- 5.5; height <- 8.0
+width <- 8.5; height <- 7.0
 ggsave(paste(outFilePath, "_ecdf.pdf", sep=""), plot = figure1, width = width, height = height, units="cm")
 
 

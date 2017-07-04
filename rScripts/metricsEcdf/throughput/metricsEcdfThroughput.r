@@ -32,13 +32,14 @@ rm(args)
 
 # --- create file and value vector ---
 detail=TRUE
-folderName="../meas/nmsInt"
-#folders=seq(40, 140, by=20)
+folderName="../meas/udpVsTcp"
+#folders=seq(0, 40, by=10)
 #folders=c(4, 8, 16, 32, 64)
-folders=c(10, seq(30, 120, by=30))
+#folders=c(10, seq(30, 120, by=30))
 #folders=c(4,8,16,32,64)
+folders=c("udp", "tcp")
 numMeas=10
-parameterName <- "Update Interval"
+parameterName <- "Protocol"
 
 #tempFiles <- c("avg10/1.csv", "avg10/2.csv")
 #tempValues <- c("10", "10")
@@ -49,20 +50,22 @@ metrics <- getEcdfData(detail, folderName, folders, numMeas, parameterName)
 
 # set factor
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('0', '10', '20', '30', '40'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
 
-legendTitle=paste(paste(strsplit(parameterName, " ")[[1]], collapse = "\n"), " [s]", sep="")
-#legendTitle=paste(strsplit(parameterName, " ")[[1]], collapse = "\n")
-#legendTitle=paste(parameterName, " [s]", sep="")
+#legendTitle=paste(paste(strsplit(parameterName, " ")[[1]], collapse = "\n"), " [%]", sep="")
+legendTitle=paste(strsplit(parameterName, " ")[[1]], collapse = "\n")
+#legendTitle=paste(parameterName, " [%]", sep="")
 
 figure1 <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
 #  scale_x_continuous(limits=c(0.75, 1.0)) +
-  coord_cartesian(xlim=c(0.5, 1.0)) +
+  coord_cartesian(xlim=c(0.8, 1.0)) +
   labs(x="Throughput", y="Cumulative Probability") +
   theme_bw() +
   scale_color_manual(name=legendTitle,
@@ -70,9 +73,9 @@ figure1 <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=val
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1),
         text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"),
-        legend.position = c(.19, .58),
-        legend.background = element_rect(fill=alpha('white', .5)))
-#  guides(col=guide_legend(nrow=1, title.position = "top"))
+        legend.position = c(.16, .78),
+        legend.background = element_rect(fill=alpha('white', 0.0)))
+#  guides(col=guide_legend(ncol=2, title.position = "top"))
 
 # save plot as pdf
 width <- 8.5; height <- 7.0
@@ -80,13 +83,13 @@ ggsave(paste(outFilePath, "_ecdf1.pdf", sep=""), plot = figure1, width = width, 
 
 
 # plot once more without legend
-figure1 <- figure1 +
+figure2 <- figure1 +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = 'none')
 
 # save plot as pdf
 width <- 6; height <- 7.0
-ggsave(paste(outFilePath, "_ecdf2.pdf", sep=""), plot = figure1, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, "_ecdf2.pdf", sep=""), plot = figure2, width = width, height = height, units="cm")
 
 
 figure3 <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=parameter, y=value, group=1)) +
@@ -99,7 +102,7 @@ figure3 <- ggplot(data=metrics[metrics[["variable"]]=="Throughput", ], aes(x=par
                position = position_dodge(.9)) +
   stat_summary(aes(color=parameter), geom="point", fun.y=mean, size = 2, stroke=0.7, shape=4) +
 #  coord_cartesian(ylim=c(0.85, 1.0)) +
-  labs(x=paste(parameterName, " [s]", sep=""), y="Throughput") +
+  labs(x=legendTitle, y="Throughput") +
   theme_bw() +
   scale_color_manual(name=parameterName,
                      values=colorRampPalette(c("blue", "red"))(length(unique(metrics$parameter)))) +

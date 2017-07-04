@@ -32,13 +32,14 @@ rm(args)
 
 # --- create file and value vector ---
 detail=TRUE
-folderName="../meas/flows"
-#folders=seq(40, 140, by=20)
+folderName="../meas/udpVsTcp"
+#folders=seq(0, 40, by=10)
 #folders=c(4, 8, 16, 32, 64)
 #folders=c(10, seq(30, 120, by=30))
-folders=c(4,8,16,32,64)
+#folders=c(4,8,16,32,64)
+folders=c("udp", "tcp")
 numMeas=10
-parameterName <- "Number of Flows"
+parameterName <- "Protocol"
 
 # get ecdf data from measurement files
 source("../getEcdfData.r")
@@ -50,12 +51,15 @@ metrics <- getEcdfData(detail, folderName, folders, numMeas, parameterName)
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('0', '10', '20', '30', '40'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
+
 
 #legendTitle=paste(paste(strsplit(parameterName, " ")[[1]], collapse = "\n"), " [%]", sep="")
 legendTitle=paste(strsplit(parameterName, " ")[[1]], collapse = "\n")
 
-figure <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=value, color=parameter)) +
+figure1 <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
 #  scale_x_continuous(limits=c(0.3, 1.0)) +
 #  coord_cartesian(xlim=c(0.3, 1.0)) +
@@ -63,23 +67,27 @@ figure <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=v
   theme_bw() +
   scale_color_manual(name=legendTitle,
                      values=colorRampPalette(c("blue", "red"))(length(unique(metrics$parameter)))) +
-  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1),
+        text = element_text(size=12),
+        panel.spacing.x = unit(0.75, "lines"),
+        #legend.position = "right",
+        legend.position = c(.16, .78),
+        legend.background = element_rect(fill=alpha('white', 0.0)))
 #  guides(col=guide_legend(nrow=2, title.position = "top"))
 
 # save plot as pdf
 width <- 8.5; height <- 7.0
-ggsave(paste(outFilePath, "_ecdf1.pdf", sep=""), plot = figure, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, "_ecdf1.pdf", sep=""), plot = figure1, width = width, height = height, units="cm")
 
 
 # plot once more without legend
-figure <- figure +
+figure2 <- figure1 +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = 'none')
 
 # save plot as pdf
 width <- 6; height <- 7.0
-ggsave(paste(outFilePath, "_ecdf2.pdf", sep=""), plot = figure, width = width, height = height, units="cm")
+ggsave(paste(outFilePath, "_ecdf2.pdf", sep=""), plot = figure2, width = width, height = height, units="cm")
 
 
 figure3 <- ggplot(data=metrics[metrics[["variable"]]=="Link Fairness", ], aes(x=parameter, y=value, group=1)) +
@@ -95,9 +103,10 @@ figure3 <- ggplot(data=metrics[metrics[["variable"]]=="Link Fairness", ], aes(x=
   theme_bw() +
   scale_color_manual(name=parameterName,
                      values=colorRampPalette(c("blue", "red"))(length(unique(metrics$parameter)))) +
-  #  scale_color_manual(name=parameterName, values=colorRampPalette(c("blue", "red"))(5)) +
-  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "none")
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1),
+        text = element_text(size=12),
+        panel.spacing.x = unit(0.75, "lines"),
+        legend.position = "none")
 
 # save plot as pdf
 width <- 6; height <- 7.0

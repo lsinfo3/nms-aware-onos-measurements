@@ -32,13 +32,14 @@ rm(args)
 
 # --- create file and value vector ---
 detail=FALSE
-folderName="../meas/flows"
-#folders=seq(40, 140, by=20)
+folderName="../meas/udpVsTcp"
+#folders=seq(0, 40, by=10)
 #folders=c(4, 8, 16, 32, 64)
 #folders=c(10, seq(30, 120, by=30))
-folders=c(4,8,16,32,64)
+#folders=c(4,8,16,32,64)
+folders=c("udp", "tcp")
 numMeas=10
-parameterName <- "Number of Flows"
+parameterName <- "Protocol"
 
 # get ecdf data from measurement files
 source("../getEcdfData.r")
@@ -50,7 +51,10 @@ metrics <- getEcdfData(detail, folderName, folders, numMeas, parameterName)
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('0', '10', '20', '30', '40'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
+
 
 #legendTitle=paste(paste(strsplit(parameterName, " ")[[1]], collapse = "\n"), " [%]", sep="")
 legendTitle=paste(strsplit(parameterName, " ")[[1]], collapse = "\n")
@@ -63,8 +67,12 @@ figure1 <- ggplot(data=metrics[metrics[["variable"]]=='Reallocations', ], aes(x=
   theme_bw() +
   scale_color_manual(name=legendTitle,
                      values=colorRampPalette(c("blue", "red"))(length(unique(metrics$parameter)))) +
-  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
-        panel.spacing.x = unit(0.75, "lines"), legend.position = "right")
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1),
+        text = element_text(size=12),
+        panel.spacing.x = unit(0.75, "lines"),
+        #legend.position = "right",
+        legend.position = c(.16, .79),
+        legend.background = element_rect(fill=alpha('white', 0.0)))
 #  guides(col=guide_legend(nrow=1, byrow=TRUE, title.position = "top", label.position = "bottom"))
 
 # save plot as pdf
