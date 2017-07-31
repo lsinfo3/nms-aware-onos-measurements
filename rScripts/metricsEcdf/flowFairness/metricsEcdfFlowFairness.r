@@ -32,14 +32,14 @@ rm(args)
 
 # --- create file and value vector ---
 detail=TRUE
-folderName="../meas/udpVsTcp"
-#folders=seq(0, 40, by=10)
+folderName="../meas/load"
+folders=seq(40, 140, by=20)
 #folders=c(4, 8, 16, 32, 64)
 #folders=c(10, seq(30, 120, by=30))
 #folders=c(4,8,16,32,64)
-folders=c("udp", "tcp")
+#folders=c("udp", "tcp")
 numMeas=10
-parameterName <- "Protocol"
+parameterName <- "Offered Network Load"
 
 # get ecdf data from measurement files
 source("../getEcdfData.r")
@@ -49,15 +49,15 @@ metrics <- getEcdfData(detail, folderName, folders, numMeas, parameterName)
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
-#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('0', '10', '20', '30', '40'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
 
 
-#legendTitle=paste(parameterName, " [%]", sep="")
-legendTitle=paste(parameterName, sep="")
+legendTitle=paste(parameterName, " [%]", sep="")
+#legendTitle=paste(parameterName, sep="")
 
 figure1 <- ggplot(data=metrics[metrics[["variable"]]=='Flow Fairness', ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
@@ -86,14 +86,15 @@ figure3 <- ggplot(data=metrics[metrics[["variable"]]=="Flow Fairness", ], aes(x=
                size = .5,    # Thinner lines
                width = .5,
                position = position_dodge(.9)) +
-  stat_summary(aes(color=parameter), geom="point", fun.y=mean, size = 2, stroke=0.7, shape=4) +
+  stat_summary(aes(color=parameter), geom="point", fun.y=mean, size = 5, stroke=0.7, shape=45) +
 #  coord_cartesian(ylim=c(0.95, 1.0)) +
   labs(x=legendTitle, y="Flow Fairness") +
+#  labs(x="Offered Network\nLoad [%]", y="Flow Fairness") +
   theme_bw() +
   scale_color_manual(values=colorRampPalette(c("blue", "red"))(length(unique(metrics$parameter)))) +
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1), text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"), legend.position = "none")
 
 # save plot as pdf
-width <- 8.0; height <- 7.0
+width <- 6.0; height <- 7.0
 ggsave(paste(outFilePath, "_conf.pdf", sep=""), plot = figure3, width = width, height = height, units="cm")

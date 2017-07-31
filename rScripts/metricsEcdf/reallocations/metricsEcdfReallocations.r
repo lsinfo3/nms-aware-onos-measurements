@@ -32,14 +32,14 @@ rm(args)
 
 # --- create file and value vector ---
 detail=FALSE
-folderName="../meas/udpVsTcp"
-#folders=seq(0, 40, by=10)
+folderName="../meas/load"
+folders=seq(40, 140, by=20)
 #folders=c(4, 8, 16, 32, 64)
 #folders=c(10, seq(30, 120, by=30))
 #folders=c(4,8,16,32,64)
-folders=c("udp", "tcp")
+#folders=c("udp", "tcp")
 numMeas=10
-parameterName <- "Protocol"
+parameterName <- "Offered Network Load"
 
 # get ecdf data from measurement files
 source("../getEcdfData.r")
@@ -49,15 +49,16 @@ metrics <- getEcdfData(detail, folderName, folders, numMeas, parameterName)
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
-#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('0', '10', '20', '30', '40'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
 
 
-#legendTitle=paste(paste(strsplit(parameterName, " ")[[1]], collapse = "\n"), " [%]", sep="")
-legendTitle=paste(strsplit(parameterName, " ")[[1]], collapse = "\n")
+legendTitle=paste(paste(strsplit(parameterName, " ")[[1]], collapse = "\n"), " [%]", sep="")
+#legendTitle=paste(strsplit(parameterName, " ")[[1]], collapse = "\n")
+#legendTitle=paste(parameterName, " [%]", sep="")
 
 figure1 <- ggplot(data=metrics[metrics[["variable"]]=='Reallocations', ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
@@ -70,9 +71,9 @@ figure1 <- ggplot(data=metrics[metrics[["variable"]]=='Reallocations', ], aes(x=
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1),
         text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"),
-        #legend.position = "right",
-        legend.position = c(.16, .79),
-        legend.background = element_rect(fill=alpha('white', 0.0)))
+        legend.position = "right")
+        #legend.position = c(.16, .79),
+        #legend.background = element_rect(fill=alpha('white', 0.0)))
 #  guides(col=guide_legend(nrow=1, byrow=TRUE, title.position = "top", label.position = "bottom"))
 
 # save plot as pdf

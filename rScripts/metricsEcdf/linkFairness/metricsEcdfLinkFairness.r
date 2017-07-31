@@ -32,14 +32,14 @@ rm(args)
 
 # --- create file and value vector ---
 detail=TRUE
-folderName="../meas/udpVsTcp"
-#folders=seq(0, 40, by=10)
+folderName="../meas/load"
+folders=seq(40, 140, by=20)
 #folders=c(4, 8, 16, 32, 64)
 #folders=c(10, seq(30, 120, by=30))
 #folders=c(4,8,16,32,64)
-folders=c("udp", "tcp")
+#folders=c("udp", "tcp")
 numMeas=10
-parameterName <- "Protocol"
+parameterName <- "Offered Network Load"
 
 # get ecdf data from measurement files
 source("../getEcdfData.r")
@@ -49,15 +49,15 @@ metrics <- getEcdfData(detail, folderName, folders, numMeas, parameterName)
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '6', '8', '10', '12'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('10', '30', '60', '90', '120'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('20', '30', '40', '50', '60'))
-#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
+metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('40', '60', '80', '100', '120', '140'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '12', '16', '20'))
 #metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('4', '8', '16', '32', '64'))
-#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('0', '10', '20', '30', '40'))
-metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('0', '10', '20', '30', '40'), labels=c('0'="0", '10'=paste("\U00B1","10", sep=""), '20'=paste("\U00B1","20", sep=""), '30'=paste("\U00B1","30", sep=""), '40'=paste("\U00B1","40", sep="")))
+#metrics[["parameter"]] <- factor(metrics[["parameter"]], levels=c('udp', 'tcp'), labels=c("udp"="UDP", "tcp"="TCP"))
 
 
-#legendTitle=paste(paste(strsplit(parameterName, " ")[[1]], collapse = "\n"), " [%]", sep="")
-legendTitle=paste(strsplit(parameterName, " ")[[1]], collapse = "\n")
+legendTitle=paste(paste(strsplit(parameterName, " ")[[1]], collapse = "\n"), " [%]", sep="")
+#legendTitle=paste(strsplit(parameterName, " ")[[1]], collapse = "\n")
 
 figure1 <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=value, color=parameter)) +
   stat_ecdf(geom="step", na.rm=TRUE) +
@@ -71,7 +71,7 @@ figure1 <- ggplot(data=metrics[metrics[["variable"]]=='Link Fairness', ], aes(x=
         text = element_text(size=12),
         panel.spacing.x = unit(0.75, "lines"),
         #legend.position = "right",
-        legend.position = c(.16, .78),
+        legend.position = c(.23, .62),
         legend.background = element_rect(fill=alpha('white', 0.0)))
 #  guides(col=guide_legend(nrow=2, title.position = "top"))
 
@@ -94,12 +94,13 @@ figure3 <- ggplot(data=metrics[metrics[["variable"]]=="Link Fairness", ], aes(x=
   stat_summary(geom="errorbar", fun.data=mean_cl_normal, 
                fun.args=list(conf.int=0.95),
                size = .5,    # Thinner lines
-               width = .5,
+               width = .3,
                position = position_dodge(.9)) +
-  stat_summary(aes(color=parameter), geom="point", fun.y=mean, size = 2, stroke=0.7, shape=4) +
+  stat_summary(aes(color=parameter), geom="point", fun.y=mean, size = 5, stroke=0.7, shape=45) +
 #  scale_y_continuous(breaks=seq(0.7, 1.0, by=0.05)) +
 #  coord_cartesian(ylim=c(0.7, 1.0)) +
-  labs(x=paste(parameterName, sep=""), y="Link Fairness") +
+  labs(x=paste(parameterName, " [%]", sep=""), y="Link Fairness") +
+#  labs(x="Offered Network\nLoad [%]", y="Link Fairness") +
   theme_bw() +
   scale_color_manual(name=parameterName,
                      values=colorRampPalette(c("blue", "red"))(length(unique(metrics$parameter)))) +
