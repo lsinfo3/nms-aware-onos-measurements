@@ -337,6 +337,8 @@ unset onosVmFolder
 
 # remove capture files
 rm $resultFolder/*.cap
+# move capture files to measurement folder
+#mv $resultFolder/*.cap $dataFolder
 
 unset fileBaseName fileName fileName2 fileFolderName dataFolder
 

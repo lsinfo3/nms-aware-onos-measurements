@@ -94,9 +94,9 @@ if [ -z "$capFiles" ] || [ -z "$rFilePath" ]
     for capFile in $capFilesList; do
       fileBaseName=$(basename "$capFile")
       fileName="${fileBaseName%.*}"
-      #outDir=$(dirname "$outFilePath")
-      #mv ./${fileName}.csv $outDir
-      rm ./${fileName}.csv
+      outDir=$(dirname "$outFilePath")
+      mv ./${fileName}.csv $outDir
+      #rm ./${fileName}.csv
     done
     
 fi
