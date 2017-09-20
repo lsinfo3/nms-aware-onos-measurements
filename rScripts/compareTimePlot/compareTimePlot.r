@@ -22,8 +22,8 @@ protocol <- "17"
 
 csvFilesMod <- c("mod/s1.csv", "mod/s2.csv", "mod/s3.csv", "mod/s4.csv")
 csvFilesNms <- c("nms/s1.csv", "nms/s2.csv", "nms/s3.csv", "nms/s4.csv")
-legendNamesMod <- c("mod_s1", "mod_s2", "mod_s3", "mod_s4")
-legendNamesNms <- c("nms_s1", "nms_s2", "nms_s3", "nms_s4")
+legendNamesMod <- c("MOD/NMS_S1", "MOD_S2", "MOD_S3", "MOD_S4")
+legendNamesNms <- c("NMS_S1", "NMS_S2", "NMS_S3", "NMS_S4")
 
 if(length(args) >= 1){
   protocol <- as.character(args[1])
@@ -76,7 +76,7 @@ bandwidthDataNms <- shapeBandwidth(csvFilesNms, resolution, protocol, legendName
 bandwidthData <- rbind(bandwidthDataMod, bandwidthDataNms)
 
 # print the whole thing
-figure <- ggplot(data=bandwidthData[bandwidthData[["Switch"]] != "nms_s1",], aes(x=time, y=bandwidthAll, color=Switch, linetype=Switch)) +
+figure <- ggplot(data=bandwidthData[bandwidthData[["Switch"]] != "NMS_S1",], aes(x=time, y=bandwidthAll, color=Switch, linetype=Switch)) +
   geom_line() +
   scale_color_manual(values=c("blue", "#FF0000", "#FF0000", "#FF0000", "#00FF00", "#00FF00", "#00FF00")
   ) +
@@ -88,9 +88,11 @@ figure <- ggplot(data=bandwidthData[bandwidthData[["Switch"]] != "nms_s1",], aes
 if(length(unique(bandwidthData[["Switch"]])) == 1) {
   figure <- figure + theme(legend.position = "none")
 }
+# save as rdata
+save(figure, file="./out_aggr.RData")
 # save as pdf
 width <- 15.0; height <- 7.0
 #ggsave(paste(outFilePath, "_aggr_", strftime(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
 ggsave(paste(outFilePath, "_aggr", ".pdf", sep=""), plot = figure, width = width, height = height, units="cm")
 
-#rm(width, height, bandwidthData, computeBandwidth)
+rm(width, height, bandwidthData, computeBandwidth)
