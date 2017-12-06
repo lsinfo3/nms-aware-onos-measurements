@@ -17,7 +17,7 @@ sudo apt-get install zip -y && \
 sudo apt-get install python -y
 
 # Clone ONOS repo.
-git clone https://github.com/lsinfo3/nms-aware-onos
+git clone https://github.com/lsinfo3/nms-aware-onos ./nms-aware-onos/
 
 # Install ONOS (cf. https://wiki.onosproject.org/display/ONOS/Developer+Quick+Start).
 cd nms-aware-onos
