@@ -1,12 +1,16 @@
 #!/bin/bash
 
-# Locale.
+#############
+## Locale. ##
+#############
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 sudo locale-gen en_US.UTF-8
 
-# Install ONOS prerequisites (cf. https://wiki.onosproject.org/display/ONOS/Developer+Quick+Start).
+#######################################################################################################
+## Install ONOS prerequisites (cf. https://wiki.onosproject.org/display/ONOS/Developer+Quick+Start). ##
+#######################################################################################################
 sudo apt-get update
 sudo apt-get install software-properties-common -y && \
 sudo add-apt-repository ppa:webupd8team/java -y && \
@@ -16,16 +20,18 @@ sudo apt-get install oracle-java8-installer oracle-java8-set-default -y && \
 sudo apt-get install zip -y && \
 sudo apt-get install python -y
 
-# Clone ONOS repo.
+######################
+## Clone ONOS repo. ##
+######################
 git clone https://github.com/lsinfo3/nms-aware-onos ./nms-aware-onos/
 
-# Install ONOS (cf. https://wiki.onosproject.org/display/ONOS/Developer+Quick+Start).
+#######################################################################################
+## Build ONOS (cf. https://wiki.onosproject.org/display/ONOS/Developer+Quick+Start). ##
+#######################################################################################
 cd nms-aware-onos
 export ONOS_ROOT=$(pwd)
 # Set variable persistently.
-echo "export ONOS_ROOT=$(pwd)" >> ~/.bashrc
+echo "export ONOS_ROOT=$(pwd)" >> /home/ubuntu/.bashrc
 tools/build/onos-buck build onos --show-output
-
-# Configure ONOS.
-
-
+# Generate IntelliJ project structure.
+tools/build/onos-buck project
