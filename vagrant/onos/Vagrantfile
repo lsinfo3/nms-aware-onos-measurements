@@ -5,7 +5,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.box = "ubuntu/xenial64"
   config.vm.provision :shell, path: "install.sh"
-  config.vm.synced_folder "onos", "/home/ubuntu/nms-aware-onos"
+  config.vm.synced_folder "./nms-aware-onos", "/home/ubuntu/nms-aware-onos"
   config.vm.hostname = "onos"
   
   config.vm.provider "virtualbox" do |v|
