@@ -13,5 +13,7 @@ measurements/02_lowBandwidthSsh/run*.sh
 rScripts/metricsEcdf/meas/
 rScripts/compareMetricsEcdf/meas/
 *.RData
+vagrant/onos/nms-aware-onos/
 vagrant/onos/.vagrant
+vagrant/nms/.vagrant
 *.log
