@@ -41,3 +41,10 @@ echo "export ONOS_ROOT=$(pwd)" >> /home/ubuntu/.bashrc
 tools/build/onos-buck build onos --show-output
 # Generate IntelliJ project structure.
 tools/build/onos-buck project
+
+####################
+## Configure ONOS ##
+####################
+cp buck-out/gen/tools/package/onos-package/onos.tar.gz /opt/
+tar -xzf /opt/onos.tar.gz -C /opt/
+mv /opt/onos-1.7.2-SNAPSHOT/ /opt/onos/
