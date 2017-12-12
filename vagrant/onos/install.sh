@@ -45,6 +45,9 @@ tools/build/onos-buck project
 ####################
 ## Configure ONOS ##
 ####################
+printf "\n### Configuring ONOS ###"
 cp buck-out/gen/tools/package/onos-package/onos.tar.gz /opt/
 tar -xzf /opt/onos.tar.gz -C /opt/
 mv /opt/onos-1.7.2-SNAPSHOT/ /opt/onos/
+chown -cR ubuntu /opt/onos/
+echo "export ONOS_APPS=drivers,openflow-base,hostprovider,netcfglinksprovider,ifw,proxyarp,mobility" >> /home/ubuntu/.bashrc
