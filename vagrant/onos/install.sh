@@ -51,3 +51,13 @@ tar -xzf /opt/onos.tar.gz -C /opt/
 mv /opt/onos-1.7.2-SNAPSHOT/ /opt/onos/
 chown -cR ubuntu /opt/onos/
 echo "export ONOS_APPS=drivers,openflow-base,hostprovider,netcfglinksprovider,ifw,proxyarp,mobility" >> /home/ubuntu/.bashrc
+
+###########################
+## Adding public SSH key ##
+###########################
+if [ -f /home/ubuntu/.ssh/me.pub ]; then
+  cat /home/ubuntu/.ssh/me.pub >> /home/ubuntu/.ssh/authorized_keys
+else
+  printf "No public SSH key available! No connection via SSH possible without password!\n" 1>&2
+fi
+
