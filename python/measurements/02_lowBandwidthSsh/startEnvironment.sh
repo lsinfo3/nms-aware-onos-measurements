@@ -2,7 +2,7 @@
 
 # Public ssh key has to be install in the ONOS and mininet VM!
 
-onosVmFolder="$HOME/Masterthesis/vm/firstOnosVm"
+onosVmFolder="../../../vagrant/onos"
 mnVmFolder="$HOME/Masterthesis/vm/leftVm"
 mnLocation="/home/ubuntu/python/measurements/02_lowBandwidthSsh/8clientSshd.py"
 onosVmIp="192.168.33.20"
@@ -14,7 +14,7 @@ mnVmIp="192.168.33.10"
 printf "Starting ONOS VM\n"
 printf "Vagrant log\n\nStart ONOS VM:\n\n" > vagrant_log.txt
 ( cd $onosVmFolder ; vagrant up ) >> vagrant_log.txt 2>&1
-ssh ubuntu@192.168.33.20 'screen -dm bash -c "source /home/ubuntu/.profile; onos-karaf"'
+ssh ubuntu@192.168.33.20 'screen -dm bash -c "/opt/onos/bin/onos-service start"'
 
 # start mininet vm
 printf "Starting mininet VM\n"

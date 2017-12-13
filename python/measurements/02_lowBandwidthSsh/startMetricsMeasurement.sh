@@ -101,7 +101,7 @@ echo "Duration per flow: $FLOWDUR s." >&2
 
 
 # create results folder with date and time
-leftVmFolder="$HOME/Masterthesis/vm/leftVm"
+leftVmFolder="$HOME"
 STARTTIME=$(date +%F_%H-%M-%S)
 resultFolder="$leftVmFolder/captures/metrics/${TYPE}_${STARTTIME}"
 mkdir $resultFolder
