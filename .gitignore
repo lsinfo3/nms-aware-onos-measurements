@@ -17,3 +17,4 @@ vagrant/onos/nms-aware-onos/
 vagrant/onos/.vagrant
 vagrant/nms/.vagrant
 *.log
+*_log.txt
