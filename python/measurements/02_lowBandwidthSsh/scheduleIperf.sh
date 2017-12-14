@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export LC_NUMERIC="en_US.UTF-8"
+
 leftVmPath="/home/lorry/Masterthesis/vm/leftVm/"
 
 IAT="0" 			# inter arrival time
