@@ -39,7 +39,7 @@ printf "ONOS is available\n"
 while [ true ]; do
   printf "Starting mininet\n"
   # start mininet in vm
-  ssh -oStrictHostKeyChecking=no ubuntu@$mnVmIp "screen -dm bash -c \"sudo $mnLocation -c $onosVmIp\""
+  ssh -oStrictHostKeyChecking=no ubuntu@$mnVmIp "screen -dm bash -c \"chmod +x $mnLocation; sudo $mnLocation -c $onosVmIp\""
 
   waitTime=0
   mnIsNotAvailable=1
