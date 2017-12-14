@@ -15,8 +15,9 @@ printf "\n### Updating the Packet Sources ###"
 sudo apt-get update
 printf "\n### Installing zip and python ###"
 sudo apt-get install zip -y && \
-sudo apt-get install python -y && \
+sudo apt-get install python python-pip -y && \
 sudo apt-get install mininet -y
+LC_ALL=C pip install requests
 
 ###########################
 ## Adding public SSH key ##
@@ -27,4 +28,11 @@ if [ -f /home/ubuntu/.ssh/me.pub ]; then
   rm /home/ubuntu/.ssh/me.pub
 else
   printf "No public SSH key available! No connection via SSH possible without password!\n" 1>&2
+fi
+
+###########################
+## Make files executable ##
+###########################
+if [ -f /home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py ]; then
+  chmod +x /home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py;
 fi

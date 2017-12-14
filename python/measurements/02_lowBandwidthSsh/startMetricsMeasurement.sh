@@ -183,7 +183,9 @@ unset nmsCommand NMSDURATION
 
 printf "Starting tcpdump packet capture.\n"
 # remove old captures
-rm $leftVmFolder/*.cap
+if [ -f $leftVmFolder/*.cap ]; then
+  rm $leftVmFolder/*.cap
+fi
 # monitor traffic with tcpdump to file
 # output of switch 1 (both data streams before limitation)
 IFACE="s1-eth3"
