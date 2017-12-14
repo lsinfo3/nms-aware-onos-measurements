@@ -16,7 +16,8 @@ sudo apt-get update
 printf "\n### Installing zip and python ###"
 sudo apt-get install zip -y && \
 sudo apt-get install python python-pip -y && \
-sudo apt-get install mininet -y
+sudo apt-get install mininet -y && \
+sudo apt-get install iperf3 -y
 LC_ALL=C pip install requests
 
 ###########################

@@ -22,7 +22,8 @@ sudo apt-get install oracle-java8-installer oracle-java8-set-default -y
 echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle/jre" >> /home/ubuntu/.profile
 printf "\n### Installing zip and python ###"
 sudo apt-get install zip -y && \
-sudo apt-get install python -y
+sudo apt-get install python -y && \
+sudo apt-get install bc -y
 
 ######################
 ## Clone ONOS repo. ##
