@@ -59,6 +59,12 @@ echo "export ONOS_APPS=drivers,openflow-base,hostprovider,netcfglinksprovider,if
 printf "\n### Copy public SSH key ###"
 if [ -f /home/ubuntu/.ssh/me.pub ]; then
   cat /home/ubuntu/.ssh/me.pub >> /home/ubuntu/.ssh/authorized_keys
+  if [ -f /opt/onos/apache-karaf-3.0.5/etc/keys.properties ]; then
+    printf "karaf=" >> /opt/onos/apache-karaf-3.0.5/etc/keys.properties
+    # get only the key
+    cat /home/ubuntu/.ssh/me.pub | cut -d ' ' -f 2 | tr -d '\n' >> /opt/onos/apache-karaf-3.0.5/etc/keys.properties
+    printf ",_g_:admingroup\n" >> /opt/onos/apache-karaf-3.0.5/etc/keys.properties
+  fi
   rm /home/ubuntu/.ssh/me.pub
 else
   printf "No public SSH key available! No connection via SSH possible without password!\n" 1>&2
