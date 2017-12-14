@@ -8,18 +8,20 @@ mnLocation="/home/ubuntu/python/measurements/02_lowBandwidthSsh/8clientSshd.py"
 onosVmIp="192.168.33.20"
 onosUiPort="8181"
 mnVmIp="192.168.33.10"
+logFile="./startEnvironment_log.txt"
 
 
-# start onos vm
+# start ONOS VM
 printf "Starting ONOS VM\n"
-printf "Vagrant log\n\nStart ONOS VM:\n\n" > vagrant_log.txt
-( cd $onosVmFolder ; vagrant up ) >> vagrant_log.txt 2>&1
-ssh ubuntu@192.168.33.20 'screen -dm bash -c "/opt/onos/bin/onos-service start"'
+printf "Vagrant log\n\nStart ONOS VM:\n\n" > $logFile
+( cd $onosVmFolder ; vagrant up ) >> $logFile 2>&1
+# source profile file (no environment variables set) and start ONOS
+ssh ubuntu@$onosVmIp 'screen -dm bash -c "source /home/ubuntu/.profile; /opt/onos/bin/onos-service start"'
 
 # start mininet vm
 printf "Starting mininet VM\n"
-printf "\nStart Mininet VM:\n\n" >> vagrant_log.txt
-( cd $mnVmFolder ; vagrant up ) >> vagrant_log.txt 2>&1
+printf "\nStart Mininet VM:\n\n" >> $logFile
+( cd $mnVmFolder ; vagrant up ) >> $logFile 2>&1
 
 # wait for Onos to start
 printf "Waiting for ONOS to start\n"

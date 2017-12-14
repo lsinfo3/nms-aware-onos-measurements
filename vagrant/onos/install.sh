@@ -19,6 +19,7 @@ sudo add-apt-repository ppa:webupd8team/java -y && \
 sudo apt-get update && \
 echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
 sudo apt-get install oracle-java8-installer oracle-java8-set-default -y
+echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle/jre" >> /home/ubuntu/.profile
 printf "\n### Installing zip and python ###"
 sudo apt-get install zip -y && \
 sudo apt-get install python -y
@@ -50,11 +51,12 @@ cp buck-out/gen/tools/package/onos-package/onos.tar.gz /opt/
 tar -xzf /opt/onos.tar.gz -C /opt/
 mv /opt/onos-1.7.2-SNAPSHOT/ /opt/onos/
 chown -cR ubuntu /opt/onos/
-echo "export ONOS_APPS=drivers,openflow-base,hostprovider,netcfglinksprovider,ifw,proxyarp,mobility" >> /home/ubuntu/.bashrc
+echo "export ONOS_APPS=drivers,openflow-base,hostprovider,netcfglinksprovider,ifwd,proxyarp,mobility" >> /home/ubuntu/.profile
 
 ###########################
 ## Adding public SSH key ##
 ###########################
+printf "\n### Copy public SSH key ###"
 if [ -f /home/ubuntu/.ssh/me.pub ]; then
   cat /home/ubuntu/.ssh/me.pub >> /home/ubuntu/.ssh/authorized_keys
 else
