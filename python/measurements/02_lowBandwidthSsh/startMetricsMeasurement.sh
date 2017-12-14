@@ -133,11 +133,17 @@ for run in `seq 1 $REP`; do
 printf "\n\n--------------Run #%s--------------\n" "${run}"
 
 # start measurement environment
+printf "## Starting the testing environment. ##\n"
 ./startEnvironment.sh
 printf "\n"
 
 # remove files from previous measurements
-ssh ubuntu@192.168.33.10 "rm /home/ubuntu/clientList.txt; rm iperfResult*.txt"
+ssh ubuntu@$mnVmIp "if [ -f /home/ubuntu/clientList.txt ]; then \
+rm /home/ubuntu/clientList.txt; \
+fi; \
+if [ -f /home/ubuntu/iperfResult*.txt ]; then \
+rm /home/ubuntu/iperfResult*.txt; \
+fi"
 
 initTimeFactor="1.5"
 INITTIME=$(bc -l <<< "$FLOWDUR * $initTimeFactor")

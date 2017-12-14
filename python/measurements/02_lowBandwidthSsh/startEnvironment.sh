@@ -11,23 +11,24 @@ mnVmIp="192.168.33.10"
 logFile="./startEnvironment.log"
 
 # Remove old ssh keys if present
+printf "## Remove old SSH keys of VM if present. ##"
 ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R $onosVmIp
 ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R $mnVmIp
 
 # start ONOS VM
-printf "Starting ONOS VM\n"
+printf "## Starting ONOS VM ##\n"
 printf "Vagrant log\n\nStart ONOS VM:\n\n" > $logFile
 ( cd $onosVmFolder ; vagrant up ) >> $logFile 2>&1
 # source profile file (no environment variables set) and start ONOS
 ssh -oStrictHostKeyChecking=no ubuntu@$onosVmIp 'screen -dm bash -c "source /home/ubuntu/.profile; /opt/onos/bin/onos-service start"'
 
 # start mininet vm
-printf "Starting mininet VM\n"
+printf "## Starting mininet VM ##\n"
 printf "\nStart Mininet VM:\n\n" >> $logFile
 ( cd $mnVmFolder ; vagrant up ) >> $logFile 2>&1
 
 # wait for Onos to start
-printf "Waiting for ONOS to start\n"
+printf "## Waiting for ONOS to start ##\n"
 nc -z -v -w5 $onosVmIp $onosUiPort
 while [ $? -ne 0 ]; do
   printf "ONOS not yet available\n"
@@ -37,7 +38,7 @@ done
 printf "ONOS is available\n"
 
 while [ true ]; do
-  printf "Starting mininet\n"
+  printf "## Starting mininet ##\n"
   # start mininet in vm
   ssh -oStrictHostKeyChecking=no ubuntu@$mnVmIp "screen -dm bash -c \"chmod +x $mnLocation; sudo $mnLocation -c $onosVmIp\""
 
