@@ -16,3 +16,14 @@ sudo apt-get update
 printf "\n### Installing zip and python ###"
 sudo apt-get install zip -y && \
 sudo apt-get install python -y
+
+###########################
+## Adding public SSH key ##
+###########################
+printf "\n### Copy public SSH key ###"
+if [ -f /home/ubuntu/.ssh/me.pub ]; then
+  cat /home/ubuntu/.ssh/me.pub >> /home/ubuntu/.ssh/authorized_keys
+  rm /home/ubuntu/.ssh/me.pub
+else
+  printf "No public SSH key available! No connection via SSH possible without password!\n" 1>&2
+fi

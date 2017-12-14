@@ -59,6 +59,7 @@ echo "export ONOS_APPS=drivers,openflow-base,hostprovider,netcfglinksprovider,if
 printf "\n### Copy public SSH key ###"
 if [ -f /home/ubuntu/.ssh/me.pub ]; then
   cat /home/ubuntu/.ssh/me.pub >> /home/ubuntu/.ssh/authorized_keys
+  rm /home/ubuntu/.ssh/me.pub
 else
   printf "No public SSH key available! No connection via SSH possible without password!\n" 1>&2
 fi

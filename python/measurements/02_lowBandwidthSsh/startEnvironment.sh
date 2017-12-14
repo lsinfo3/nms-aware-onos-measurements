@@ -8,15 +8,18 @@ mnLocation="/home/ubuntu/python/measurements/02_lowBandwidthSsh/8clientSshd.py"
 onosVmIp="192.168.33.20"
 onosUiPort="8181"
 mnVmIp="192.168.33.10"
-logFile="./startEnvironment_log.txt"
+logFile="./startEnvironment.log"
 
+# Remove old ssh keys if present
+ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R $onosVmIp
+ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R $mnVmIp
 
 # start ONOS VM
 printf "Starting ONOS VM\n"
 printf "Vagrant log\n\nStart ONOS VM:\n\n" > $logFile
 ( cd $onosVmFolder ; vagrant up ) >> $logFile 2>&1
 # source profile file (no environment variables set) and start ONOS
-ssh ubuntu@$onosVmIp 'screen -dm bash -c "source /home/ubuntu/.profile; /opt/onos/bin/onos-service start"'
+ssh -oStrictHostKeyChecking=no ubuntu@$onosVmIp 'screen -dm bash -c "source /home/ubuntu/.profile; /opt/onos/bin/onos-service start"'
 
 # start mininet vm
 printf "Starting mininet VM\n"
@@ -36,7 +39,7 @@ printf "ONOS is available\n"
 while [ true ]; do
   printf "Starting mininet\n"
   # start mininet in vm
-  ssh ubuntu@$mnVmIp "screen -dm bash -c \"sudo $mnLocation -c $onosVmIp\""
+  ssh -oStrictHostKeyChecking=no ubuntu@$mnVmIp "screen -dm bash -c \"sudo $mnLocation -c $onosVmIp\""
 
   waitTime=0
   mnIsNotAvailable=1
