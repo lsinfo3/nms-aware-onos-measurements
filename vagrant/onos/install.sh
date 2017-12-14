@@ -70,3 +70,9 @@ else
   printf "No public SSH key available! No connection via SSH possible without password!\n" 1>&2
 fi
 
+###########################
+## Make files executable ##
+###########################
+if [ -f /vagrant/onosLoad.sh ]; then
+  chmod +x /vagrant/onosLoad.sh
+fi
