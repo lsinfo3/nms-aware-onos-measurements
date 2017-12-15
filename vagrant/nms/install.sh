@@ -31,6 +31,12 @@ else
   printf "No public SSH key available! No connection via SSH possible without password!\n" 1>&2
 fi
 
+################################
+## Adding SSH key for mininet ##
+################################
+runuser -l ubuntu -c 'ssh-keygen -t rsa -N "" -f /home/ubuntu/.ssh/id_rsa'
+cat /home/ubuntu/.ssh/id_rsa.pub >> /home/ubuntu/.ssh/authorized_keys
+
 ###########################
 ## Make files executable ##
 ###########################

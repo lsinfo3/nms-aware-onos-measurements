@@ -16,5 +16,6 @@ rScripts/compareMetricsEcdf/meas/
 vagrant/onos/nms-aware-onos/
 vagrant/onos/.vagrant
 vagrant/nms/.vagrant
+vagrant/nms/captures/*
 *.log
 *_log.txt

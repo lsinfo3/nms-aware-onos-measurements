@@ -103,7 +103,7 @@ echo "Duration per flow: $FLOWDUR s." >&2
 # create results folder with date and time
 leftVmFolder="../../../vagrant/nms"
 STARTTIME=$(date +%F_%H-%M-%S)
-resultFolder="$leftVmFolder/captures/metrics/${TYPE}_${STARTTIME}"
+resultFolder="$leftVmFolder/captures/${TYPE}_${STARTTIME}"
 mkdir $resultFolder
 
 
@@ -227,17 +227,16 @@ killScripts () {
   printf "Kill onosLoad.sh script\n"
   ssh ubuntu@$onosVmIp 'ps -ax | grep [/]bin/bash\ /vagrant/onosLoad.sh | awk '"'"'{ printf "%s", $1 }'"'"' | xargs kill -15'
   
-  # TODO: Create access to mininet via SSH!!!
   # kill iperf server and client on mininet vm in NMS VM
   printf "Kill iperf server and client.\n"
-  ssh ubuntu@$mnVmIp 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $1}'"'"')\" | xargs kill -15"'
+  ssh ubuntu@$mnVmIp 'ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R 100.0.1.201; ssh -oStrictHostKeyChecking=no ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[i]perf3'"'"' | awk '"'"'{if ($5 == "iperf3") print $1}'"'"')\" | xargs kill -15"'
   # kill iperf python script on mininet vm in NMS VM
   printf "Kill iperf python script\n"
-  ssh ubuntu@$mnVmIp 'ssh ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $1}'"'"')\" | xargs kill -15"'
+  ssh ubuntu@$mnVmIp 'ssh -oStrictHostKeyChecking=no ubuntu@100.0.1.201 "echo \"$(ps -ax | grep '"'"'[/]usr/bin/python /home/ubuntu/python/measurements/02_lowBandwidthSsh/testOverSsh.py'"'"' | awk '"'"'{print $1}'"'"')\" | xargs kill -15"'
   # kill all remaining ssh connections on mininet vm
   printf "Kill all remaining ssh connections on NMS VM\n"
-  ssh ubuntu@$mnVmIp 'ssh ubuntu@100.0.1.201 "killall /usr/bin/ssh"'
-  ssh ubuntu@$mnVmIp 'ssh ubuntu@100.0.1.101 "killall /usr/bin/ssh"'
+  ssh ubuntu@$mnVmIp 'ssh -oStrictHostKeyChecking=no ubuntu@100.0.1.201 "killall /usr/bin/ssh"'
+  ssh ubuntu@$mnVmIp 'ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R 100.0.1.101; ssh -oStrictHostKeyChecking=no ubuntu@100.0.1.101 "killall /usr/bin/ssh"'
 }
 
 interruptScript () {
