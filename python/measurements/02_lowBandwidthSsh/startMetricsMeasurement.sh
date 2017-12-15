@@ -273,6 +273,8 @@ sleep 5
 
 ### create results ###
 
+rScriptFolder="../../../rScripts"
+
 # wait for capture files to be available
 printf "\nWaiting for capture files to be available.\n"
 for f in $leftVmFolder/*.cap; do
@@ -321,14 +323,14 @@ for f in $resultFolder/*.cap; do
 done
 
 # create and execute R file command
-rCommand="$leftVmFolder/python/rScripts/createPlot.sh"
+rCommand="$rScriptFolder/createPlot.sh"
 if [ "$USEUDP" == true ]; then
   # use UDP rather than TCP
   rCommand="$rCommand -u"
 fi
 rCommand="$rCommand -i \"${capFiles}\""
 rCommand="$rCommand -n \"${legendNames}\""
-rCommand="$rCommand -r $leftVmFolder/python/rScripts/computeMetrics/computeMetrics.r"
+rCommand="$rCommand -r $rScriptFolder/computeMetrics/computeMetrics.r"
 rCommand="$rCommand -o $resultFolder/metrics"
 
 eval $rCommand
@@ -351,9 +353,9 @@ mv $onosVmFolder/*.csv $dataFolder
 unset onosVmFolder
 
 # remove capture files
-rm $resultFolder/*.cap
+#rm $resultFolder/*.cap
 # move capture files to measurement folder
-#mv $resultFolder/*.cap $dataFolder
+mv $resultFolder/*.cap $dataFolder
 
 unset fileBaseName fileName fileName2 fileFolderName dataFolder
 
