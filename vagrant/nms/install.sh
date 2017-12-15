@@ -40,6 +40,7 @@ cat /home/ubuntu/.ssh/id_rsa.pub >> /home/ubuntu/.ssh/authorized_keys
 ###########################
 ## Make files executable ##
 ###########################
-if [ -f /home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py ]; then
-  chmod +x /home/ubuntu/python/measurements/02_lowBandwidthSsh/simpleNms.py;
+if [ -d /home/ubuntu/python/measurements/02_lowBandwidthSsh ]; then
+  chmod +x /home/ubuntu/python/measurements/02_lowBandwidthSsh/*.py;
+  chmod +x /home/ubuntu/python/measurements/02_lowBandwidthSsh/*.sh;
 fi
