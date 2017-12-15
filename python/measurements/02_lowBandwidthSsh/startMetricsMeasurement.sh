@@ -141,7 +141,7 @@ printf "\n"
 ssh ubuntu@$mnVmIp "if [ -f /home/ubuntu/clientList.txt ]; then \
 rm /home/ubuntu/clientList.txt; \
 fi; \
-if [ -f /home/ubuntu/iperfResult*.txt ]; then \
+if ls /home/ubuntu/iperfResult*.txt 1> /dev/null 2>&1; then \
 rm /home/ubuntu/iperfResult*.txt; \
 fi"
 
@@ -183,7 +183,7 @@ unset nmsCommand NMSDURATION
 
 printf "Starting tcpdump packet capture.\n"
 # remove old captures
-if [ -f $leftVmFolder/*.cap ]; then
+if ls $leftVmFolder/*.cap 1> /dev/null 2>&1; then
   rm $leftVmFolder/*.cap
 fi
 # monitor traffic with tcpdump to file
