@@ -19,6 +19,7 @@ sudo apt-get install python python-pip -y && \
 sudo apt-get install mininet -y && \
 sudo apt-get install iperf3 -y
 LC_ALL=C pip install requests
+LC_ALL=C pip install pexpect
 
 ###########################
 ## Adding public SSH key ##
