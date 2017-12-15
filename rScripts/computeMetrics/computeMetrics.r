@@ -42,7 +42,7 @@ rm(args)
 resultHeader <- c("time", "throughput", "linkFairness", "flowFairness", "reallocations")
 result <- c(strftime(Sys.time(), "%Y-%m-%d_%H-%M-%S"))
 
-source("../computeBandwidth.r")
+source("../../../rScripts/computeBandwidth.r")
 
 for(i in 1:length(csvFiles)) {
   # compute the bandwidth data
@@ -85,7 +85,7 @@ rm(width, height)
 
 #TODO: Do not depend on legend names!
 # calculate the percentage of the throughput
-source("../metrics/getThroughput.r")
+source("../../../rScripts/metrics/getThroughput.r")
 throughputData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
 throughput <- getThroughput(throughputData[, c("time", "s1", "s3")], 2000, "s1", "s3")
 #rm(throughputData, getThroughput)
@@ -97,7 +97,7 @@ resultDetail <- melt(throughput, id.vars="time")
 
 
 # calculate the link fairness
-source("../metrics/getLinkFairness.r")
+source("../../../rScripts/metrics/getLinkFairness.r")
 linkFairnessData <- dcast(bandwidthData, time ~ Switch, value.var="bandwidthAll")
 linkFairness <- getLinkFairness(linkFairnessData[, c("time", "s2", "s4")])
 rm(linkFairnessData, getLinkFairness)
@@ -110,7 +110,7 @@ rm(bandwidthData)
 
 
 
-source("../mergeBandwidth.r")
+source("../../../rScripts/mergeBandwidth.r")
 # calculate bandwidth data
 bandwidthData <- mergeBandwidth(csvFiles[c(2,4)], legendNames[c(2,4)], resolution, protocol)
 rm(mergeBandwidth, computeBandwidth)
@@ -140,7 +140,7 @@ rm(width, height)
 
 # calculate the flow fairness
 # TODO: Adapt requested bandwidth!
-source("../metrics/getFlowFairness.r")
+source("../../../rScripts/metrics/getFlowFairness.r")
 flowFairnessData <- dcast(bandwidthData, time ~ src, value.var="bandwidth", fun.aggregate=sum)
 flowFairness <- getFlowFairness(flowFairnessData, rep(200, ncol(flowFairnessData)-1))
 rm(flowFairnessData, getFlowFairness)
@@ -152,7 +152,7 @@ rm(flowFairness)
 
 
 # calculate the flow reallocation
-source("../metrics/getReallocation.r")
+source("../../../rScripts/metrics/getReallocation.r")
 reallocations <- getReallocation(bandwidthData[, c("time", "bandwidth", "src", "Switch")])
 print(paste("Flow reallocations: ", sum(reallocations), sep=""))
 result <- c(result, sum(reallocations))
