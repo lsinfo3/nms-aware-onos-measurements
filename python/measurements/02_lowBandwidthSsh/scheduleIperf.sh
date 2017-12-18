@@ -2,8 +2,6 @@
 
 export LC_NUMERIC="en_US.UTF-8"
 
-leftVmPath="/home/lorry/Masterthesis/vm/leftVm/"
-
 IAT="0" 			# inter arrival time
 BANDWIDTH="400"		# flow bandwidth
 VARIATION="0" 		# percentage of bandwidth deviation
@@ -65,7 +63,7 @@ while getopts "i:b:v:l:c:d:e:r:s:fut:h" opt; do
       SEED=$OPTARG
       ;;
     f)
-      #echo "Use UDP rather than TCP." >&2
+      #echo "Do a virtual run without creating real instances." >&2
       VIRTUAL=true
       ;;
     u)
