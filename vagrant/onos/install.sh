@@ -29,29 +29,29 @@ sudo apt-get install bc -y
 ## Clone ONOS repo. ##
 ######################
 printf "\n### Cloning ONOS Repository ###"
-git clone https://github.com/lsinfo3/nms-aware-onos ./nms-aware-onos/ --progress
+runuser -l ubuntu -c 'git clone https://github.com/lsinfo3/nms-aware-onos ./nms-aware-onos/ --progress'
 
 #######################################################################################
 ## Build ONOS (cf. https://wiki.onosproject.org/display/ONOS/Developer+Quick+Start). ##
 #######################################################################################
 cd nms-aware-onos
-git checkout networkManagement
+runuser -l ubuntu -c 'git checkout networkManagement'
 printf "\n### Building ONOS with Buck ###"
-export ONOS_ROOT=$(pwd)
+#export ONOS_ROOT=$(pwd)
 # Set variable persistently.
-echo "export ONOS_ROOT=$(pwd)" >> /home/ubuntu/.bashrc
-tools/build/onos-buck build onos --show-output
+#echo "export ONOS_ROOT=$(pwd)" >> /home/ubuntu/.bashrc
+runuser -l ubuntu -c 'tools/build/onos-buck build onos --show-output'
 # Generate IntelliJ project structure.
-tools/build/onos-buck project
+runuser -l ubuntu -c 'tools/build/onos-buck project'
 
 ####################
 ## Configure ONOS ##
 ####################
-printf "\n### Configuring ONOS ###"
-cp buck-out/gen/tools/package/onos-package/onos.tar.gz /opt/
-tar -xzf /opt/onos.tar.gz -C /opt/
-mv /opt/onos-1.7.2-SNAPSHOT/ /opt/onos/
-chown -cR ubuntu /opt/onos/
+printf "\n### Configure ONOS ###"
+runuser -l ubuntu -c 'cp buck-out/gen/tools/package/onos-package/onos.tar.gz /opt/'
+runuser -l ubuntu -c 'tar -xzf /opt/onos.tar.gz -C /opt/'
+runuser -l ubuntu -c 'v /opt/onos-1.7.2-SNAPSHOT/ /opt/onos/'
+#chown -cR ubuntu /opt/onos/
 echo "export ONOS_APPS=drivers,openflow-base,hostprovider,netcfglinksprovider,ifwd,proxyarp,mobility" >> /home/ubuntu/.profile
 
 ###########################
