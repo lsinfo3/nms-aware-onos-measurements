@@ -104,6 +104,9 @@ echo "Duration per flow: $FLOWDUR s." >&2
 leftVmFolder="../../../vagrant/nms"
 STARTTIME=$(date +%F_%H-%M-%S)
 resultFolder="$leftVmFolder/captures/${TYPE}_${STARTTIME}"
+if [ ! -d "$leftVmFolder/captures" ]; then
+mkdir "$leftVmFolder/captures"
+fi
 mkdir $resultFolder
 
 
