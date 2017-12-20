@@ -38,11 +38,11 @@ runuser -l ubuntu -c 'git clone https://github.com/lsinfo3/nms-aware-onos ./nms-
 ## Build ONOS (cf. https://wiki.onosproject.org/display/ONOS/Developer+Quick+Start). ##
 #######################################################################################
 cd nms-aware-onos
-runuser -l ubuntu -c 'cd /home/ubuntu/nms-aware-onos; git checkout networkManagement'
+runuser -l ubuntu -c 'cd /home/ubuntu/nms-aware-onos; git checkout networkManagement-1.12'
 printf "\n### Building ONOS with Buck ###"
-#export ONOS_ROOT=$(pwd)
+export ONOS_ROOT=$(pwd)
 # Set variable persistently.
-#echo "export ONOS_ROOT=$(pwd)" >> /home/ubuntu/.bashrc
+echo "export ONOS_ROOT=$(pwd)" >> /home/ubuntu/.bashrc
 runuser -l ubuntu -c 'cd /home/ubuntu/nms-aware-onos; tools/build/onos-buck build onos --show-output'
 # Generate IntelliJ project structure.
 runuser -l ubuntu -c 'cd /home/ubuntu/nms-aware-onos; tools/build/onos-buck project'

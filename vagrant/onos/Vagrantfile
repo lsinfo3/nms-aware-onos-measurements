@@ -11,8 +11,10 @@ Vagrant.configure(2) do |config|
   config.vm.provider "virtualbox" do |v|
 	v.name = "Ubuntu_Xenial64_NMS_Aware_ONOS"
     v.memory = 4096
-    v.cpus = 2
+    v.cpus = 4
     v.customize ["modifyvm", :id, "--vram", "20"]
+    v.customize ["modifyvm", :id, "--vtxvpid", "on"]
+    v.customize ["modifyvm", :id, "--paravirtprovider", "hyperv"]
   end
   
   config.vm.provision "copy_private_key", type: "file" do |s|
