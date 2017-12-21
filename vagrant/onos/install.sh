@@ -43,9 +43,9 @@ printf "\n### Building ONOS with Buck ###"
 export ONOS_ROOT=$(pwd)
 # Set variable persistently.
 echo "export ONOS_ROOT=$(pwd)" >> /home/ubuntu/.bashrc
-runuser -l ubuntu -c 'cd /home/ubuntu/nms-aware-onos; tools/build/onos-buck build onos --show-output'
+runuser -l ubuntu -c 'cd /home/ubuntu/nms-aware-onos; export ONOS_ROOT=$(pwd); tools/build/onos-buck build onos --show-output'
 # Generate IntelliJ project structure.
-runuser -l ubuntu -c 'cd /home/ubuntu/nms-aware-onos; tools/build/onos-buck project'
+runuser -l ubuntu -c 'cd /home/ubuntu/nms-aware-onos; export ONOS_ROOT=$(pwd); tools/build/onos-buck project'
 
 ####################
 ## Configure ONOS ##
@@ -53,7 +53,7 @@ runuser -l ubuntu -c 'cd /home/ubuntu/nms-aware-onos; tools/build/onos-buck proj
 printf "\n### Configure ONOS ###"
 cp buck-out/gen/tools/package/onos-package/onos.tar.gz /opt/
 tar -xzf /opt/onos.tar.gz -C /opt/
-mv /opt/onos-1.7.2-SNAPSHOT/ /opt/onos/
+mv /opt/onos-1.12.1-SNAPSHOT/ /opt/onos/
 chown -cR ubuntu /opt/onos/
 echo "export ONOS_APPS=drivers,openflow-base,hostprovider,netcfglinksprovider,ifwd,proxyarp,mobility" >> /home/ubuntu/.profile
 
@@ -63,11 +63,13 @@ echo "export ONOS_APPS=drivers,openflow-base,hostprovider,netcfglinksprovider,if
 printf "\n### Copy public SSH key ###"
 if [ -f /home/ubuntu/.ssh/me.pub ]; then
   cat /home/ubuntu/.ssh/me.pub >> /home/ubuntu/.ssh/authorized_keys
-  if [ -f /opt/onos/apache-karaf-3.0.5/etc/keys.properties ]; then
-    printf "karaf=" >> /opt/onos/apache-karaf-3.0.5/etc/keys.properties
+  if [ -f /opt/onos/apache-karaf-3.0.8/etc/keys.properties ]; then
+    printf "karaf=" >> /opt/onos/apache-karaf-3.0.8/etc/keys.properties
     # get only the key
-    cat /home/ubuntu/.ssh/me.pub | cut -d ' ' -f 2 | tr -d '\n' >> /opt/onos/apache-karaf-3.0.5/etc/keys.properties
-    printf ",_g_:admingroup\n" >> /opt/onos/apache-karaf-3.0.5/etc/keys.properties
+    cat /home/ubuntu/.ssh/me.pub | cut -d ' ' -f 2 | tr -d '\n' >> /opt/onos/apache-karaf-3.0.8/etc/keys.properties
+    printf ",_g_:admingroup\n" >> /opt/onos/apache-karaf-3.0.8/etc/keys.properties
+  else
+    printf "No apache-karaf folder found inside ONOS!\n"
   fi
   rm /home/ubuntu/.ssh/me.pub
 else
