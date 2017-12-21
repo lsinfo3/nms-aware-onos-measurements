@@ -37,6 +37,10 @@ while [ $? -ne 0 ]; do
 done
 printf "ONOS is available\n"
 
+# configure ONOS links via REST
+print "## Configure ONOS link via REST ##\n"
+curl --user karaf:karaf -X POST -H "Content-Type:application/json" http://$onosVmIp:8181/onos/v1/network/configuration -d "@network-cfg.json" -v >> $logFile 2>&1
+
 while [ true ]; do
   printf "## Starting mininet ##\n"
   # start mininet in vm
