@@ -101,6 +101,7 @@ echo "Duration per flow: $FLOWDUR s." >&2
 
 
 # create results folder with date and time
+onosVmFolder="../../../vagrant/onos"
 leftVmFolder="../../../vagrant/nms"
 STARTTIME=$(date +%F_%H-%M-%S)
 resultFolder="$leftVmFolder/captures/${TYPE}_${STARTTIME}"
@@ -350,15 +351,14 @@ mv ${resultFolder}/*.csv $dataFolder
 # move metrics back to parent folder
 mv ${dataFolder}/metrics.csv $resultFolder
 
-# move onos load results
-onosVmFolder="$HOME/Masterthesis/vm/firstOnosVm"
-mv $onosVmFolder/*.csv $dataFolder
+# move onos load results (folder is defined at the beginning of the document)
+mv ${onosVmFolder}/*.csv $dataFolder
 unset onosVmFolder
 
 # remove capture files
-#rm $resultFolder/*.cap
+rm ${resultFolder}/*.cap
 # move capture files to measurement folder
-mv $resultFolder/*.cap $dataFolder
+#mv ${resultFolder}/*.cap $dataFolder
 
 unset fileBaseName fileName fileName2 fileFolderName dataFolder
 
