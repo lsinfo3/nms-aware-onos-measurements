@@ -12,7 +12,7 @@ locale-gen en_US.UTF-8
 ## Configure ONOS ##
 ####################
 printf "\n### Configure ONOS ###"
-cp buck-out/gen/tools/package/onos-package/onos.tar.gz /opt/
+cp /home/ubuntu/nms-aware-onos/buck-out/gen/tools/package/onos-package/onos.tar.gz /opt/
 tar -xzf /opt/onos.tar.gz -C /opt/
 mv /opt/onos-1.12.1-SNAPSHOT/ /opt/onos/
 chown -cR ubuntu /opt/onos/
