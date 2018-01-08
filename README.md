@@ -1,9 +1,9 @@
 # nms-aware-onos-measurements
 
-This repository contains a measurement setup for the [NMS aware ONOS](https://github.com/lsinfo3/nms-aware-onos/tree/networkManagement-1.12) SDN controller. The setup consists of two virtual machines which are managed with vagrant. One VM hosts the NMS and the virtual topology and the other one is used as SDN controller.
+This repository contains a measurement setup for the [NMS aware ONOS](https://github.com/lsinfo3/nms-aware-onos/tree/networkManagement-1.12) SDN controller. The setup consists of two virtual machines which are managed with Vagrant. One VM hosts the NMS and the virtual topology and the other one is used as SDN controller.
 
 ## Usage
-A measurement is initiated with the `startMetricsMeasurement.sh` script. It is located inside the python/measurements/02_lowBandwidthSsh/ folder.
+A measurement is initiated with the `startMetricsMeasurement.sh` script. It is located inside the `python/measurements/02_lowBandwidthSsh/` folder.
 ```
 Usage:
  startMetricsMeasurement.sh [options]
@@ -30,7 +30,7 @@ Options:
  	 A measurement for the NMS aware ONOS version is executed. An NMS is instantiated. The created flows are measured and annotated.
 ```
 
-### Example
+### Examples
 
 ```
 ./startMetricsMeasurement.sh -r 2 -d 300 -c 1 -i 5 -f 4 -b 400 -n 10 -u -t NMS
@@ -45,9 +45,24 @@ The default values determine that no bandwidth variation is performed and that t
 ```
 This measurement has a total duration of 60 seconds and is repeated only once. The expected flow inter arrival time is 5 seconds and an expected number of 4 simultaneous flows is active. The bandwidth of 400 kbit/s per flow is deviated by a percentage of 10. This means the bandwidth of the flows is spread evenly between 360 and 440 kbit/s. As the seed is set to a value of 2, the inter arrival time, flow duration, and bandwidth variation is based on different random variables, compared to the first example. As the measurement is of type ORG, no NMS instance is used to manage the traffic. The measurement expects an unmodified ONOS version as SDN controller.
 
-## Prerequisites
-These prerequisites are necessary in order to evaluate the measurement results.
+### Tips
 
+* The start of the first measurement could take quite some time, as the VM's have to be created and provisioned. The provisioning includes amongst others, the build process of ONOS, dependent software like Java 8, Python, Mininet, Iperf3.
+* If something does not work like expected during the VM setup phase, check the `startEnvironment.log` file inside the `python/measurements/02_lowBandwidthSsh/` folder.
+* There exist two different Vagrant configurations inside the `vagrant/onos/` respectively `vagrant/nms/` folder. The default `Vagrantfile` is configured to use 4 CPU's, Hyper-V, VT-x, and a main memory of 4096 mb. If these specifications exceed your PC's capabilities, either use the 'Vagrantfile_legacy' and rename it to 'Vagrantfile' or feel free to adjust the values manually.
+* The setup is not compatible to Windows. However, as the measurement is based on VM's, it is possible to create the VM's using Windows. Therefore, please remove the `config.vm.synced_folder` inside the `Vagrantfile`'s. Subsequently, run the Vagrant command manually.
+
+## Prerequisites
+These prerequisites are necessary in order run the measurement and evaluate its results.
+
+Virtualbox is used to run the virtual machines hosting the NMS, SDN controller, and the virtual topology.
+```
+$ sudo apt-get install virtualbox virtualbox-qt virtualbox-dkms 
+```
+The terminal tool `bc` is used to evaluate the command line input and to calculate measurement variables. Install it using the following command.
+```
+$ sudo apt-get install bc
+```
 Tshark is used to parse the packet capture files into csv.
 ```
 $ sudo apt-get install tshark
