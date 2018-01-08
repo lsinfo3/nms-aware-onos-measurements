@@ -11,22 +11,14 @@ Vagrant.configure(2) do |config|
   config.vm.provider "virtualbox" do |v|
 	v.name = "Ubuntu_Xenial64_NMS_Aware_ONOS"
     v.memory = 4096
-    v.cpus = 4
+    v.cpus = 2
     v.customize ["modifyvm", :id, "--vram", "20"]
-    v.customize ["modifyvm", :id, "--vtxvpid", "on"]
-    v.customize ["modifyvm", :id, "--paravirtprovider", "hyperv"]
   end
   
-  # move public ssh key to vm
   config.vm.provision "copy_private_key", type: "file" do |s|
 	s.source = "~/.ssh/id_rsa.pub"
 	s.destination = "~/.ssh/me.pub"
   end
-  # update packages and install necessary applications
-  config.vm.provision "setup", type: "shell", path: "install_basic.sh"
-  # get and build the nms aware ONOS
-  config.vm.provision "onos", type: "shell", path: "build_onos.sh", privileged: false
-  # configure the whole setup
-  config.vm.provision "config", type: "shell", path: "config_setup.sh"
+  config.vm.provision "setup", type: "shell", path: "install.sh"
 
 end
