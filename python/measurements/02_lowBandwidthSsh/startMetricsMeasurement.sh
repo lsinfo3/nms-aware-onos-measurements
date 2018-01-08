@@ -15,11 +15,32 @@ USEUDP=false	# use udp traffic
 mnVmIp="192.168.33.10"		# mininet VM's IP address
 onosVmIp="192.168.33.20"	# ONOS VM's IP address
 
-runCommand="startMetricsMeasurement.sh [-r <measurement runs>] \
-[-c <number of flows per iPerf instance>] [-i <inter arrival time in seconds>] \
-[-f <number of simultaneous flows>] [-b <bandwidth per flow in kbit/s>] \
-[-v <bandwidth variation>] [-d <overall measurement duration in seconds>] \
-[-s <seed>] [-n <nms interval>] [-u] -t {ORG|MOD|NMS}"
+runCommand="
+Usage:
+ startMetricsMeasurement.sh [options]
+
+Options:
+ -r\t number of measurement repetitions. Default: 1
+ -c\t number of flows per iPerf instance. Default: 1
+ -i\t expected flow inter arrival time in seconds. Average value. Default: 0
+ \t An inter arrival time of 0 means that all flows are active during the whole measurement. From the beginning to the end.
+ -f\t expected number of simultaneously active flows. Average value. Default: 8
+ -b\t bandwidth per flow in kbit/s. Default: 200 kbit/s
+ -v\t bandwidth variation in percent. Default: 0. Range: [0-1]
+ \t The bandwidth defined in \"-t\" is deviated by the given percentage.
+ -d\t overall measurement duration in seconds. Default: 120s
+ -s\t seed for the random variable. Default: 1
+ -n\t update interval of the nms in seconds. Default: 10s
+ -u\t tag if the UDP protocol should be used, instead of TCP. Default: TCP
+ -t\t measurement type. Default: ORG. Values: {ORG|MOD|NMS}.
+ \t Type: ORG
+ \t A measurement for the originial ONOS version is executed. No NMS is used.
+ \t Type: MOD
+ \t A measurement for the modified ONOS version is executed. No NMS is used.
+ \t Type: NMS
+ \t A measurement for the NMS aware ONOS version is executed. An NMS is instantiated. The created flows are measured and annotated.
+  
+"
 
 while getopts "r:c:i:f:b:v:d:s:n:ut:h" opt; do
   case $opt in
@@ -74,7 +95,7 @@ while getopts "r:c:i:f:b:v:d:s:n:ut:h" opt; do
 	  fi
 	  ;;
     h)
-      echo -e "Usage:\n$runCommand"
+      printf "$runCommand"
       exit 1
       ;;
     \?)
