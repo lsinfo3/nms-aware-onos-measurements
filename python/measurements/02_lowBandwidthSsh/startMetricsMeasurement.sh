@@ -21,6 +21,7 @@ Usage:
 
 Options:
  -r\t number of measurement repetitions. Default: 1
+ -d\t overall measurement duration in seconds. Default: 120s
  -c\t number of flows per iPerf instance. Default: 1
  -i\t expected flow inter arrival time in seconds. Average value. Default: 0
  \t An inter arrival time of 0 means that all flows are active during the whole measurement. From the beginning to the end.
@@ -28,7 +29,6 @@ Options:
  -b\t bandwidth per flow in kbit/s. Default: 200 kbit/s
  -v\t bandwidth variation in percent. Default: 0. Range: [0-1]
  \t The bandwidth defined in \"-t\" is deviated by the given percentage.
- -d\t overall measurement duration in seconds. Default: 120s
  -s\t seed for the random variable. Default: 1. Ranged: [0-32767]
  -n\t update interval of the nms in seconds. Default: 10s
  -u\t tag if the UDP protocol should be used, instead of TCP. Default: TCP
@@ -48,17 +48,27 @@ while getopts "r:c:i:f:b:v:d:s:n:ut:h" opt; do
       if [ $OPTARG -le 0 ]; then
         printf "\nExiting: Measurement repetitions must be a positive value.\n" >&2
         printf "$runCommand"
-        exit 0
+        exit 1
       else
         echo "Measurement repetitions: $OPTARG" >&2
         REP=$OPTARG
+      fi
+      ;;
+    d)
+      if [ $OPTARG -le 0 ]; then
+        printf "\nExiting: Measurement duration must be a positive value.\n" >&2
+        printf "$runCommand"
+        exit 1
+      else
+        echo "Measurement duration: $OPTARG seconds" >&2
+        DURATION=$OPTARG
       fi
       ;;
     c)
       if [ $OPTARG -le 0 ]; then
         printf "\nExiting: Number of flows must be a positive value.\n" >&2
         printf "$runCommand"
-        exit 0
+        exit 1
       else
         echo "Number of flows per iPerf instance: $OPTARG" >&2
         COUNT=$OPTARG
@@ -68,7 +78,7 @@ while getopts "r:c:i:f:b:v:d:s:n:ut:h" opt; do
       if [ $OPTARG -lt 0 ]; then
         printf "\nExiting: Flow inter arrival time must be a positive value.\n" >&2
         printf "$runCommand"
-        exit 0
+        exit 1
       else
         echo "Flow inter arrival time: $OPTARG seconds" >&2
         IAT=$OPTARG
@@ -78,7 +88,7 @@ while getopts "r:c:i:f:b:v:d:s:n:ut:h" opt; do
       if [ $OPTARG -le 0 ]; then
         printf "\nExiting: Number of simultaneous flows must be a positive value.\n" >&2
         printf "$runCommand"
-        exit 0
+        exit 1
       else
         echo "Number of simultaneous flows: $OPTARG" >&2
         FLOWS=$OPTARG
@@ -88,37 +98,31 @@ while getopts "r:c:i:f:b:v:d:s:n:ut:h" opt; do
       if [ $OPTARG -le 0 ]; then
         printf "\nExiting: Bandwidth per flow must be a positive value.\n" >&2
         printf "$runCommand"
-        exit 0
+        exit 1
       else
         echo "Bandwidth per flow: $OPTARG kbit/s" >&2
         BWD=$OPTARG
       fi
       ;;
     v)
-      if [ $OPTARG -lt 0 ] || [ $OPTARG -gt 1 ]; then
-        printf "\nExiting: Bandwidht deviation must be a value between 0 and 1.\n" >&2
-        printf "$runCommand"
-        exit 0
+      if command -v bc >/dev/null 2>&1; then
+        if (( $(echo "$OPTARG < 0.0" | bc -l) )) || (( $(echo "$OPTARG >= 1.0" | bc -l) )); then
+          printf "\nExiting: Bandwidht deviation must be a value between 0 and 1.\n" >&2
+          printf "$runCommand"
+          exit 1
+        else
+          echo "Bandwidth deviation: $OPTARG" >&2
+          VARIATION=$OPTARG
+        fi
       else
-        echo "Bandwidth deviation: $OPTARG" >&2
-        VARIATION=$OPTARG
-      fi
-      ;;
-    d)
-      if [ $OPTARG -le 0 ]; then
-        printf "\nExiting: Measurement duration must be a positive value.\n" >&2
-        printf "$runCommand"
-        exit 0
-      else
-        echo "Measurement duration: $OPTARG seconds" >&2
-        DURATION=$OPTARG
+        printf "Command \"bc\" not installed. Could not check bandiwdth deviation variable format." >&2
       fi
       ;;
     s)
       if [ $OPTARG -lt 0 ] || [ $OPTARG -gt 32767 ]; then
         printf "\nExiting: Random seed must be a value between 0 and 32767.\n" >&2
         printf "$runCommand"
-        exit 0
+        exit 1
       else
         echo "Seed is: $OPTARG" >&2
         SEED=$OPTARG
@@ -128,7 +132,7 @@ while getopts "r:c:i:f:b:v:d:s:n:ut:h" opt; do
       if [ $OPTARG -lt 0 ]; then
         printf "\nExiting: Flow inter arrival time must be a positive value.\n" >&2
         printf "$runCommand"
-        exit 0
+        exit 1
       else
         echo "NMS update interval is: $OPTARG" >&2
         NMSINT=$OPTARG
@@ -146,22 +150,22 @@ while getopts "r:c:i:f:b:v:d:s:n:ut:h" opt; do
 		else
 		  echo "Exciting: Measurement type not valid."
 		  printf "$runCommand"
-		  exit 0
+		  exit 1
 	  fi
 	  ;;
     h)
       printf "$runCommand"
-      exit 1
+      exit 0
       ;;
     \?)
       echo "Exciting: Invalid option: -$OPTARG" >&2
       printf "$runCommand"
-      exit 0
+      exit 1
       ;;
     :)
       echo "Option -$OPTARG requires an argument." >&2
       printf "$runCommand"
-      exit 0
+      exit 1
       ;;
   esac
 done
