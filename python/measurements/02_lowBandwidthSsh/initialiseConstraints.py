@@ -11,7 +11,7 @@ import getIperfClients
 import json, time, sys, getopt
 
 
-INTENTURL='http://192.168.33.20:8181/onos/v1/intents'
+INTENTURL='http://172.16.44.11:8181/onos/v1/intents'
 
 RESULTPATH='/home/ubuntu/iperf_test_1.txt'
 

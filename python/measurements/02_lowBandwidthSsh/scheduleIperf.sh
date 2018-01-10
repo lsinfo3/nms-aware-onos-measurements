@@ -21,8 +21,9 @@ runCommand="runIperf.sh [-i <inter arrival time in seconds>] \
 [-e <time delay in seconds>] [-r <iPerf run number>] [-s <seed>] [-f] [-u] -t {ORG|MOD|NMS}"
 
 vmUser="ubuntu"
-vmIp="192.168.33.10"
-mininetServerIp="100.0.1.201"
+vmIp="172.16.44.11"
+mininetServerIp="10.0.0.1"
+mininetServerIpTestnet="172.16.44.12"
 
 while getopts "i:b:v:l:c:d:e:r:s:fut:h" opt; do
   case $opt in
@@ -98,6 +99,7 @@ while getopts "i:b:v:l:c:d:e:r:s:fut:h" opt; do
 done
 unset runCommand
 
+printf "[scheduleIperf] runCommand finished\n"
 
 createCommand ()
 {
@@ -127,10 +129,10 @@ getServerPort ()
 {
 	#printf "Search for unused server port.\n"
 	tempPort=$1
-	ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $tempPort" 2> /dev/null
+	ssh ${vmUser}@${mininetServerIpTestnet} "nc -z -v -w5 $mininetServerIp $tempPort" 2> /dev/null
 	while [ $? == 0 ]; do
 		tempPort=$(($tempPort + 1))
-		ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $tempPort" 2> /dev/null
+		ssh ${vmUser}@${mininetServerIpTestnet} "nc -z -v -w5 $mininetServerIp $tempPort" 2> /dev/null
 	done
 	serverPort=$tempPort
 	unset tempPort
@@ -141,16 +143,18 @@ waitForServer ()
 {
 	portToWait=$1
 	#printf "Waiting for server on port %s.\n" "$portToWait"
-	ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $portToWait" 2> /dev/null
+	ssh ${vmUser}@${mininetServerIpTestnet} "nc -z -v -w5 $mininetServerIp $portToWait" 2> /dev/null
 	while [ $? == 1 ]; do
 	  sleep 1
-	  ssh ${vmUser}@${vmIp} "nc -z -v -w5 $mininetServerIp $portToWait" 2> /dev/null
+	  ssh ${vmUser}@${mininetServerIpTestnet} "nc -z -v -w5 $mininetServerIp $portToWait" 2> /dev/null
 	done
 	#printf "Server on port %s is listening.\n" "$portToWait"
 	unset portToWait
 }
 
 iperfNumber=$RUN
+
+printf "[scheduleIperf] iperfNumber finished\n"
 
 if [ "$IAT" == "0" ]; then
 	createCommand $iperfNumber "5001" $FLOWDUR
@@ -254,6 +258,8 @@ else
 	else
 		# only run the iPerf instaces at the end of the script
 		
+		printf "[scheduleIperf] entering else part\n"
+
 		measRunTime=0						# measurement start time
 		calcIatCounter=0 					# calculated IAT sum
 		serverPort=$((5000 + $iperfNumber))	# the port to use for the iPerf server

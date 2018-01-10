@@ -14,10 +14,12 @@ except ImportError:
 
 
 CLIENTLISTPATH='/home/ubuntu/clientList.txt'
-hostname1 = '100.0.1.101'
-hostname2 = '100.0.1.201'
+hostname1 = '10.0.0.1'
+hostname1testnet = '172.16.44.12'
+hostname2 = '10.0.0.2'
+hostname2testnet = '172.16.44.13'
 username = 'ubuntu'
-password = '4fa3fe78fc88f8b5c19e50c0'
+password = 'onos123'
 
 
 def addClientsToList(clientListPath, clientPortMap, instanceName):
@@ -102,7 +104,7 @@ def startIperfClient(threadName, duration='10', clientCount='1',
   try:
     # log in to host1 via ssh
     h1 = pxssh.pxssh()
-    h1.login(hostname1, username, password)
+    h1.login(hostname1testnet, username, password)
     
     # starting iperf client bandwidth measurement
     cmd =  'stdbuf -i0 -o0 -e0'
@@ -174,7 +176,7 @@ def startIperfServer(resultIperf, serverPort='5001', duration='10'):
   try:
     # log in to host1 via ssh
     h2 = pxssh.pxssh()
-    h2.login(hostname2, username, password)
+    h2.login(hostname2testnet, username, password)
     
     # start iperf server on host 2
     cmd = "timeout {}s".format(float(duration)+5)

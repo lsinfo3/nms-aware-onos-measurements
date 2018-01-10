@@ -2,6 +2,8 @@
 
 # Public ssh key has to be installed in the mininet VM and the karaf shell
 
+exit
+
 onosVmFolder="../../../vagrant/onos"
 mnVmFolder="../../../vagrant/nms"
 onosVmIp="192.168.33.20"

@@ -9,7 +9,7 @@ from helpers import get, put, post, printDict
 from json import dumps
 
 
-LINKSURL='http://192.168.33.20:8181/onos/v1/network/configuration/links'
+LINKSURL='http://172.16.44.11:8181/onos/v1/network/configuration/links'
 
 BANDWIDTH='bandwidth'
 LATENCY='latency'

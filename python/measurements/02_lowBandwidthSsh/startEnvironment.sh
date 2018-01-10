@@ -2,6 +2,8 @@
 
 # Public ssh key has to be installed in the ONOS and mininet VM!
 
+exit
+
 onosVmFolder="../../../vagrant/onos"
 mnVmFolder="../../../vagrant/nms"
 mnLocation="/home/ubuntu/python/measurements/02_lowBandwidthSsh/8clientSshd.py"

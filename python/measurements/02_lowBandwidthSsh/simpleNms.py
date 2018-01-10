@@ -14,8 +14,8 @@ import json, time, sys, getopt, os.path
 
 DEVICEID2 = 'of:0000000000000002'
 DEVICEID4 = 'of:0000000000000004'
-FLOWURL = 'http://192.168.33.20:8181/onos/v1/flows/'
-LINKURL = 'http://192.168.33.20:8181/onos/v1/network/configuration/links'
+FLOWURL = 'http://172.16.44.11:8181/onos/v1/flows/'
+LINKURL = 'http://172.16.44.11:8181/onos/v1/network/configuration/links'
 PROTOSRC = 'TCP_SRC'
 PROTODST = 'TCP_DST'
 CRITERIA = 'tcpPort'

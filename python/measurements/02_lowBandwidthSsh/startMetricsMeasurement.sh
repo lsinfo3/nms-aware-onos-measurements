@@ -12,8 +12,8 @@ NMSINT="10" 	# updated interval of the NMS
 SEED="1"		# seed for the RANDOM variable
 USEUDP=false	# use udp traffic
 
-mnVmIp="192.168.33.10"		# mininet VM's IP address
-onosVmIp="192.168.33.20"	# ONOS VM's IP address
+mnVmIp="172.16.44.11"		# mininet VM's IP address
+onosVmIp="172.16.44.11"	# ONOS VM's IP address
 
 runCommand="
 Usage:
