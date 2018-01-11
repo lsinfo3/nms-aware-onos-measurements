@@ -3,11 +3,11 @@
 REP="1" 		# measurement repetitions
 COUNT="1"		# simultanious connections per iPerf instance
 DURATION="120"	# complete measurment duration
-IAT="0"			# inter arrival time
+IAT="5"			# inter arrival time
 FLOWS="8"		# amount of flows
 BWD="200"		# bandwidth
 VARIATION="0" # percentage of bandwidth deviation
-TYPE="ORG"		# measurement type
+TYPE="NMS"		# measurement type
 NMSINT="10" 	# updated interval of the NMS
 SEED="1"		# seed for the RANDOM variable
 USEUDP=false	# use udp traffic
@@ -23,7 +23,7 @@ Options:
  -r\t number of measurement repetitions. Default: 1
  -d\t overall measurement duration in seconds. Default: 120s
  -c\t number of flows per iPerf instance. Default: 1
- -i\t expected flow inter arrival time in seconds. Average value. Default: 0
+ -i\t expected flow inter arrival time in seconds. Average value. Default: 5
  \t An inter arrival time of 0 means that all flows are active during the whole measurement. From the beginning to the end.
  -f\t expected number of simultaneously active flows. Average value. Default: 8
  -b\t bandwidth per flow in kbit/s. Default: 200 kbit/s
@@ -32,7 +32,7 @@ Options:
  -s\t seed for the random variable. Default: 1. Ranged: [0-32767]
  -n\t update interval of the nms in seconds. Default: 10s
  -u\t tag if the UDP protocol should be used, instead of TCP. Default: TCP
- -t\t measurement type. Default: ORG. Values: {ORG|MOD|NMS}.
+ -t\t measurement type. Default: NMS. Values: {ORG|MOD|NMS}.
  \t Type: ORG
  \t A measurement for the originial ONOS version is executed. No NMS is used.
  \t Type: MOD
