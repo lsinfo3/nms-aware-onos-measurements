@@ -103,6 +103,7 @@ getEcdfCompareData <- function(detail, folderName, folders, numMeas, parameterNa
   
   # get load measurement values
   for(i in 1:length(loadCsv)) {
+    if(file.exists(loadCsv[i])){
     loadPart <- read.csv(loadCsv[i], header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
     loadPart[["parameter"]] <- loadValues[i]
     loadPart[["measurement"]] <- loadMeasName[i]
@@ -133,6 +134,7 @@ getEcdfCompareData <- function(detail, folderName, folders, numMeas, parameterNa
       onosLoad <- rbind(onosLoad, loadPart)
     } else {
       onosLoad <- loadPart
+    }
     }
   }
   rm(loadPart)
