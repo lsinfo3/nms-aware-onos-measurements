@@ -65,6 +65,7 @@ rm(tempFiles, tempLoadFiles, tempValues, tempLoadValues, i, j, folders, numMeas)
 
 # get load measurement values
 for(i in 1:length(loadCsv)) {
+  if(file.exists(loadCsv[i])){
   loadPart <- read.csv(loadCsv[i], header=TRUE, sep=",", quote="\"", dec=".", fill=TRUE)
   loadPart[["parameter"]] <- loadValues[i]
   
@@ -93,6 +94,7 @@ for(i in 1:length(loadCsv)) {
     onosLoad <- rbind(onosLoad, loadPart)
   } else {
     onosLoad <- loadPart
+  }
   }
 }
 rm(loadPart)
