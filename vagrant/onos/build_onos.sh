@@ -25,6 +25,7 @@ printf "\n### Building ONOS with Buck ###"
 export ONOS_ROOT=$(pwd)
 # Set variable persistently.
 echo "export ONOS_ROOT=$(pwd)" >> /home/ubuntu/.bashrc
+echo "export ONOS_ROOT=$(pwd)" >> /home/ubuntu/.profile
 tools/build/onos-buck build onos --show-output
 # Generate IntelliJ project structure.
 tools/build/onos-buck project

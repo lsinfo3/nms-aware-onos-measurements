@@ -20,7 +20,8 @@ printf "## Starting ONOS VM ##\n"
 printf "Vagrant log\n\nStart ONOS VM:\n\n" > $logFile
 ( cd $onosVmFolder ; vagrant up ) >> $logFile 2>&1
 # source profile file (no environment variables set) and start ONOS
-ssh -oStrictHostKeyChecking=no ubuntu@$onosVmIp 'screen -dm bash -c "source /home/ubuntu/.profile; /opt/onos/bin/onos-service start"'
+#ssh -oStrictHostKeyChecking=no ubuntu@$onosVmIp 'screen -dm bash -c "source /home/ubuntu/.profile; /opt/onos/bin/onos-service start"'
+ssh -oStrictHostKeyChecking=no ubuntu@$onosVmIp 'screen -dm -S onos bash -c "source /home/ubuntu/.profile; cd /home/ubuntu/nms-aware-onos/; ./tools/build/onos-buck run onos-local -- clean > /home/ubuntu/onosLog.txt 2>&1"'
 
 # start mininet vm
 printf "## Starting mininet VM ##\n"
@@ -38,8 +39,22 @@ done
 printf "ONOS is available\n"
 
 # configure ONOS links via REST
-print "## Configure ONOS link via REST ##\n"
-curl --user karaf:karaf -X POST -H "Content-Type:application/json" http://$onosVmIp:8181/onos/v1/network/configuration -d "@network-cfg.json" -v >> $logFile 2>&1
+printf "## Configure ONOS link via REST ##\n"
+
+printf "## Push Config via REST ## \n" >> $logFile
+curl_output="$(curl --user karaf:karaf -X POST -H \"Content-Type:application/json\" -w "%{http_code}" http://$onosVmIp:8181/onos/v1/network/configuration -d \"@network-cfg.json\")"
+echo "$curl_output" >> $logFile
+echo "$curl_output" | grep -q '200'
+retval=$?
+
+while [ $retval -ne 0 ]; do
+	sleep 5
+	printf "## Push Config via REST ## \n" >> $logFile
+	curl_output="$(curl --user karaf:karaf -X POST -H Content-Type:application/json -w \"%{http_code}\" http://$onosVmIp:8181/onos/v1/network/configuration -d @network-cfg.json)"
+	echo "$curl_output" >> $logFile
+	echo "$curl_output" | grep -q '200'
+	retval=$?
+done
 
 while [ true ]; do
   printf "## Starting mininet ##\n"

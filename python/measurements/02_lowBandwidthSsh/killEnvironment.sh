@@ -12,8 +12,9 @@ logFile="./killEnvironment.log"
 ssh ubuntu@$mnVmIp "sudo killall /usr/bin/python; sudo mn -c" > /dev/null 2>&1
 
 # kill onos via karaf shell
-ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R [$onosVmIp]:8101
-ssh -oStrictHostKeyChecking=no -p 8101 -i ~/.ssh/id_rsa karaf@$onosVmIp "shutdown -f"
+#ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R [$onosVmIp]:8101
+#ssh -oStrictHostKeyChecking=no -p 8101 -i ~/.ssh/id_rsa karaf@$onosVmIp "shutdown -f"
+ssh ubuntu@$onosVmIp "screen -X -S onos quit"
 
 unset mnVmIp onosVmIp
 
